@@ -1,0 +1,6 @@
+[package]
+name = "simple_rdb"
+version = "0.1.0"
+authors = ["hajime <d.runana@gmail.com>"]
+
+[dependencies]
