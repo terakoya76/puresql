@@ -3,6 +3,13 @@ use std::vec::Vec;
 use std::collections::HashMap;
 use std::borrow::ToOwned;
 
+mod datum;
+mod column;
+mod tuple;
+pub use datum::datum::Datum;
+pub use column::column::Column;
+pub use tuple::tuple::Tuple;
+
 pub struct Query {
     columns: Vec<Column>,
     tuples: Vec<Tuple>,
@@ -32,14 +39,14 @@ impl Query {
             let mut values: Vec<&str> = Vec::new();
             for index in indexes.iter().cloned() {
                 if index < tuple.values.len() {
-                    values.push(&tuple.values[index]);
+                    values.push(&tuple.values[index].value);
                 } else {
                     values.push("");
                 }
             }
 
             tuples.push(
-                Tuple::new(values.iter().map(|s| s.to_string()).collect())
+                Tuple::new(values.iter().map(|s| Datum::new(s)).collect())
             );
         }
 
@@ -60,7 +67,7 @@ impl Query {
         let r_column_idx: usize = relation.find_column(key_column);
 
         if l_column_idx >= self.columns.len() || r_column_idx >= relation.columns.len() {
-            return Query::new(&self.columns, &vec![Tuple::new(vec!["".to_string(); self.columns.len()])]);
+            return Query::new(&self.columns, &vec![Tuple::new(vec![Datum::new(""); self.columns.len()])]);
         }
 
         let mut new_columns: Vec<Column> = self.columns.iter().map(|c| Column::new(&c.table_name, &c.name)).collect();
@@ -72,19 +79,19 @@ impl Query {
         for l_tuple in &self.tuples {
             let mut tmp_tuple: Tuple = Tuple::new(l_tuple.values.to_owned());
             while tmp_tuple.values.len() < self.columns.len() {
-                tmp_tuple.values.push("".to_string());
+                tmp_tuple.values.push(Datum::new(""));
             }
 
-            let l_value: String = tmp_tuple.values[l_column_idx].to_string();
+            let l_value: String = tmp_tuple.values[l_column_idx].value.to_string();
             if !l_value.is_empty() {
                 for r_tuple in &relation.tuples {
                     if r_tuple.values.len() < r_column_idx {
                         continue;
                     }
 
-                    if l_value == r_tuple.values[r_column_idx] {
+                    if l_value == r_tuple.values[r_column_idx].value {
                         for r_value in &r_tuple.values {
-                            tmp_tuple.values.push(r_value.to_string());
+                            tmp_tuple.values.push(Datum::new(&r_value.value));
                         }
                         break;
                     }
@@ -92,7 +99,7 @@ impl Query {
             }
 
             while tmp_tuple.values.len() < new_columns.len() {
-                tmp_tuple.values.push("".to_string());
+                tmp_tuple.values.push(Datum::new(""));
             }
             new_tuples.push(tmp_tuple);
         }
@@ -103,12 +110,12 @@ impl Query {
     fn equal(&self, key_column: &str, value: &str) -> Query {
         let index: usize = self.find_column(key_column);
         if index >= self.columns.len() {
-            return Query::new(&self.columns, &vec![Tuple::new(vec!["".to_string(); self.columns.len()])]);
+            return Query::new(&self.columns, &vec![Tuple::new(vec![Datum::new(""); self.columns.len()])]);
         }
 
         let mut new_tuples: Vec<Tuple> = Vec::new();
         for tuple in &self.tuples {
-            if value == tuple.values[index] {
+            if value == tuple.values[index].value {
                 new_tuples.push(Tuple::new(tuple.values.clone()));
             }
         }
@@ -118,12 +125,12 @@ impl Query {
     fn less_than(&self, key_column: &str, value: &str) -> Query {
         let idx: usize = self.find_column(key_column);
         if idx >= self.columns.len() {
-            return Query::new(&self.columns, &vec![Tuple::new(vec!["".to_string(); self.columns.len()])]);
+            return Query::new(&self.columns, &vec![Tuple::new(vec![Datum::new(""); self.columns.len()])]);
         }
 
         let mut new_tuples: Vec<Tuple> = Vec::new();
         for tuple in &self.tuples {
-            if tuple.values[idx] < value.to_string() {
+            if tuple.values[idx].value < value.to_string() {
                 new_tuples.push(Tuple::new(tuple.values.clone()));
             }
         }
@@ -144,7 +151,7 @@ impl Query {
         for tuple in &self.tuples {
             for v in &tuple.values {
                 tuple_buffer += "|";
-                tuple_buffer += &v;
+                tuple_buffer += &v.value;
             }
             println!("{}", tuple_buffer);
             tuple_buffer.clear();
@@ -205,7 +212,7 @@ impl Table {
         for tuple in &self.tuples {
             for v in &tuple.values {
                 tuple_buffer += "|";
-                tuple_buffer += &v;
+                tuple_buffer += &v.value;
             }
             println!("{}", tuple_buffer);
             tuple_buffer.clear();
@@ -214,38 +221,10 @@ impl Table {
 
     fn insert(&mut self, values: Vec<&str>) {
         &self.tuples.push(
-            Tuple::new(values.iter().map(|s| s.to_string()).collect())
+            Tuple::new(values.iter().map(|s| Datum::new(s)).collect())
         );
     }
 } 
-
-#[derive(Clone)]
-pub struct Column {
-    table_name: String,
-    name: String,
-}
-
-impl Column {
-    fn new(table_name: &str, name: &str) -> Column {
-        Column {
-            table_name: table_name.to_string(),
-            name: name.to_string(),
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct Tuple {
-    values: Vec<String>, 
-}
-
-impl Tuple {
-    fn new(values: Vec<String>) -> Tuple {
-        Tuple {
-            values: values,
-        }
-    }
-}
 
 fn main() {
     println!("\nWhole Table");
