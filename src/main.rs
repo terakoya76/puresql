@@ -16,16 +16,6 @@ impl Query {
         }
     }
 
-    fn from(tables: &HashMap<String, Table>, table_name: &str) -> Query {
-        let opt_table: Option<&Table> = tables.get(table_name);
-        if let Some(t) = opt_table {
-            let table: Table = t.clone();
-            Query::new(&table.columns, &table.tuples)
-        } else {
-            Query::new(&vec![], &vec![])
-        }
-    }
-
     fn select(&self, column_names: Vec<&str>) -> Query {
         let mut columns: Vec<Column> = Vec::new();
         let mut tuples: Vec<Tuple> = Vec::new();
@@ -56,23 +46,26 @@ impl Query {
         Query::new(&columns, &tuples)
     }
 
-    fn left_join(&self, tables: &HashMap<String, Table>, table_name: &str, key_column_name: &str) -> Query {
-        let opt_table: Option<&Table> = tables.get(table_name);
-        if opt_table.is_none() {
-            return Query::new(&self.columns, &self.tuples);
+    fn find_column(&self, column_name: &str) -> usize {
+        for (i, col) in self.columns.iter().enumerate() {
+            if col.name == column_name {
+                return i;
+            }
         }
-        let table: Table = opt_table.unwrap().clone();
+        self.columns.len()
+    }
 
-        let l_column_idx: usize = self.find_column(key_column_name);
-        let r_column_idx: usize = table.find_column(key_column_name);
+    fn left_join(&self, relation: Query, key_column: &str) -> Query {
+        let l_column_idx: usize = self.find_column(key_column);
+        let r_column_idx: usize = relation.find_column(key_column);
 
-        if l_column_idx >= self.columns.len() || r_column_idx >= table.columns.len() {
+        if l_column_idx >= self.columns.len() || r_column_idx >= relation.columns.len() {
             return Query::new(&self.columns, &vec![Tuple::new(vec!["".to_string(); self.columns.len()])]);
         }
 
         let mut new_columns: Vec<Column> = self.columns.iter().map(|c| Column::new(&c.table_name, &c.name)).collect();
-        for r_col in &table.columns {
-            new_columns.push(Column::new(table_name, &r_col.name));
+        for r_col in &relation.columns {
+            new_columns.push(Column::new(&r_col.table_name, &r_col.name));
         }
 
         let mut new_tuples: Vec<Tuple> = Vec::new();
@@ -84,7 +77,7 @@ impl Query {
 
             let l_value: String = tmp_tuple.values[l_column_idx].to_string();
             if !l_value.is_empty() {
-                for r_tuple in &table.tuples {
+                for r_tuple in &relation.tuples {
                     if r_tuple.values.len() < r_column_idx {
                         continue;
                     }
@@ -107,8 +100,23 @@ impl Query {
         Query::new(&new_columns, &new_tuples)
     }
 
-    fn less_than(&self, column_name: &str, value: &str) -> Query {
-        let idx: usize = self.find_column(column_name);
+    fn equal(&self, key_column: &str, value: &str) -> Query {
+        let index: usize = self.find_column(key_column);
+        if index >= self.columns.len() {
+            return Query::new(&self.columns, &vec![Tuple::new(vec!["".to_string(); self.columns.len()])]);
+        }
+
+        let mut new_tuples: Vec<Tuple> = Vec::new();
+        for tuple in &self.tuples {
+            if value == tuple.values[index] {
+                new_tuples.push(Tuple::new(tuple.values.clone()));
+            }
+        }
+        Query::new(&self.columns, &new_tuples)
+    }
+
+    fn less_than(&self, key_column: &str, value: &str) -> Query {
+        let idx: usize = self.find_column(key_column);
         if idx >= self.columns.len() {
             return Query::new(&self.columns, &vec![Tuple::new(vec!["".to_string(); self.columns.len()])]);
         }
@@ -121,16 +129,6 @@ impl Query {
         }
 
         Query::new(&self.columns, &new_tuples)
-    }
-
-    fn find_column(&self, name: &str) -> usize {
-        for (i, col) in self.columns.iter().enumerate() {
-            if col.name == name {
-                return i;
-            }
-        }
-
-        self.columns.len()
     }
 
     fn to_string(&self) {
@@ -181,9 +179,13 @@ impl Table {
         Table::new(&name, &columns, &tuples)
     }
 
-    fn find_column(&self, name: &str) -> usize {
+    fn from(&self) -> Query {
+        Query::new(&self.columns, &self.tuples)
+    }
+
+    fn find_column(&self, column_name: &str) -> usize {
         for (i, col) in self.columns.iter().enumerate() {
-            if col.name == name {
+            if col.name == column_name {
                 return i;
             }
         }
@@ -246,6 +248,7 @@ impl Tuple {
 }
 
 fn main() {
+    println!("\nWhole Table");
     let mut shohin: Table = Table::create("shohin", vec!["shohin_id", "shohin_name", "kubun_id", "price"]);
     shohin.insert(vec!["1", "apple", "1", "300"]);
     shohin.insert(vec!["2", "orange", "1", "130"]);
@@ -258,11 +261,16 @@ fn main() {
     kubun.insert(vec!["1", "fruit"]);
     kubun.insert(vec!["2", "vegetable"]);
 
+    println!("\nselect");
     let mut tables = HashMap::new();
     tables.insert(shohin.clone().name, shohin.clone());
-    Query::from(&tables, "shohin").select(vec!["shohin_id", "shohin_name"]).to_string();
+    shohin.from().select(vec!["shohin_id", "shohin_name"]).to_string();
 
+    println!("\nleft join");
     tables.insert(kubun.clone().name, kubun.clone());
-    Query::from(&tables, "shohin").left_join(&tables, "kubun", "kubun_id").to_string();
+    shohin.from().left_join(kubun.from(), "kubun_id").to_string();
+
+    println!("\nequal");
+    shohin.from().equal("shohin_name", "orange").to_string();
 }
 
