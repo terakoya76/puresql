@@ -1,15 +1,17 @@
 pub mod tuple {
-    use datum::datum::Datum;
+    use field::field::Field;
 
     #[derive(Clone)]
     pub struct Tuple {
-        pub values: Vec<Datum>, 
+        pub internal_id: usize,
+        pub fields: Vec<Field>,
     }
 
     impl Tuple {
-        pub fn new(values: Vec<Datum>) -> Tuple {
+        pub fn new(internal_id: usize, fields: Vec<Field>) -> Tuple {
             Tuple {
-                values: values,
+                internal_id: internal_id,
+                fields: fields,
             }
         }
     }

@@ -1,241 +1,34 @@
-use std::string::String;
 use std::vec::Vec;
 use std::collections::HashMap;
 use std::borrow::ToOwned;
 
-mod datum;
+mod field;
 mod column;
 mod tuple;
-pub use datum::datum::Datum;
+mod table;
+//mod relation;
+mod allocator;
+pub use field::field::Field;
 pub use column::column::Column;
 pub use tuple::tuple::Tuple;
-
-pub struct Query {
-    columns: Vec<Column>,
-    tuples: Vec<Tuple>,
-}
-
-impl Query {
-    fn new(columns: &Vec<Column>, tuples: &Vec<Tuple>) -> Query {
-        Query {
-            columns: columns.to_owned(),
-            tuples: tuples.to_owned(),
-        }
-    }
-
-    fn select(&self, column_names: Vec<&str>) -> Query {
-        let mut columns: Vec<Column> = Vec::new();
-        let mut tuples: Vec<Tuple> = Vec::new();
-        let mut indexes: Vec<usize> = Vec::new();
-
-        for col_name in column_names {
-            let index: usize = self.find_column(col_name);
-            let table_name: &str = &self.columns[index].table_name;
-            columns.push(Column::new(table_name, col_name));
-            indexes.push(index);
-        }
-
-        for tuple in &self.tuples {
-            let mut values: Vec<&str> = Vec::new();
-            for index in indexes.iter().cloned() {
-                if index < tuple.values.len() {
-                    values.push(&tuple.values[index].value);
-                } else {
-                    values.push("");
-                }
-            }
-
-            tuples.push(
-                Tuple::new(values.iter().map(|s| Datum::new(s)).collect())
-            );
-        }
-
-        Query::new(&columns, &tuples)
-    }
-
-    fn find_column(&self, column_name: &str) -> usize {
-        for (i, col) in self.columns.iter().enumerate() {
-            if col.name == column_name {
-                return i;
-            }
-        }
-        self.columns.len()
-    }
-
-    fn left_join(&self, relation: Query, key_column: &str) -> Query {
-        let l_column_idx: usize = self.find_column(key_column);
-        let r_column_idx: usize = relation.find_column(key_column);
-
-        if l_column_idx >= self.columns.len() || r_column_idx >= relation.columns.len() {
-            return Query::new(&self.columns, &vec![Tuple::new(vec![Datum::new(""); self.columns.len()])]);
-        }
-
-        let mut new_columns: Vec<Column> = self.columns.iter().map(|c| Column::new(&c.table_name, &c.name)).collect();
-        for r_col in &relation.columns {
-            new_columns.push(Column::new(&r_col.table_name, &r_col.name));
-        }
-
-        let mut new_tuples: Vec<Tuple> = Vec::new();
-        for l_tuple in &self.tuples {
-            let mut tmp_tuple: Tuple = Tuple::new(l_tuple.values.to_owned());
-            while tmp_tuple.values.len() < self.columns.len() {
-                tmp_tuple.values.push(Datum::new(""));
-            }
-
-            let l_value: String = tmp_tuple.values[l_column_idx].value.to_string();
-            if !l_value.is_empty() {
-                for r_tuple in &relation.tuples {
-                    if r_tuple.values.len() < r_column_idx {
-                        continue;
-                    }
-
-                    if l_value == r_tuple.values[r_column_idx].value {
-                        for r_value in &r_tuple.values {
-                            tmp_tuple.values.push(Datum::new(&r_value.value));
-                        }
-                        break;
-                    }
-                }
-            }
-
-            while tmp_tuple.values.len() < new_columns.len() {
-                tmp_tuple.values.push(Datum::new(""));
-            }
-            new_tuples.push(tmp_tuple);
-        }
-
-        Query::new(&new_columns, &new_tuples)
-    }
-
-    fn equal(&self, key_column: &str, value: &str) -> Query {
-        let index: usize = self.find_column(key_column);
-        if index >= self.columns.len() {
-            return Query::new(&self.columns, &vec![Tuple::new(vec![Datum::new(""); self.columns.len()])]);
-        }
-
-        let mut new_tuples: Vec<Tuple> = Vec::new();
-        for tuple in &self.tuples {
-            if value == tuple.values[index].value {
-                new_tuples.push(Tuple::new(tuple.values.clone()));
-            }
-        }
-        Query::new(&self.columns, &new_tuples)
-    }
-
-    fn less_than(&self, key_column: &str, value: &str) -> Query {
-        let idx: usize = self.find_column(key_column);
-        if idx >= self.columns.len() {
-            return Query::new(&self.columns, &vec![Tuple::new(vec![Datum::new(""); self.columns.len()])]);
-        }
-
-        let mut new_tuples: Vec<Tuple> = Vec::new();
-        for tuple in &self.tuples {
-            if tuple.values[idx].value < value.to_string() {
-                new_tuples.push(Tuple::new(tuple.values.clone()));
-            }
-        }
-
-        Query::new(&self.columns, &new_tuples)
-    }
-
-    fn to_string(&self) {
-        let mut col_buffer: String = String::new();
-        let mut tuple_buffer: String = String::new();
-
-        for col in &self.columns {
-            col_buffer += "|";
-            col_buffer += &col.name;
-        }
-        println!("{}", col_buffer);
-
-        for tuple in &self.tuples {
-            for v in &tuple.values {
-                tuple_buffer += "|";
-                tuple_buffer += &v.value;
-            }
-            println!("{}", tuple_buffer);
-            tuple_buffer.clear();
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct Table {
-    name: String,
-    columns: Vec<Column>, 
-    tuples: Vec<Tuple>,
-}
-
-impl Table {
-    fn new(name: &str, columns: &Vec<Column>, tuples: &Vec<Tuple>) -> Table {
-        Table {
-            name: name.to_string(),
-            columns: columns.to_owned(),
-            tuples: tuples.to_owned(), 
-        }
-    }
-
-    fn create(name: &str, column_names: Vec<&str>) -> Table {
-        let mut columns: Vec<Column> = Vec::new();
-        for c_name in column_names {
-            columns.push(Column::new(name, c_name))
-        }
-
-        let tuples: Vec<Tuple> = Vec::new();
-
-        Table::new(&name, &columns, &tuples)
-    }
-
-    fn from(&self) -> Query {
-        Query::new(&self.columns, &self.tuples)
-    }
-
-    fn find_column(&self, column_name: &str) -> usize {
-        for (i, col) in self.columns.iter().enumerate() {
-            if col.name == column_name {
-                return i;
-            }
-        }
-        self.columns.len()
-    }
-
-    fn to_string(&self) {
-        let mut col_buffer: String = String::new();
-        let mut tuple_buffer: String = String::new();
-
-        for col in &self.columns {
-            col_buffer += "|";
-            col_buffer += &col.name;
-        }
-        println!("{}", col_buffer);
-
-        for tuple in &self.tuples {
-            for v in &tuple.values {
-                tuple_buffer += "|";
-                tuple_buffer += &v.value;
-            }
-            println!("{}", tuple_buffer);
-            tuple_buffer.clear();
-        }
-    }
-
-    fn insert(&mut self, values: Vec<&str>) {
-        &self.tuples.push(
-            Tuple::new(values.iter().map(|s| Datum::new(s)).collect())
-        );
-    }
-} 
+pub use table::table::Table;
+//pub use relation::relation::Relation;
+pub use allocator::allocator::Allocator;
 
 fn main() {
     println!("\nWhole Table");
-    let mut shohin: Table = Table::create("shohin", vec!["shohin_id", "shohin_name", "kubun_id", "price"]);
-    shohin.insert(vec!["1", "apple", "1", "300"]);
-    shohin.insert(vec!["2", "orange", "1", "130"]);
-    shohin.insert(vec!["3", "cabbage", "2", "200"]);
-    shohin.insert(vec!["4", "sea weed", "None", "250"]);
-    shohin.insert(vec!["5", "mushroom", "3", "100"]);
+    let alloc: Allocator = Allocator::new(1);
+    let mut shohin: Table = Table::create(1, "shohin", vec!["shohin_id", "shohin_name", "kubun_id", "price"], alloc);
+    let tuple: Tuple = Tuple::new(1, vec![Field::set_u64(1), Field::set_str("apple"), Field::set_u64(1), Field::set_u64(300)]);
+    shohin.insert(tuple);
+    //shohin.insert(vec!["1", "apple", "1", "300"]);
+    //shohin.insert(vec!["2", "orange", "1", "130"]);
+    //shohin.insert(vec!["3", "cabbage", "2", "200"]);
+    //shohin.insert(vec!["4", "sea weed", "None", "250"]);
+    //shohin.insert(vec!["5", "mushroom", "3", "100"]);
     shohin.to_string();
 
+    /*
     let mut kubun: Table = Table::create("kubun", vec!["kubun_id", "kubun_name"]);
     kubun.insert(vec!["1", "fruit"]);
     kubun.insert(vec!["2", "vegetable"]);
@@ -251,5 +44,6 @@ fn main() {
 
     println!("\nequal");
     shohin.from().equal("shohin_name", "orange").to_string();
+    */
 }
 
