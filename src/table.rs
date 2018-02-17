@@ -11,22 +11,24 @@ pub mod table {
         pub id: usize,
         pub name: String,
         pub columns: Vec<Column>,
-        pub alloc: Allocator,
+        pub alloc: Box<Allocator>,
         pub tree: BTreeMap<u64, Tuple>,
     }
 
     impl Table {
-        pub fn new(id: usize, name: &str, columns: &Vec<Column>, alloc: Allocator) -> Table {
-            Table {
-                id: id,
-                name: name.to_string(),
-                columns: columns.to_owned(),
-                alloc: alloc,
-                tree: BTreeMap::new(),
-            }
+        pub fn new(id: usize, name: &str, columns: &Vec<Column>, alloc: Box<Allocator>) -> Box<Table> {
+            Box::new(
+                Table {
+                    id: id,
+                    name: name.to_string(),
+                    columns: columns.to_owned(),
+                    alloc: alloc,
+                    tree: BTreeMap::new(),
+                }
+            )
         }
 
-        pub fn create(id: usize, name: &str, column_names: Vec<&str>, alloc: Allocator) -> Table {
+        pub fn create(id: usize, name: &str, column_names: Vec<&str>, alloc: Box<Allocator>) -> Box<Table> {
             let mut columns: Vec<Column> = Vec::new();
             for c_name in column_names {
                 columns.push(Column::new(name, c_name))

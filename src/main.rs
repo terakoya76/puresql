@@ -17,8 +17,8 @@ pub use allocator::allocator::Allocator;
 
 fn main() {
     println!("\nWhole Table");
-    let alloc: Allocator = Allocator::new(1);
-    let mut shohin: Table = Table::create(1, "shohin", vec!["shohin_id", "shohin_name", "kubun_id", "price"], alloc);
+    let alloc: Box<Allocator> = Allocator::new(1);
+    let mut shohin: Box<Table> = Table::create(1, "shohin", vec!["shohin_id", "shohin_name", "kubun_id", "price"], alloc);
     let tuple: Tuple = Tuple::new(1, vec![Field::set_u64(1), Field::set_str("apple"), Field::set_u64(1), Field::set_u64(300)]);
     shohin.insert(tuple);
     //shohin.insert(vec!["1", "apple", "1", "300"]);

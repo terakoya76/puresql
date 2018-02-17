@@ -6,11 +6,13 @@ pub mod allocator {
     }
 
     impl Allocator {
-        pub fn new(db_id: usize) -> Allocator {
-            Allocator {
-                db_id: db_id,
-                base: 1 as u64,
-            }
+        pub fn new(db_id: usize) -> Box<Allocator> {
+            Box::new(
+                Allocator {
+                    db_id: db_id,
+                    base: 1 as u64,
+                }
+            )
         }
 
         pub fn increament(&mut self) {
