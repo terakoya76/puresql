@@ -32,58 +32,17 @@ pub mod table {
         pub fn create(alloc: &mut Box<Allocator>, name: &str, column_names: Vec<&str>) -> Box<Table> {
             let table_id: u64 = alloc.base;
             alloc.increament();
+
             let mut columns: Vec<Column> = Vec::new();
-            for c_name in column_names {
-                columns.push(Column::new(name, c_name))
+            for (i, c_name) in column_names.iter().enumerate() {
+                columns.push(Column::new(name, c_name, i))
             }
+
             let alloc: Box<Allocator> = Allocator::new(table_id);
             Table::new(table_id, &name, &columns, alloc)
         }
 
-        /*
-        pub fn from(&self) -> Relation {
-            Relation::new(&self.columns, &self.tuples)
-        }
-        */
-
-        /*
-        pub fn find_column(&self, column_name: &str) -> usize {
-            for (i, col) in self.columns.iter().enumerate() {
-                if col.name == column_name {
-                    return i;
-                }
-            }
-            self.columns.len()
-        }
-        */
-
-        pub fn to_string(&self) {
-            let mut col_buffer: String = String::new();
-            let mut tuple_buffer: String = String::new();
-
-            for col in &self.columns {
-                col_buffer += "|";
-                col_buffer += &col.name;
-            }
-            println!("{}", col_buffer);
-
-            for (internal_id, tuple) in self.tree.iter() {
-                for f in &tuple.fields {
-                    tuple_buffer += "|";
-                    match f.kind {
-                        ::field::field::KIND_I64 => tuple_buffer += &f.get_i64().to_string(),
-                        ::field::field::KIND_U64 => tuple_buffer += &f.get_u64().to_string(),
-                        ::field::field::KIND_F64 => tuple_buffer += &f.get_f64().to_string(),
-                        ::field::field::KIND_STR => tuple_buffer += &f.get_str(),
-                        _ => tuple_buffer += "Unsupported Data Type",
-                    }
-                }
-                println!("{}", tuple_buffer);
-                tuple_buffer.clear();
-            }
-        }
-
-        // TODO: IMPL some response as API
+                // TODO: IMPL some response as API
         pub fn insert(&mut self, fields: Vec<Field>) {
             let internal_id: u64 = self.alloc.base;
             if !self.tree.contains_key(&internal_id) {
@@ -93,20 +52,51 @@ pub mod table {
             }
         }
 
-        /*
-        pub fn tuple_with_columns(&self, internal_id: usize, columns: Vec<Column>) -> Vec<Field> {
-            let mut v = Vec::new();
+        pub fn get_fields(&self, columns: Vec<&str>) -> Vec<Field> {
+            let filtered_cols: Vec<&Column> = self.columns.iter().filter(|c| columns.contains(&c.name.as_str())).collect();
+            let mut fields = Vec::new();
+            for internal_id in self.tree.keys() {
+                fields.append(&mut self.get_fields_by_columns(internal_id, &filtered_cols));
+            }
+            fields
+        }
+
+        pub fn get_fields_by_columns(&self, internal_id: &u64, columns: &Vec<&Column>) -> Vec<Field> {
+            let mut fields = Vec::new();
             let tuple = self.tree.get(&internal_id);
-            match tuple {
-                Some(&Tuple) => {
-                    for column in columns {
-                        v.push(tuple.unwrap().fields[column.pos]);
-                    }
+            if tuple.is_some() {
+                for column in columns {
+                    fields.push(tuple.unwrap().fields[column.offset].clone());
                 }
             }
-            v
+            fields
         }
-        */
+    }
+
+    pub fn to_string(&self) {
+        let mut col_buffer: String = String::new();
+        let mut tuple_buffer: String = String::new();
+
+        for col in &self.columns {
+            col_buffer += "|";
+            col_buffer += &col.name;
+        }
+        println!("{}", col_buffer);
+
+        for tuple in self.tree.values() {
+            for f in &tuple.fields {
+                tuple_buffer += "|";
+                match f.kind {
+                    ::field::field::KIND_I64 => tuple_buffer += &f.get_i64().to_string(),
+                    ::field::field::KIND_U64 => tuple_buffer += &f.get_u64().to_string(),
+                    ::field::field::KIND_F64 => tuple_buffer += &f.get_f64().to_string(),
+                    ::field::field::KIND_STR => tuple_buffer += &f.get_str(),
+                    _ => tuple_buffer += "Unsupported Data Type",
+                }
+            }
+            println!("{}", tuple_buffer);
+            tuple_buffer.clear();
+        }
     }
 }
 
