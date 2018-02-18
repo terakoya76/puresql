@@ -1,15 +1,15 @@
 pub mod allocator {
     #[derive(Clone)]
     pub struct Allocator {
-        pub db_id: usize,
+        pub table_id: u64,
         pub base: u64,
     }
 
     impl Allocator {
-        pub fn new(db_id: usize) -> Box<Allocator> {
+        pub fn new(table_id: u64) -> Box<Allocator> {
             Box::new(
                 Allocator {
-                    db_id: db_id,
+                    table_id: table_id,
                     base: 1 as u64,
                 }
             )

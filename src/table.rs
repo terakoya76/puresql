@@ -1,5 +1,6 @@
 pub mod table {
     use std::collections::BTreeMap;
+    use std::borrow::ToOwned;
 
     use field::field::Field;
     use column::column::Column;
@@ -8,7 +9,7 @@ pub mod table {
 
     #[derive(Clone)]
     pub struct Table {
-        pub id: usize,
+        pub id: u64,
         pub name: String,
         pub columns: Vec<Column>,
         pub alloc: Box<Allocator>,
@@ -16,7 +17,7 @@ pub mod table {
     }
 
     impl Table {
-        pub fn new(id: usize, name: &str, columns: &Vec<Column>, alloc: Box<Allocator>) -> Box<Table> {
+        pub fn new(id: u64, name: &str, columns: &Vec<Column>, alloc: Box<Allocator>) -> Box<Table> {
             Box::new(
                 Table {
                     id: id,
@@ -28,12 +29,15 @@ pub mod table {
             )
         }
 
-        pub fn create(id: usize, name: &str, column_names: Vec<&str>, alloc: Box<Allocator>) -> Box<Table> {
+        pub fn create(alloc: &mut Box<Allocator>, name: &str, column_names: Vec<&str>) -> Box<Table> {
+            let table_id: u64 = alloc.base;
+            alloc.increament();
             let mut columns: Vec<Column> = Vec::new();
             for c_name in column_names {
                 columns.push(Column::new(name, c_name))
             }
-            Table::new(id, &name, &columns, alloc)
+            let alloc: Box<Allocator> = Allocator::new(table_id);
+            Table::new(table_id, &name, &columns, alloc)
         }
 
         /*
@@ -80,9 +84,10 @@ pub mod table {
         }
 
         // TODO: IMPL some response as API
-        pub fn insert(&mut self, tuple: Tuple) {
+        pub fn insert(&mut self, fields: Vec<Field>) {
             let internal_id: u64 = self.alloc.base;
             if !self.tree.contains_key(&internal_id) {
+                let tuple: Tuple = Tuple::new(internal_id, fields);
                 &mut self.tree.insert(internal_id, tuple);
                 self.alloc.increament();
             }
