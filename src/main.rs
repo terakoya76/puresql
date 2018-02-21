@@ -6,12 +6,15 @@ mod tuple;
 mod table;
 //mod relation;
 mod allocator;
+mod executor;
 pub use field::field::Field;
 pub use column::column::Column;
+pub use column::column::Range;
 pub use tuple::tuple::Tuple;
 pub use table::table::Table;
 //pub use relation::relation::Relation;
 pub use allocator::allocator::Allocator;
+pub use executor::executor::TableScanExec;
 
 fn main() {
     println!("Whole Table\n");
@@ -32,8 +35,15 @@ fn main() {
     println!("");
 
     println!("select\n");
-    assert_eq!(shohin.get_fields(vec!["shohin_id"]).len(), 5);
-    assert_eq!(shohin.get_fields(vec!["shohin_id", "shohin_name"]).len(), 10);
+
+    let mut tb_scan: TableScanExec = TableScanExec::new(&shohin, &shohin.name, vec![Range::new(1, 10)]);
+    loop {
+        match tb_scan.next() {
+            None => break,
+            Some(tuple) => tuple.to_string(),
+        }
+    }
+    println!("Scaned");
 
     /*
     println!("\nleft join");

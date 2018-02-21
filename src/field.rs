@@ -16,18 +16,6 @@ pub mod field {
     }
 
     impl Field {
-        /*
-        pub fn new<T>(value: T) -> Field {
-            Field {
-                kind: usize,
-                i: i64,
-                u: u64,
-                f: f64,
-                s: String,
-            }
-        }
-        */
-
         pub fn set_i64(value: i64) -> Field {
             Field {
                 kind: KIND_I64,
