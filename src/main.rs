@@ -9,12 +9,12 @@ mod allocator;
 mod executor;
 pub use field::field::Field;
 pub use column::column::Column;
-pub use column::column::Range;
+pub use column::range::Range;
 pub use tuple::tuple::Tuple;
 pub use table::table::Table;
 //pub use relation::relation::Relation;
 pub use allocator::allocator::Allocator;
-pub use executor::executor::TableScanExec;
+pub use executor::table_scan::TableScanExec;
 
 fn main() {
     println!("Whole Table\n");
