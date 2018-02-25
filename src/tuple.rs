@@ -3,16 +3,20 @@ pub mod tuple {
 
     #[derive(Clone)]
     pub struct Tuple {
-        pub internal_id: usize,
         pub fields: Vec<Field>,
     }
 
     impl Tuple {
-        pub fn new(internal_id: usize, fields: Vec<Field>) -> Tuple {
+        pub fn new(fields: Vec<Field>) -> Tuple {
             Tuple {
-                internal_id: internal_id,
                 fields: fields,
             }
+        }
+
+        pub fn append(&self, tuple: &Tuple) -> Tuple {
+            let mut fields: Vec<Field> = self.fields.clone();
+            fields.append(&mut tuple.fields.clone());
+            Tuple::new(fields)
         }
 
         pub fn to_string(&self) {

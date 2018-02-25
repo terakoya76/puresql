@@ -1,4 +1,3 @@
-use field::field::Field;
 use column::column::Column;
 use column::range::Range;
 use tuple::tuple::Tuple;
@@ -25,16 +24,6 @@ impl<'a> TableScanExec<'a> {
         }
     }
 
-    pub fn next(&mut self) -> Option<Tuple> {
-        match self.next_handle() {
-            None => None,
-            Some(handle) => {
-                *&mut self.seek_handle = handle + 1;
-                Some(self.get_tuple(handle))
-            },
-        }
-    }
-
     pub fn next_handle(&mut self) -> Option<usize> {
         loop {
             if self.cursor >= self.ranges.len() {
@@ -48,17 +37,34 @@ impl<'a> TableScanExec<'a> {
 
             if self.seek_handle > range.high {
                 *&mut self.cursor += 1;
+                continue;
             }
 
             match self.table.seek(self.seek_handle) {
-                None => return None,
-                Some(v) => return Some(v),
+                None => {
+                    *&mut self.seek_handle = 0;
+                    return None;
+                },
+                Some(handle) => return Some(handle),
             }
         }
     }
 
     pub fn get_tuple(&self, handle: usize) -> Tuple {
         self.table.get_fields_by_columns(handle, &self.columns)
+    }
+}
+
+impl<'a> Iterator for TableScanExec<'a> {
+    type Item = Tuple;
+    fn next(&mut self) -> Option<Tuple> {
+        match self.next_handle() {
+            None => None,
+            Some(handle) => {
+                *&mut self.seek_handle = handle + 1;
+                Some(self.get_tuple(handle))
+            },
+        }
     }
 }
 

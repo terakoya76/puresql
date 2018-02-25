@@ -6,6 +6,7 @@ pub mod table {
     use field::field::Field;
     use column::column::Column;
     use tuple::tuple::Tuple;
+    use item::item::Item;
     use allocator::allocator::Allocator;
 
     #[derive(Clone)]
@@ -14,7 +15,7 @@ pub mod table {
         pub name: String,
         pub columns: Vec<Column>,
         pub alloc: Box<Allocator>,
-        pub tree: BTreeMap<usize, Tuple>,
+        pub tree: BTreeMap<usize, Item>,
     }
 
     impl Table {
@@ -47,8 +48,9 @@ pub mod table {
         pub fn insert(&mut self, fields: Vec<Field>) {
             let internal_id: usize = self.alloc.base;
             if !self.tree.contains_key(&internal_id) {
-                let tuple: Tuple = Tuple::new(internal_id, fields);
-                &mut self.tree.insert(internal_id, tuple);
+                let tuple: Tuple = Tuple::new(fields);
+                let item: Item = Item::new(internal_id, tuple);
+                &mut self.tree.insert(internal_id, item);
                 self.alloc.increament();
             }
         }
@@ -66,46 +68,36 @@ pub mod table {
 
         pub fn get_fields_by_columns(&self, internal_id: usize, columns: &Vec<Column>) -> Tuple {
             let mut fields = Vec::new();
-            let tuple = self.tree.get(&internal_id);
-            if tuple.is_some() {
+            let item = self.tree.get(&internal_id);
+            if item.is_some() {
                 for column in columns {
-                    fields.push(tuple.unwrap().fields[column.offset].clone());
+                    fields.push(item.unwrap().tuple.fields[column.offset].clone());
                 }
             }
-            Tuple::new(internal_id, fields)
+            Tuple::new(fields)
         }
 
         pub fn seek(&self, current_handle: usize) -> Option<usize> {
             let offset: usize = self.tree.len();
+            if current_handle > offset {
+                return None;
+            }
             match self.tree.range((Included(&current_handle), Included(&offset))).next() {
                 None => self.seek(current_handle+1),
-                Some(tuple) => Some(tuple.0.clone()),
+                Some(item) => Some(item.0.clone()),
             }
         }
 
         pub fn to_string(&self) {
             let mut col_buffer: String = String::new();
-            let mut tuple_buffer: String = String::new();
-
             for col in &self.columns {
                 col_buffer += "|";
                 col_buffer += &col.name;
             }
             println!("{}", col_buffer);
 
-            for tuple in self.tree.values() {
-                for f in &tuple.fields {
-                    tuple_buffer += "|";
-                    match f.kind {
-                        ::field::field::KIND_I64 => tuple_buffer += &f.get_i64().to_string(),
-                        ::field::field::KIND_U64 => tuple_buffer += &f.get_u64().to_string(),
-                        ::field::field::KIND_F64 => tuple_buffer += &f.get_f64().to_string(),
-                        ::field::field::KIND_STR => tuple_buffer += &f.get_str(),
-                        _ => tuple_buffer += "Unsupported Data Type",
-                    }
-                }
-                println!("{}", tuple_buffer);
-                tuple_buffer.clear();
+            for item in self.tree.values() {
+                item.tuple.to_string();
             }
         }
     }
