@@ -1,11 +1,8 @@
-//use std::collections::HashMap;
-
 mod field;
 mod column;
 mod tuple;
 mod item;
 mod table;
-//mod relation;
 mod allocator;
 mod executor;
 pub use field::field::Field;
@@ -14,10 +11,11 @@ pub use column::range::Range;
 pub use tuple::tuple::Tuple;
 pub use item::item::Item;
 pub use table::table::Table;
-//pub use relation::relation::Relation;
 pub use allocator::allocator::Allocator;
 pub use executor::table_scan::TableScanExec;
 pub use executor::join::NestedLoopJoinExec;
+pub use executor::selection::SelectionExec;
+pub use executor::filter::{equal};
 
 fn main() {
     println!("Whole Table");
@@ -49,7 +47,7 @@ fn main() {
 
     println!("joined select");
     let mut shohin_tb_scan: TableScanExec = TableScanExec::new(&shohin, &shohin.name, vec![Range::new(0, 10)]);
-    let mut kubun_tb_scan: TableScanExec = TableScanExec::new(&kubun, &kubun.name, vec![Range::new(0,10)]);
+    let mut kubun_tb_scan: TableScanExec = TableScanExec::new(&kubun, &kubun.name, vec![Range::new(0, 10)]);
     let mut joined_exec: NestedLoopJoinExec = NestedLoopJoinExec::new(shohin_tb_scan, kubun_tb_scan);
     let joined_tps: Vec<Tuple> = joined_exec.join();
     for tp in joined_tps.iter() {
@@ -57,9 +55,16 @@ fn main() {
     }
     println!("Scaned\n");
 
-    /*
-    println!("\nequal");
-    shohin.from().equal("shohin_name", "orange").to_string();
-    */
+    println!("where");
+    let mut tb_scan: TableScanExec = TableScanExec::new(&shohin, &shohin.name, vec![Range::new(0, 10)]);
+    let mut where_scan: SelectionExec = SelectionExec::new(&mut tb_scan, vec![equal("shohin_name", Field::set_str("apple"))]);
+    loop {
+        match where_scan.next() {
+            None => break,
+            Some(tuple) => tuple.to_string(),
+        }
+    }
+    println!("Scaned\n");
+
 }
 

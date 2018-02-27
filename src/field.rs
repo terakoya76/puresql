@@ -72,5 +72,21 @@ pub mod field {
             self.s.clone().unwrap()
         }
     }
+
+    impl PartialEq for Field {
+        fn eq(&self, other: &Field) -> bool {
+            if self.kind != other.kind {
+                return false;
+            }
+
+            match self.kind {
+                KIND_I64 => self.get_i64() == other.get_i64(),
+                KIND_U64 => self.get_u64() == other.get_u64(),
+                KIND_F64 => self.get_f64() == other.get_f64(),
+                KIND_STR => self.get_str() == other.get_str(),
+                _ => false,
+            }
+        }
+    }
 }
 

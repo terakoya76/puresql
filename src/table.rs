@@ -55,6 +55,15 @@ pub mod table {
             }
         }
 
+        pub fn get_column_offset(&self, column_name: &str) -> Option<usize> {
+            for column in &self.columns {
+                if column.name == column_name {
+                    return Some(column.offset.clone());
+                }
+            }
+            None
+        }
+
         /*
         pub fn get_fields(&self, columns: Vec<&str>) -> Vec<Field> {
             let filtered_cols: Vec<Column> = self.columns.iter().filter(|c| columns.contains(&c.name.as_str())).collect();
