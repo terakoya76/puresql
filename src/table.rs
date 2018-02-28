@@ -64,17 +64,6 @@ pub mod table {
             None
         }
 
-        /*
-        pub fn get_fields(&self, columns: Vec<&str>) -> Vec<Field> {
-            let filtered_cols: Vec<Column> = self.columns.iter().filter(|c| columns.contains(&c.name.as_str())).collect();
-            let mut fields = Vec::new();
-            for internal_id in self.tree.keys() {
-                fields.append(&mut self.get_fields_by_columns(internal_id.clone(), &filtered_cols));
-            }
-            fields
-        }
-        */
-
         pub fn get_fields_by_columns(&self, internal_id: usize, columns: &Vec<Column>) -> Tuple {
             let mut fields = Vec::new();
             let item = self.tree.get(&internal_id);
