@@ -2,13 +2,13 @@ use column::column::Column;
 use tuple::tuple::Tuple;
 use executor::table_scan::TableScanExec;
 
-pub struct SelectionExec<'a> {
-    inputs: &'a mut TableScanExec<'a>,
+pub struct SelectionExec<'s, 't: 's> {
+    inputs: &'s mut TableScanExec<'t>,
     filters: Vec<Box<Fn(&Tuple, &Vec<Column>) -> bool>>,
 }
 
-impl<'a> SelectionExec<'a> {
-    pub fn new(inputs: &'a mut TableScanExec<'a>, filters: Vec<Box<Fn(&Tuple, &Vec<Column>) -> bool>>) -> SelectionExec<'a> {
+impl<'s, 't: 's> SelectionExec<'s, 't> {
+    pub fn new(inputs: &'s mut TableScanExec<'t>, filters: Vec<Box<Fn(&Tuple, &Vec<Column>) -> bool>>) -> SelectionExec<'s, 't> {
         SelectionExec {
             inputs: inputs,
             filters: filters,
@@ -16,7 +16,7 @@ impl<'a> SelectionExec<'a> {
     }
 }
 
-impl<'a> Iterator for SelectionExec<'a> {
+impl<'s, 't: 's> Iterator for SelectionExec<'s, 't> {
     type Item = Tuple;
     fn next(&mut self) -> Option<Tuple> {
         loop {

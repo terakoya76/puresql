@@ -15,7 +15,7 @@ pub use allocator::allocator::Allocator;
 pub use executor::table_scan::TableScanExec;
 pub use executor::join::NestedLoopJoinExec;
 pub use executor::selection::SelectionExec;
-pub use executor::filter::{equal};
+pub use executor::filter::{equal, lt, le, gt, ge};
 
 fn main() {
     println!("Whole Table");
@@ -46,8 +46,8 @@ fn main() {
     println!("Scaned\n");
 
     println!("joined select");
-    let mut shohin_tb_scan: TableScanExec = TableScanExec::new(&shohin, &shohin.name, vec![Range::new(0, 10)]);
-    let mut kubun_tb_scan: TableScanExec = TableScanExec::new(&kubun, &kubun.name, vec![Range::new(0, 10)]);
+    let shohin_tb_scan: TableScanExec = TableScanExec::new(&shohin, &shohin.name, vec![Range::new(0, 10)]);
+    let kubun_tb_scan: TableScanExec = TableScanExec::new(&kubun, &kubun.name, vec![Range::new(0, 10)]);
     let mut joined_exec: NestedLoopJoinExec = NestedLoopJoinExec::new(shohin_tb_scan, kubun_tb_scan);
     let joined_tps: Vec<Tuple> = joined_exec.join();
     for tp in joined_tps.iter() {
@@ -57,14 +57,27 @@ fn main() {
 
     println!("where");
     let mut tb_scan: TableScanExec = TableScanExec::new(&shohin, &shohin.name, vec![Range::new(0, 10)]);
-    let mut where_scan: SelectionExec = SelectionExec::new(&mut tb_scan, vec![equal("shohin_name", Field::set_str("apple"))]);
-    loop {
-        match where_scan.next() {
-            None => break,
-            Some(tuple) => tuple.to_string(),
-        }
-    }
-    println!("Scaned\n");
 
+    {
+        let mut where_scan: SelectionExec = SelectionExec::new(&mut tb_scan, vec![equal("shohin_name", Field::set_str("apple"))]);
+        loop {
+            match where_scan.next() {
+                None => break,
+                Some(tuple) => tuple.to_string(),
+            }
+        }
+        println!("Scaned\n");
+    }
+
+    {
+        let mut where_scan: SelectionExec = SelectionExec::new(&mut tb_scan, vec![le("shohin_id", Field::set_u64(3))]);
+        loop {
+            match where_scan.next() {
+                None => break,
+                Some(tuple) => tuple.to_string(),
+            }
+        }
+        println!("Scaned\n");
+    }
 }
 

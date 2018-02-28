@@ -1,5 +1,6 @@
 pub mod field {
     use std::string::String;
+    use std::cmp::Ordering;
 
     pub const KIND_I64: usize = 0;
     pub const KIND_U64: usize = 1;
@@ -85,6 +86,22 @@ pub mod field {
                 KIND_F64 => self.get_f64() == other.get_f64(),
                 KIND_STR => self.get_str() == other.get_str(),
                 _ => false,
+            }
+        }
+    }
+
+    impl PartialOrd for Field {
+        fn partial_cmp(&self, other: &Field) -> Option<Ordering> {
+            if self.kind != other.kind {
+                return None;
+            }
+
+            match self.kind {
+                KIND_I64 => self.get_i64().partial_cmp(&other.get_i64()),
+                KIND_U64 => self.get_u64().partial_cmp(&other.get_u64()),
+                KIND_F64 => self.get_f64().partial_cmp(&other.get_f64()),
+                KIND_STR => self.get_str().partial_cmp(&other.get_str()),
+                _ => None,
             }
         }
     }
