@@ -5,6 +5,7 @@ mod item;
 mod table;
 mod allocator;
 mod executor;
+
 pub use field::field::Field;
 pub use column::column::Column;
 pub use column::range::Range;
@@ -37,11 +38,11 @@ fn main() {
     println!("");
 
     println!("table scan");
-    let mut tb_scan: TableScanExec = TableScanExec::new(&shohin, &shohin.name, vec![Range::new(0, 10)]);
+    let mut shohin_tb_scan: TableScanExec = TableScanExec::new(&shohin, &shohin.name, vec![Range::new(0, 10)]);
 
     {
         loop {
-            match tb_scan.next() {
+            match shohin_tb_scan.next() {
                 None => break,
                 Some(tuple) => tuple.to_string(),
             }
@@ -50,11 +51,10 @@ fn main() {
     }
 
     println!("joined table scan");
-    let shohin_tb_scan: TableScanExec = TableScanExec::new(&shohin, &shohin.name, vec![Range::new(0, 10)]);
-    let kubun_tb_scan: TableScanExec = TableScanExec::new(&kubun, &kubun.name, vec![Range::new(0, 10)]);
+    let mut kubun_tb_scan: TableScanExec = TableScanExec::new(&kubun, &kubun.name, vec![Range::new(0, 10)]);
 
     {
-        let mut joined_exec: NestedLoopJoinExec = NestedLoopJoinExec::new(shohin_tb_scan, kubun_tb_scan);
+        let mut joined_exec: NestedLoopJoinExec = NestedLoopJoinExec::new(&mut shohin_tb_scan, &mut kubun_tb_scan);
         let joined_tps: Vec<Tuple> = joined_exec.join();
         for tp in joined_tps.iter() {
             tp.to_string();
@@ -65,7 +65,7 @@ fn main() {
     println!("selection");
 
     {
-        let mut selection: SelectionExec = SelectionExec::new(&mut tb_scan, vec![equal("shohin_name", Field::set_str("apple"))]);
+        let mut selection: SelectionExec = SelectionExec::new(&mut shohin_tb_scan, vec![equal("shohin_name", Field::set_str("apple"))]);
         loop {
             match selection.next() {
                 None => break,
@@ -76,7 +76,7 @@ fn main() {
     }
 
     {
-        let mut selection: SelectionExec = SelectionExec::new(&mut tb_scan, vec![le("shohin_id", Field::set_u64(3))]);
+        let mut selection: SelectionExec = SelectionExec::new(&mut shohin_tb_scan, vec![le("shohin_id", Field::set_u64(3))]);
         loop {
             match selection.next() {
                 None => break,
@@ -89,7 +89,7 @@ fn main() {
     println!("projection");
 
     {
-        let mut projection: ProjectionExec = ProjectionExec::new(&mut tb_scan, vec!["shohin_name", "price"]);
+        let mut projection: ProjectionExec = ProjectionExec::new(&mut shohin_tb_scan, vec!["shohin_name", "price"]);
         loop {
             match projection.next() {
                 None => break,

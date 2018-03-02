@@ -1,15 +1,15 @@
 use tuple::tuple::Tuple;
 use executor::table_scan::TableScanExec;
 
-pub struct NestedLoopJoinExec<'a> {
+pub struct NestedLoopJoinExec<'n, 't: 'n> {
     cursor: usize,
     result_tuples: Vec<Tuple>,
-    inner_table: TableScanExec<'a>,
-    outer_table: TableScanExec<'a>,
+    inner_table: &'n mut TableScanExec<'t>,
+    outer_table: &'n mut TableScanExec<'t>,
 }
 
-impl<'a> NestedLoopJoinExec<'a> {
-    pub fn new(inner_table: TableScanExec<'a>, outer_table: TableScanExec<'a>) -> NestedLoopJoinExec<'a> {
+impl<'n, 't> NestedLoopJoinExec<'n, 't> {
+    pub fn new(inner_table: &'n mut TableScanExec<'t>, outer_table: &'n mut TableScanExec<'t>) -> NestedLoopJoinExec<'n, 't> {
         NestedLoopJoinExec {
             cursor: 0,
             result_tuples: Vec::new(),
