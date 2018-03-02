@@ -4,14 +4,14 @@ use executor::table_scan::TableScanExec;
 
 pub struct SelectionExec<'s, 't: 's> {
     inputs: &'s mut TableScanExec<'t>,
-    filters: Vec<Box<Fn(&Tuple, &Vec<Column>) -> bool>>,
+    selectors: Vec<Box<Fn(&Tuple, &Vec<Column>) -> bool>>,
 }
 
 impl<'s, 't: 's> SelectionExec<'s, 't> {
-    pub fn new(inputs: &'s mut TableScanExec<'t>, filters: Vec<Box<Fn(&Tuple, &Vec<Column>) -> bool>>) -> SelectionExec<'s, 't> {
+    pub fn new(inputs: &'s mut TableScanExec<'t>, selectors: Vec<Box<Fn(&Tuple, &Vec<Column>) -> bool>>) -> SelectionExec<'s, 't> {
         SelectionExec {
             inputs: inputs,
-            filters: filters,
+            selectors: selectors,
         }
     }
 }
@@ -24,8 +24,8 @@ impl<'s, 't: 's> Iterator for SelectionExec<'s, 't> {
                 None => return None,
                 Some(tuple) => {
                     let mut passed: bool = true;
-                    for ref filter in &self.filters {
-                        if !(filter)(&tuple, &self.inputs.columns) {
+                    for ref selector in &self.selectors {
+                        if !(selector)(&tuple, &self.inputs.columns) {
                           passed = false;
                           break;
                         }
@@ -34,7 +34,7 @@ impl<'s, 't: 's> Iterator for SelectionExec<'s, 't> {
                     if passed {
                         return Some(tuple);
                     }
-                }
+                },
             }
         }
     }

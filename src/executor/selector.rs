@@ -4,6 +4,7 @@ use field::field::Field;
 
 pub fn equal(col_name: &str, field: Field) -> Box<Fn(&Tuple, &Vec<Column>) -> bool> {
     let deref_col_name: String = col_name.to_string();
+
     Box::new(
         move |tuple: &Tuple, columns: &Vec<Column>| {
             let mut _result: bool = false;
@@ -20,6 +21,7 @@ pub fn equal(col_name: &str, field: Field) -> Box<Fn(&Tuple, &Vec<Column>) -> bo
 
 pub fn lt(col_name: &str, field: Field) -> Box<Fn(&Tuple, &Vec<Column>) -> bool> {
     let deref_col_name: String = col_name.to_string();
+
     Box::new(
         move |tuple: &Tuple, columns: &Vec<Column>| {
             let mut _result: bool = false;
@@ -36,6 +38,7 @@ pub fn lt(col_name: &str, field: Field) -> Box<Fn(&Tuple, &Vec<Column>) -> bool>
 
 pub fn le(col_name: &str, field: Field) -> Box<Fn(&Tuple, &Vec<Column>) -> bool> {
     let deref_col_name: String = col_name.to_string();
+
     Box::new(
         move |tuple: &Tuple, columns: &Vec<Column>| {
             let mut _result: bool = false;
@@ -52,6 +55,7 @@ pub fn le(col_name: &str, field: Field) -> Box<Fn(&Tuple, &Vec<Column>) -> bool>
 
 pub fn gt(col_name: &str, field: Field) -> Box<Fn(&Tuple, &Vec<Column>) -> bool> {
     let deref_col_name: String = col_name.to_string();
+
     Box::new(
         move |tuple: &Tuple, columns: &Vec<Column>| {
             let mut _result: bool = false;
@@ -68,6 +72,7 @@ pub fn gt(col_name: &str, field: Field) -> Box<Fn(&Tuple, &Vec<Column>) -> bool>
 
 pub fn ge(col_name: &str, field: Field) -> Box<Fn(&Tuple, &Vec<Column>) -> bool> {
     let deref_col_name: String = col_name.to_string();
+
     Box::new(
         move |tuple: &Tuple, columns: &Vec<Column>| {
             let mut _result: bool = false;

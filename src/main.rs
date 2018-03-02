@@ -15,7 +15,8 @@ pub use allocator::allocator::Allocator;
 pub use executor::table_scan::TableScanExec;
 pub use executor::join::NestedLoopJoinExec;
 pub use executor::selection::SelectionExec;
-pub use executor::filter::{equal, lt, le, gt, ge};
+pub use executor::selector::{equal, lt, le, gt, ge};
+pub use executor::projection::ProjectionExec;
 
 fn main() {
     println!("Whole Table");
@@ -35,33 +36,38 @@ fn main() {
     kubun.to_string();
     println!("");
 
-    println!("select");
-    let mut tb_scan: TableScanExec = TableScanExec::new(&shohin, &shohin.name, vec![Range::new(0, 10)]);
-    loop {
-        match tb_scan.next() {
-            None => break,
-            Some(tuple) => tuple.to_string(),
-        }
-    }
-    println!("Scaned\n");
-
-    println!("joined select");
-    let shohin_tb_scan: TableScanExec = TableScanExec::new(&shohin, &shohin.name, vec![Range::new(0, 10)]);
-    let kubun_tb_scan: TableScanExec = TableScanExec::new(&kubun, &kubun.name, vec![Range::new(0, 10)]);
-    let mut joined_exec: NestedLoopJoinExec = NestedLoopJoinExec::new(shohin_tb_scan, kubun_tb_scan);
-    let joined_tps: Vec<Tuple> = joined_exec.join();
-    for tp in joined_tps.iter() {
-        tp.to_string();
-    }
-    println!("Scaned\n");
-
-    println!("where");
+    println!("table scan");
     let mut tb_scan: TableScanExec = TableScanExec::new(&shohin, &shohin.name, vec![Range::new(0, 10)]);
 
     {
-        let mut where_scan: SelectionExec = SelectionExec::new(&mut tb_scan, vec![equal("shohin_name", Field::set_str("apple"))]);
         loop {
-            match where_scan.next() {
+            match tb_scan.next() {
+                None => break,
+                Some(tuple) => tuple.to_string(),
+            }
+        }
+        println!("Scaned\n");
+    }
+
+    println!("joined table scan");
+    let shohin_tb_scan: TableScanExec = TableScanExec::new(&shohin, &shohin.name, vec![Range::new(0, 10)]);
+    let kubun_tb_scan: TableScanExec = TableScanExec::new(&kubun, &kubun.name, vec![Range::new(0, 10)]);
+
+    {
+        let mut joined_exec: NestedLoopJoinExec = NestedLoopJoinExec::new(shohin_tb_scan, kubun_tb_scan);
+        let joined_tps: Vec<Tuple> = joined_exec.join();
+        for tp in joined_tps.iter() {
+            tp.to_string();
+        }
+        println!("Scaned\n");
+    }
+
+    println!("selection");
+
+    {
+        let mut selection: SelectionExec = SelectionExec::new(&mut tb_scan, vec![equal("shohin_name", Field::set_str("apple"))]);
+        loop {
+            match selection.next() {
                 None => break,
                 Some(tuple) => tuple.to_string(),
             }
@@ -70,9 +76,22 @@ fn main() {
     }
 
     {
-        let mut where_scan: SelectionExec = SelectionExec::new(&mut tb_scan, vec![le("shohin_id", Field::set_u64(3))]);
+        let mut selection: SelectionExec = SelectionExec::new(&mut tb_scan, vec![le("shohin_id", Field::set_u64(3))]);
         loop {
-            match where_scan.next() {
+            match selection.next() {
+                None => break,
+                Some(tuple) => tuple.to_string(),
+            }
+        }
+        println!("Scaned\n");
+    }
+
+    println!("projection");
+
+    {
+        let mut projection: ProjectionExec = ProjectionExec::new(&mut tb_scan, vec!["shohin_name", "price"]);
+        loop {
+            match projection.next() {
                 None => break,
                 Some(tuple) => tuple.to_string(),
             }
