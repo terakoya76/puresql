@@ -18,6 +18,8 @@ pub use executor::join::NestedLoopJoinExec;
 pub use executor::selection::SelectionExec;
 pub use executor::selector::{equal, lt, le, gt, ge};
 pub use executor::projection::ProjectionExec;
+pub use executor::aggregation::AggregationExec;
+pub use executor::aggregator::Aggregator;
 
 fn main() {
     println!("Whole Table");
@@ -92,6 +94,19 @@ fn main() {
         let mut projection: ProjectionExec = ProjectionExec::new(&mut shohin_tb_scan, vec!["shohin_name", "price"]);
         loop {
             match projection.next() {
+                None => break,
+                Some(tuple) => tuple.to_string(),
+            }
+        }
+        println!("Scaned\n");
+    }
+
+    println!("aggregation\n");
+
+    {
+        let mut aggregation: AggregationExec = AggregationExec::new(&mut shohin_tb_scan, vec![Aggregator::count(), Aggregator::sum("price")/*, Aggregator::average("price")*/]);
+        loop {
+            match aggregation.next() {
                 None => break,
                 Some(tuple) => tuple.to_string(),
             }

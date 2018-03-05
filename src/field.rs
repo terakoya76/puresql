@@ -1,11 +1,14 @@
 pub mod field {
     use std::string::String;
     use std::cmp::Ordering;
+    use std::ops::Add;
+    use std::ops::Div;
 
-    pub const KIND_I64: usize = 0;
-    pub const KIND_U64: usize = 1;
-    pub const KIND_F64: usize = 2;
-    pub const KIND_STR: usize = 3;
+    pub const INIT:     usize = 0;
+    pub const KIND_I64: usize = 1;
+    pub const KIND_U64: usize = 2;
+    pub const KIND_F64: usize = 3;
+    pub const KIND_STR: usize = 4;
 
     #[derive(Clone)]
     pub struct Field {
@@ -17,6 +20,16 @@ pub mod field {
     }
 
     impl Field {
+        pub fn set_init() -> Field {
+            Field {
+                kind: INIT,
+                i: None,
+                u: None,
+                f: None,
+                s: None,
+            }
+        }
+
         pub fn set_i64(value: i64) -> Field {
             Field {
                 kind: KIND_I64,
@@ -57,6 +70,28 @@ pub mod field {
             }
         }
 
+        pub fn set_same_type(&self, value: usize) -> Field {
+            match self.kind {
+                KIND_I64 => {
+                    let converted: i64 = value as i64;
+                    Self::set_i64(converted)
+                },
+                KIND_U64 => {
+                    let converted: u64 = value as u64;
+                    Self::set_u64(converted)
+                },
+                KIND_F64 => {
+                    let converted: f64 = value as f64;
+                    Self::set_f64(converted)
+                },
+                KIND_STR => {
+                    let converted: &str = &*value.to_string();
+                    Self::set_str(converted)
+                },
+                _ => Self::set_init(),
+            }
+        }
+
         pub fn get_i64(&self) -> i64 {
             self.i.unwrap()
         }
@@ -71,6 +106,16 @@ pub mod field {
 
         pub fn get_str(&self) -> String {
             self.s.clone().unwrap()
+        }
+
+        pub fn to_string(&self) {
+            match self.kind {
+                KIND_I64 => println!("{}", self.get_i64()),
+                KIND_U64 => println!("{}", self.get_u64()),
+                KIND_F64 => println!("{}", self.get_f64()),
+                KIND_STR => println!("{}", self.get_str()),
+                _ => println!("irregular data type"),
+            }
         }
     }
 
@@ -102,6 +147,46 @@ pub mod field {
                 KIND_F64 => self.get_f64().partial_cmp(&other.get_f64()),
                 KIND_STR => self.get_str().partial_cmp(&other.get_str()),
                 _ => None,
+            }
+        }
+    }
+
+    impl Add for Field {
+        type Output = Field;
+        fn add(self, other: Field) -> Field {
+            if self.kind == INIT {
+                return other;
+            }
+
+            if self.kind != other.kind {
+                return self;
+            }
+
+            match self.kind {
+                KIND_I64 => Self::set_i64(&self.get_i64() + &other.get_i64()),
+                KIND_U64 => Self::set_u64(&self.get_u64() + &other.get_u64()),
+                KIND_F64 => Self::set_f64(&self.get_f64() + &other.get_f64()),
+                _ => self,
+            }
+        }
+    }
+
+    impl Div for Field {
+        type Output = Field;
+        fn div(self, other: Field) -> Field {
+            if self.kind == INIT {
+                return Self::set_init();
+            }
+
+            if self.kind != other.kind {
+                return self;
+            }
+
+            match self.kind {
+                KIND_I64 => Self::set_i64(&self.get_i64() / &other.get_i64()),
+                KIND_U64 => Self::set_u64(&self.get_u64() / &other.get_u64()),
+                KIND_F64 => Self::set_f64(&self.get_f64() / &other.get_f64()),
+                _ => self,
             }
         }
     }
