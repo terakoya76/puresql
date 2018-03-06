@@ -7,11 +7,11 @@ use executor::aggregator::Aggregator;
 pub struct AggregationExec<'a, 't: 'a> {
     pub counter: usize,
     pub inputs: &'a mut TableScanExec<'t>,
-    pub aggregators: Vec<Aggregator>,
+    pub aggregators: Vec<Box<Aggregator>>,
 }
 
 impl<'a, 't: 'a> AggregationExec<'a, 't> {
-    pub fn new(inputs: &'a mut TableScanExec<'t>, aggregators: Vec<Aggregator>) -> AggregationExec<'a, 't> {
+    pub fn new(inputs: &'a mut TableScanExec<'t>, aggregators: Vec<Box<Aggregator>>) -> AggregationExec<'a, 't> {
         AggregationExec {
             counter: 0,
             inputs: inputs,
@@ -34,9 +34,8 @@ impl<'a, 't: 'a> Iterator for AggregationExec<'a, 't> {
                     self.increament();
                     let mut fields: Vec<Field> = Vec::new();
                     for ref mut aggregator in &mut self.aggregators {
-                        let next_value: Field = (aggregator.function)(self.counter, &aggregator.result, &tuple, &self.inputs.columns);
-                        aggregator.update(next_value);
-                        fields.push(aggregator.result.clone());
+                        aggregator.update(&tuple, &self.inputs.columns);
+                        fields.push(aggregator.fetch_result());
                     }
                     return Some(Tuple::new(fields));
                 },

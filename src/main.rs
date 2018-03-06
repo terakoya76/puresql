@@ -19,7 +19,7 @@ pub use executor::selection::SelectionExec;
 pub use executor::selector::{equal, lt, le, gt, ge};
 pub use executor::projection::ProjectionExec;
 pub use executor::aggregation::AggregationExec;
-pub use executor::aggregator::Aggregator;
+pub use executor::aggregator::{Aggregator, AggrCount, AggrSum, AggrAvg};
 
 fn main() {
     println!("Whole Table");
@@ -104,7 +104,7 @@ fn main() {
     println!("aggregation\n");
 
     {
-        let mut aggregation: AggregationExec = AggregationExec::new(&mut shohin_tb_scan, vec![Aggregator::count(), Aggregator::sum("price")/*, Aggregator::average("price")*/]);
+        let mut aggregation = AggregationExec::new(&mut shohin_tb_scan, vec![AggrCount::new(), AggrSum::new("price"), AggrAvg::new("price")]);
         loop {
             match aggregation.next() {
                 None => break,
