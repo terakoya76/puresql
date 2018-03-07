@@ -19,7 +19,6 @@ pub use executor::selection::SelectionExec;
 pub use executor::selector::{equal, lt, le, gt, ge};
 pub use executor::projection::ProjectionExec;
 pub use executor::aggregation::AggregationExec;
-pub use executor::grouped_aggregation::GroupedAggregationExec;
 pub use executor::aggregator::{Aggregator, AggrCount, AggrSum, AggrAvg};
 
 fn main() {
@@ -105,11 +104,15 @@ fn main() {
     println!("aggregation\n");
 
     {
-        let mut aggregation = AggregationExec::new(&mut shohin_tb_scan, vec![AggrCount::new(), AggrSum::new("price"), AggrAvg::new("price")]);
+        let mut aggregation = AggregationExec::new(&mut shohin_tb_scan, vec![], vec![AggrCount::new(), AggrSum::new("price"), AggrAvg::new("price")]);
         loop {
             match aggregation.next() {
                 None => break,
-                Some(tuple) => tuple.print(),
+                Some(tuples) => {
+                    for tuple in tuples {
+                        tuple.print();
+                    }
+                },
             }
         }
         println!("Scaned\n");
@@ -118,7 +121,7 @@ fn main() {
     println!("group by aggregation\n");
 
     {
-        let mut grouped = GroupedAggregationExec::new(&mut shohin_tb_scan, vec!["kubun_id"], vec![AggrCount::new(), AggrSum::new("price"), AggrAvg::new("price")]);
+        let mut grouped = AggregationExec::new(&mut shohin_tb_scan, vec!["price"], vec![AggrCount::new(), AggrSum::new("price"), AggrAvg::new("price")]);
         loop {
             match grouped.next() {
                 None => break,
