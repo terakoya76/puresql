@@ -15,8 +15,8 @@ pub mod item {
             }
         }
 
-        pub fn to_string(&self) {
-            self.tuple.to_string();
+        pub fn print(&self) {
+            self.tuple.print();
         }
     }
 }

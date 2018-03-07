@@ -19,15 +19,15 @@ pub mod tuple {
             Tuple::new(fields)
         }
 
-        pub fn to_string(&self) {
+        pub fn print(&self) {
             let mut buffer: String = String::new();
             for f in &self.fields {
                 buffer += "|";
                 match f.kind {
-                    ::field::field::KIND_I64 => buffer += &f.get_i64().to_string(),
-                    ::field::field::KIND_U64 => buffer += &f.get_u64().to_string(),
-                    ::field::field::KIND_F64 => buffer += &f.get_f64().to_string(),
-                    ::field::field::KIND_STR => buffer += &f.get_str(),
+                    ::field::field::KIND_I64 => buffer += &f.to_string(),
+                    ::field::field::KIND_U64 => buffer += &f.to_string(),
+                    ::field::field::KIND_F64 => buffer += &f.to_string(),
+                    ::field::field::KIND_STR => buffer += &f.to_string(),
                     _ => buffer += "Unsupported Data Type",
                 }
             }

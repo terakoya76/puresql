@@ -19,6 +19,7 @@ pub use executor::selection::SelectionExec;
 pub use executor::selector::{equal, lt, le, gt, ge};
 pub use executor::projection::ProjectionExec;
 pub use executor::aggregation::AggregationExec;
+pub use executor::grouped_aggregation::GroupedAggregationExec;
 pub use executor::aggregator::{Aggregator, AggrCount, AggrSum, AggrAvg};
 
 fn main() {
@@ -30,13 +31,13 @@ fn main() {
     shohin.insert(vec![Field::set_u64(3), Field::set_str("cabbage"), Field::set_u64(2), Field::set_u64(200)]);
     shohin.insert(vec![Field::set_u64(4), Field::set_str("sea weed"), Field::set_u64(5), Field::set_u64(250)]);
     shohin.insert(vec![Field::set_u64(5), Field::set_str("mushroom"), Field::set_u64(3), Field::set_u64(100)]);
-    shohin.to_string();
+    shohin.print();
     println!("");
 
     let mut kubun: Box<Table> = Table::create(&mut alloc, "kubun", vec!["kubun_id", "kubun_name"]);
     kubun.insert(vec![Field::set_u64(1), Field::set_str("fruit")]);
     kubun.insert(vec![Field::set_u64(2), Field::set_str("vegetable")]);
-    kubun.to_string();
+    kubun.print();
     println!("");
 
     println!("table scan");
@@ -46,7 +47,7 @@ fn main() {
         loop {
             match shohin_tb_scan.next() {
                 None => break,
-                Some(tuple) => tuple.to_string(),
+                Some(tuple) => tuple.print(),
             }
         }
         println!("Scaned\n");
@@ -59,7 +60,7 @@ fn main() {
         let mut joined_exec: NestedLoopJoinExec = NestedLoopJoinExec::new(&mut shohin_tb_scan, &mut kubun_tb_scan);
         let joined_tps: Vec<Tuple> = joined_exec.join();
         for tp in joined_tps.iter() {
-            tp.to_string();
+            tp.print();
         }
         println!("Scaned\n");
     }
@@ -71,7 +72,7 @@ fn main() {
         loop {
             match selection.next() {
                 None => break,
-                Some(tuple) => tuple.to_string(),
+                Some(tuple) => tuple.print(),
             }
         }
         println!("Scaned\n");
@@ -82,7 +83,7 @@ fn main() {
         loop {
             match selection.next() {
                 None => break,
-                Some(tuple) => tuple.to_string(),
+                Some(tuple) => tuple.print(),
             }
         }
         println!("Scaned\n");
@@ -95,7 +96,7 @@ fn main() {
         loop {
             match projection.next() {
                 None => break,
-                Some(tuple) => tuple.to_string(),
+                Some(tuple) => tuple.print(),
             }
         }
         println!("Scaned\n");
@@ -108,10 +109,29 @@ fn main() {
         loop {
             match aggregation.next() {
                 None => break,
-                Some(tuple) => tuple.to_string(),
+                Some(tuple) => tuple.print(),
             }
         }
         println!("Scaned\n");
     }
+
+    println!("group by aggregation\n");
+
+    {
+        let mut grouped = GroupedAggregationExec::new(&mut shohin_tb_scan, vec!["kubun_id"], vec![AggrCount::new(), AggrSum::new("price"), AggrAvg::new("price")]);
+        loop {
+            match grouped.next() {
+                None => break,
+                Some(tuples) => {
+                    for tuple in tuples {
+                        tuple.print();
+                    }
+                },
+            }
+            println!("");
+        }
+        println!("Scaned\n");
+    }
+
 }
 

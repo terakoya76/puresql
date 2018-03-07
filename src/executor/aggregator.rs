@@ -5,8 +5,16 @@ use field::field::Field;
 pub trait Aggregator {
     fn update(&mut self, tuple: &Tuple, columns: &Vec<Column>);
     fn fetch_result(&self) -> Field;
+    fn box_clone(&self) -> Box<Aggregator>;
 }
 
+impl Clone for Box<Aggregator> {
+    fn clone(&self) -> Box<Aggregator> {
+        self.box_clone()
+    }
+}
+
+#[derive(Clone)]
 pub struct AggrCount {
     pub result: Field,
 }
@@ -30,8 +38,13 @@ impl Aggregator for AggrCount {
     fn fetch_result(&self) -> Field {
         self.result.clone()
     }
+
+    fn box_clone(&self) -> Box<Aggregator> {
+        Box::new(self.clone())
+    }
 }
 
+#[derive(Clone)]
 pub struct AggrSum {
     pub result: Field,
     pub column_name: String,
@@ -63,8 +76,13 @@ impl Aggregator for AggrSum {
     fn fetch_result(&self) -> Field {
         self.result.clone()
     }
+
+    fn box_clone(&self) -> Box<Aggregator> {
+        Box::new(self.clone())
+    }
 }
 
+#[derive(Clone)]
 pub struct AggrAvg {
     pub sum: Field,
     pub iterate_num: usize,
@@ -98,6 +116,10 @@ impl Aggregator for AggrAvg {
 
     fn fetch_result(&self) -> Field {
         self.sum.clone() / self.sum.set_same_type(self.iterate_num)
+    }
+
+    fn box_clone(&self) -> Box<Aggregator> {
+        Box::new(self.clone())
     }
 }
 

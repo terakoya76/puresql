@@ -108,7 +108,17 @@ pub mod field {
             self.s.clone().unwrap()
         }
 
-        pub fn to_string(&self) {
+        pub fn to_string(&self) -> String {
+            match self.kind {
+                KIND_I64 => self.get_i64().to_string(),
+                KIND_U64 => self.get_u64().to_string(),
+                KIND_F64 => self.get_f64().to_string(),
+                KIND_STR => self.get_str(),
+                _ => "".to_string(),
+            }
+        }
+
+        pub fn print(&self) {
             match self.kind {
                 KIND_I64 => println!("{}", self.get_i64()),
                 KIND_U64 => println!("{}", self.get_u64()),

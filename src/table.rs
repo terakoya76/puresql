@@ -86,7 +86,7 @@ pub mod table {
             }
         }
 
-        pub fn to_string(&self) {
+        pub fn print(&self) {
             let mut col_buffer: String = String::new();
             for col in &self.columns {
                 col_buffer += "|";
@@ -95,7 +95,7 @@ pub mod table {
             println!("{}", col_buffer);
 
             for item in self.tree.values() {
-                item.tuple.to_string();
+                item.tuple.print();
             }
         }
     }
