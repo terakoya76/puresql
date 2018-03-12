@@ -6,15 +6,15 @@ use field::field::Field;
 use executor::table_scan::TableScanExec;
 use executor::aggregator::Aggregator;
 
-pub struct AggregationExec<'a, 't: 'a> {
+pub struct AggregationExec<'a, 'ts: 'a, 't: 'ts, 'm: 't> {
     pub group_keys: Vec<String>,
-    pub inputs: &'a mut TableScanExec<'t>,
+    pub inputs: &'a mut TableScanExec<'ts, 't, 'm>,
     pub aggregators: Vec<Box<Aggregator>>,
     pub grouped_aggregators: HashMap<Vec<String>, Vec<Box<Aggregator>>>,
 }
 
-impl<'a, 't: 'a> AggregationExec<'a, 't> {
-    pub fn new(inputs: &'a mut TableScanExec<'t>, group_keys: Vec<&str>, aggregators: Vec<Box<Aggregator>>) -> AggregationExec<'a, 't> {
+impl<'a, 'ts, 't, 'm> AggregationExec<'a, 'ts, 't, 'm> {
+    pub fn new(inputs: &'a mut TableScanExec<'ts, 't, 'm>, group_keys: Vec<&str>, aggregators: Vec<Box<Aggregator>>) -> AggregationExec<'a, 'ts, 't, 'm> {
         AggregationExec {
             group_keys: group_keys.iter().map(|k| k.to_string()).collect(),
             inputs: inputs,
@@ -51,7 +51,7 @@ impl<'a, 't: 'a> AggregationExec<'a, 't> {
     }
 }
 
-impl<'a, 't: 'a> Iterator for AggregationExec<'a, 't> {
+impl<'a, 'ts, 't, 'm> Iterator for AggregationExec<'a, 'ts, 't, 'm> {
     type Item = Vec<Tuple>;
     fn next(&mut self) -> Option<Vec<Tuple>> {
         loop {

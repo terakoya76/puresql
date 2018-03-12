@@ -3,8 +3,8 @@ use column::range::Range;
 use tuple::tuple::Tuple;
 use table::table::Table;
 
-pub struct TableScanExec<'a> {
-    pub table: &'a Box<Table>,
+pub struct TableScanExec<'ts, 't: 'ts, 'm: 't> {
+    pub table: &'ts Table<'t, 'm>,
     pub name: String,
     pub ranges: Vec<Range>,
     pub cursor: usize,
@@ -12,10 +12,10 @@ pub struct TableScanExec<'a> {
     pub columns: Vec<Column>,
 }
 
-impl<'a> TableScanExec<'a> {
-    pub fn new(table: &'a Box<Table>, name: &str, ranges: Vec<Range>) -> TableScanExec<'a> {
+impl<'ts, 't, 'm> TableScanExec<'ts, 't, 'm> {
+    pub fn new(table: &'ts Table<'t, 'm>, name: &str, ranges: Vec<Range>) -> TableScanExec<'ts, 't, 'm> {
         TableScanExec {
-            table: &table,
+            table: table,
             name: name.to_string(),
             ranges: ranges,
             cursor: 0,
@@ -55,7 +55,7 @@ impl<'a> TableScanExec<'a> {
     }
 }
 
-impl<'a> Iterator for TableScanExec<'a> {
+impl<'ts, 't, 'm> Iterator for TableScanExec<'ts, 't, 'm> {
     type Item = Tuple;
     fn next(&mut self) -> Option<Tuple> {
         match self.next_handle() {

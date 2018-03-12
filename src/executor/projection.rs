@@ -3,13 +3,13 @@ use tuple::tuple::Tuple;
 use field::field::Field;
 use executor::table_scan::TableScanExec;
 
-pub struct ProjectionExec<'p, 't: 'p> {
-    inputs: &'p mut TableScanExec<'t>,
+pub struct ProjectionExec<'p, 'ts: 'p, 't: 'ts, 'm: 't> {
+    inputs: &'p mut TableScanExec<'ts, 't, 'm>,
     projectors: Vec<&'p str>,
 }
 
-impl<'p, 't: 'p> ProjectionExec<'p, 't> {
-    pub fn new(inputs: &'p mut TableScanExec<'t>, projectors: Vec<&'p str>) -> ProjectionExec<'p, 't> {
+impl<'p, 'ts, 't, 'm> ProjectionExec<'p, 'ts, 't, 'm> {
+    pub fn new(inputs: &'p mut TableScanExec<'ts, 't, 'm>, projectors: Vec<&'p str>) -> ProjectionExec<'p, 'ts, 't, 'm> {
         ProjectionExec {
             inputs: inputs,
             projectors: projectors,
@@ -17,7 +17,7 @@ impl<'p, 't: 'p> ProjectionExec<'p, 't> {
     }
 }
 
-impl<'p, 't: 'p> Iterator for ProjectionExec<'p, 't> {
+impl<'p, 'ts, 't, 'm> Iterator for ProjectionExec<'p, 'ts, 't, 'm> {
     type Item = Tuple;
     fn next(&mut self) -> Option<Tuple> {
         loop {

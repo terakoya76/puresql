@@ -7,51 +7,48 @@ pub mod table {
     use column::column::Column;
     use tuple::tuple::Tuple;
     use item::item::Item;
+    use index::index::Index;
+    use indexed::indexed::Indexed;
+    use meta::table_info::TableInfo;
     use allocator::allocator::Allocator;
 
-    #[derive(Clone)]
-    pub struct Table {
+    pub struct Table<'t, 'm: 't> {
         pub id: usize,
         pub name: String,
         pub columns: Vec<Column>,
-        pub alloc: Box<Allocator>,
         pub tree: BTreeMap<usize, Item>,
+        pub indices: &'t mut Vec<Index<'m>>,
+        pub meta: &'t mut TableInfo,
     }
 
-    impl Table {
-        pub fn new(id: usize, name: &str, columns: &Vec<Column>, alloc: Box<Allocator>) -> Box<Table> {
-            Box::new(
+    impl<'t, 'm> Table<'t, 'm> {
+        pub fn new(meta: &'t mut TableInfo, indices: &'t mut Vec<Index<'m>>) -> Table<'t, 'm> {
+            //Box::new(
                 Table {
-                    id: id,
-                    name: name.to_string(),
-                    columns: columns.to_owned(),
-                    alloc: alloc,
+                    id: meta.id,
+                    name: meta.name.clone(),
+                    columns: meta.columns.clone(),
                     tree: BTreeMap::new(),
+                    indices: indices,
+                    meta: meta,
                 }
-            )
-        }
-
-        pub fn create(alloc: &mut Box<Allocator>, name: &str, column_names: Vec<&str>) -> Box<Table> {
-            let table_id: usize = alloc.base;
-            alloc.increament();
-
-            let mut columns: Vec<Column> = Vec::new();
-            for (i, c_name) in column_names.iter().enumerate() {
-                columns.push(Column::new(name, c_name, i))
-            }
-
-            let alloc: Box<Allocator> = Allocator::new(table_id);
-            Table::new(table_id, &name, &columns, alloc)
+            //)
         }
 
         // TODO: IMPL some response as API
         pub fn insert(&mut self, fields: Vec<Field>) {
-            let internal_id: usize = self.alloc.base;
+            let internal_id: usize = self.meta.next_record_id.base;
             if !self.tree.contains_key(&internal_id) {
                 let tuple: Tuple = Tuple::new(fields);
                 let item: Item = Item::new(internal_id, tuple);
                 &mut self.tree.insert(internal_id, item);
-                self.alloc.increament();
+
+                for ref mut index in self.indices.iter_mut() {
+                    let indexed: Indexed = Indexed::new(internal_id);
+                    &mut index.indices.insert(internal_id, indexed);
+                }
+
+                &mut self.meta.next_record_id.increament();
             }
         }
 

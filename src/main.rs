@@ -3,6 +3,9 @@ mod column;
 mod tuple;
 mod item;
 mod table;
+mod index;
+mod indexed;
+mod meta;
 mod allocator;
 mod executor;
 
@@ -12,6 +15,10 @@ pub use column::range::Range;
 pub use tuple::tuple::Tuple;
 pub use item::item::Item;
 pub use table::table::Table;
+pub use index::index::Index;
+pub use indexed::indexed::Indexed;
+pub use meta::table_info::TableInfo;
+pub use meta::index_info::IndexInfo;
 pub use allocator::allocator::Allocator;
 pub use executor::table_scan::TableScanExec;
 pub use executor::join::NestedLoopJoinExec;
@@ -24,7 +31,11 @@ pub use executor::aggregator::{Aggregator, AggrCount, AggrSum, AggrAvg};
 fn main() {
     println!("Whole Table");
     let mut alloc: Box<Allocator> = Allocator::new(1);
-    let mut shohin: Box<Table> = Table::create(&mut alloc, "shohin", vec!["shohin_id", "shohin_name", "kubun_id", "price"]);
+
+    let mut shohin_info: TableInfo = TableInfo::new(&mut alloc, "shohin", vec!["shohin_id", "shohin_name", "kubun_id", "price"], vec![/* IndexInfo */]);
+
+    let mut shohin_idx: Vec<Index> = Vec::new();
+    let mut shohin: Table = Table::new(&mut shohin_info, &mut shohin_idx);
     shohin.insert(vec![Field::set_u64(1), Field::set_str("apple"), Field::set_u64(1), Field::set_u64(300)]);
     shohin.insert(vec![Field::set_u64(2), Field::set_str("orange"), Field::set_u64(1), Field::set_u64(130)]);
     shohin.insert(vec![Field::set_u64(3), Field::set_str("cabbage"), Field::set_u64(2), Field::set_u64(200)]);
@@ -33,7 +44,10 @@ fn main() {
     shohin.print();
     println!("");
 
-    let mut kubun: Box<Table> = Table::create(&mut alloc, "kubun", vec!["kubun_id", "kubun_name"]);
+    let mut kubun_info: TableInfo = TableInfo::new(&mut alloc, "kubun", vec!["kubun_id", "kubun_name"], vec![]);
+
+    let mut kubun_idx: Vec<Index> = Vec::new();
+    let mut kubun: Table = Table::new(&mut kubun_info, &mut kubun_idx);
     kubun.insert(vec![Field::set_u64(1), Field::set_str("fruit")]);
     kubun.insert(vec![Field::set_u64(2), Field::set_str("vegetable")]);
     kubun.print();
