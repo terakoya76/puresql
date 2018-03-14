@@ -6,7 +6,6 @@ use executor::scan_exec::ScanExec;
 // struct
 use column::column::Column;
 use tuple::tuple::Tuple;
-use executor::memory_table_scan::MemoryTableScanExec;
 
 pub struct SelectionExec<'s, 't: 's, T: 't> {
     inputs: &'s mut T,

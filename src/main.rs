@@ -67,19 +67,17 @@ fn main() {
         println!("Scaned\n");
     }
 
-    /*
     println!("joined table scan");
     let mut m_kubun_tb_scan: MemoryTableScanExec = MemoryTableScanExec::new(&m_kubun, &m_kubun.name, vec![Range::new(0, 10)]);
 
     {
-        let mut joined_exec: NestedLoopJoinExec = NestedLoopJoinExec::new(&mut m_shohin_tb_scan, &mut m_kubun_tb_scan);
+        let mut joined_exec: NestedLoopJoinExec<MemoryTableScanExec, MemoryTableScanExec> = NestedLoopJoinExec::new(&mut m_shohin_tb_scan, &mut m_kubun_tb_scan);
         let joined_tps: Vec<Tuple> = joined_exec.join();
         for tp in joined_tps.iter() {
             tp.print();
         }
         println!("Scaned\n");
     }
-    */
 
     println!("selection");
     {
@@ -104,10 +102,9 @@ fn main() {
         println!("Scaned\n");
     }
 
-    /*
     println!("projection");
     {
-        let mut projection: ProjectionExec = ProjectionExec::new(&mut m_shohin_tb_scan, vec!["shohin_name", "price"]);
+        let mut projection: ProjectionExec<MemoryTableScanExec> = ProjectionExec::new(&mut m_shohin_tb_scan, vec!["shohin_name", "price"]);
         loop {
             match projection.next() {
                 None => break,
@@ -178,6 +175,5 @@ fn main() {
         }
         println!("Scaned\n");
     }
-    */
 }
 

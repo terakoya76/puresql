@@ -1,20 +1,31 @@
-use tuple::tuple::Tuple;
-use executor::memory_table_scan::MemoryTableScanExec;
+// TODO: impl Iterator
+// it's necessary for pipe processing
 
-pub struct NestedLoopJoinExec<'n, 'ts: 'n, 't: 'ts> {
+use std::marker::PhantomData;
+
+// trait
+use executor::scan_exec::ScanExec;
+
+// struct
+use tuple::tuple::Tuple;
+
+pub struct NestedLoopJoinExec<'n, 't: 'n, T1: 't, T2: 't> {
     cursor: usize,
     result_tuples: Vec<Tuple>,
-    inner_table: &'n mut MemoryTableScanExec<'ts, 't>,
-    outer_table: &'n mut MemoryTableScanExec<'ts, 't>,
+    inner_table: &'n mut T1,
+    outer_table: &'n mut T2,
+    _marker: PhantomData<&'t T1>,
 }
 
-impl<'n, 'ts, 't> NestedLoopJoinExec<'n, 'ts, 't> {
-    pub fn new(inner_table: &'n mut MemoryTableScanExec<'ts, 't>, outer_table: &'n mut MemoryTableScanExec<'ts, 't>) -> NestedLoopJoinExec<'n, 'ts, 't> {
+impl<'n, 't, T1, T2> NestedLoopJoinExec<'n, 't, T1, T2>
+    where T1: ScanExec, T2: ScanExec {
+    pub fn new(inner_table: &'n mut T1, outer_table: &'n mut T2) -> NestedLoopJoinExec<'n, 't, T1, T2> {
         NestedLoopJoinExec {
             cursor: 0,
             result_tuples: Vec::new(),
             inner_table: inner_table,
             outer_table: outer_table,
+            _marker: PhantomData,
         }
     }
 

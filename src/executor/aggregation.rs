@@ -1,31 +1,38 @@
+use std::marker::PhantomData;
 use std::collections::HashMap;
 
+// trait
+use executor::scan_exec::ScanExec;
+
+// struct
 use tuple::tuple::Tuple;
 use field::field::Field;
-use executor::memory_table_scan::MemoryTableScanExec;
 use executor::aggregator::Aggregator;
 
-pub struct AggregationExec<'a, 'ts: 'a, 't: 'ts> {
+pub struct AggregationExec<'a, 't: 'a, T: 't> {
     pub group_keys: Vec<String>,
-    pub inputs: &'a mut MemoryTableScanExec<'ts, 't>,
+    pub inputs: &'a mut T,
     pub aggregators: Vec<Box<Aggregator>>,
     pub grouped_aggregators: HashMap<Vec<String>, Vec<Box<Aggregator>>>,
+    _marker: PhantomData<&'t T>,
 }
 
-impl<'a, 'ts, 't> AggregationExec<'a, 'ts, 't> {
-    pub fn new(inputs: &'a mut MemoryTableScanExec<'ts, 't>, group_keys: Vec<&str>, aggregators: Vec<Box<Aggregator>>) -> AggregationExec<'a, 'ts, 't> {
+impl<'a, 't, T> AggregationExec<'a, 't, T>
+    where T: ScanExec {
+    pub fn new(inputs: &'a mut T, group_keys: Vec<&str>, aggregators: Vec<Box<Aggregator>>) -> AggregationExec<'a, 't, T> {
         AggregationExec {
             group_keys: group_keys.iter().map(|k| k.to_string()).collect(),
             inputs: inputs,
             aggregators: aggregators,
             grouped_aggregators: HashMap::new(),
+            _marker: PhantomData,
         }
     }
 
     fn get_keys(&self, tuple: &Tuple) -> Vec<String> {
         let mut map_keys: Vec<String> = Vec::new();
         for key in &self.group_keys {
-            for column in &self.inputs.columns {
+            for column in &self.inputs.get_columns() {
                 if column.name == *key {
                     let value: String = tuple.fields[column.offset].clone().to_string();
                     map_keys.push(value);
@@ -44,13 +51,14 @@ impl<'a, 'ts, 't> AggregationExec<'a, 'ts, 't> {
         {
             let aggrs = self.grouped_aggregators.get_mut(&keys).unwrap();
             for mut aggr in aggrs {
-                aggr.update(&tuple, &self.inputs.columns);
+                aggr.update(&tuple, &self.inputs.get_columns());
             }
         }
     }
 }
 
-impl<'a, 'ts, 't> Iterator for AggregationExec<'a, 'ts, 't> {
+impl<'a, 't, T> Iterator for AggregationExec<'a, 't, T>
+    where T: ScanExec {
     type Item = Vec<Tuple>;
     fn next(&mut self) -> Option<Vec<Tuple>> {
         loop {
