@@ -40,24 +40,11 @@ impl<'t> MemoryTable<'t> {
         }
     }
 
-    pub fn get_column_offset(&self, column_name: &str) -> Option<usize> {
-        for column in &self.columns {
-            if column.name == column_name {
-                return Some(column.offset.clone());
-            }
+    pub fn get_tuple(&self, internal_id: usize) -> Tuple {
+        match self.tree.get(&internal_id) {
+            None => Tuple::new(vec![]),
+            Some(tuple) => tuple.clone(),
         }
-        None
-    }
-
-    pub fn get_fields_by_columns(&self, internal_id: usize, columns: &Vec<Column>) -> Tuple {
-        let mut fields = Vec::new();
-        let tuple = self.tree.get(&internal_id);
-        if tuple.is_some() {
-            for column in columns {
-                fields.push(tuple.unwrap().fields[column.offset].clone());
-            }
-        }
-        Tuple::new(fields)
     }
 
     pub fn seek(&self, current_handle: usize) -> Option<usize> {

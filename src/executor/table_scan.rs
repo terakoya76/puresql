@@ -51,7 +51,7 @@ impl<'ts, 't, 'i> TableScanExec<'ts, 't, 'i> {
     }
 
     pub fn get_tuple(&self, handle: usize) -> Tuple {
-        self.table.get_fields_by_columns(handle, &self.columns)
+        self.table.get_tuple(handle)
     }
 }
 

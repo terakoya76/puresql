@@ -35,7 +35,7 @@ impl<'ts, 't> ScanExec for MemoryTableScanExec<'ts, 't> {
     }
 
     fn get_tuple(&self, handle: usize) -> Tuple {
-        self.table.get_fields_by_columns(handle, &self.columns)
+        self.table.get_tuple(handle)
     }
 
     fn set_next_handle(&mut self, next_handle: usize) {
