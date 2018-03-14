@@ -72,9 +72,11 @@ fn main() {
 
     {
         let mut joined_exec: NestedLoopJoinExec<MemoryTableScanExec, MemoryTableScanExec> = NestedLoopJoinExec::new(&mut m_shohin_tb_scan, &mut m_kubun_tb_scan);
-        let joined_tps: Vec<Tuple> = joined_exec.join();
-        for tp in joined_tps.iter() {
-            tp.print();
+        loop {
+            match joined_exec.next() {
+                None => break,
+                Some(tuple) => tuple.print(),
+            }
         }
         println!("Scaned\n");
     }
