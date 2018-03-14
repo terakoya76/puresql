@@ -3,7 +3,6 @@ use std::collections::Bound::Included;
 use field::field::Field;
 use column::column::Column;
 use tuple::tuple::Tuple;
-use item::item::Item;
 use index::index::Index;
 use indexed::indexed::Indexed;
 use meta::table_info::TableInfo;
@@ -52,10 +51,10 @@ impl<'t, 'i> Table<'t, 'i> {
 
     pub fn get_fields_by_columns(&self, internal_id: usize, columns: &Vec<Column>) -> Tuple {
         let mut fields = Vec::new();
-        let item = self.indices[0].tree.get(&internal_id);
-        if item.is_some() {
+        let indexed = self.indices[0].tree.get(&internal_id);
+        if indexed.is_some() {
             for column in columns {
-                fields.push(item.unwrap().value.fields[column.offset].clone());
+                fields.push(indexed.unwrap().value.fields[column.offset].clone());
             }
         }
         Tuple::new(fields)
@@ -68,7 +67,7 @@ impl<'t, 'i> Table<'t, 'i> {
         }
         match self.indices[0].tree.range((Included(&current_handle), Included(&offset))).next() {
             None => self.seek(current_handle+1),
-            Some(item) => Some(item.0.clone()),
+            Some(node) => Some(node.0.clone()),
         }
     }
 
@@ -80,8 +79,8 @@ impl<'t, 'i> Table<'t, 'i> {
         }
         println!("{}", col_buffer);
 
-        for item in self.indices[0].tree.values() {
-            item.value.print();
+        for indexed in self.indices[0].tree.values() {
+            indexed.value.print();
         }
     }
 }

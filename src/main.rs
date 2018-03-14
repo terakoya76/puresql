@@ -1,7 +1,6 @@
 mod field;
 mod column;
 mod tuple;
-mod item;
 mod tables;
 mod index;
 mod indexed;
@@ -13,7 +12,6 @@ pub use field::field::Field;
 pub use column::column::Column;
 pub use column::range::Range;
 pub use tuple::tuple::Tuple;
-pub use item::item::Item;
 pub use tables::table::Table;
 pub use tables::memory_table::MemoryTable;
 pub use index::index::Index;
