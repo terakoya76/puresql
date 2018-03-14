@@ -1,3 +1,7 @@
+// trait
+use executor::scan_exec::ScanExec;
+
+// struct
 use column::column::Column;
 use column::range::Range;
 use tuple::tuple::Tuple;
@@ -23,8 +27,22 @@ impl<'ts, 't> MemoryTableScanExec<'ts, 't> {
             columns: table.columns.iter().map(|c| c.clone()).collect(),
         }
     }
+}
 
-    pub fn next_handle(&mut self) -> Option<usize> {
+impl<'ts, 't> ScanExec for MemoryTableScanExec<'ts, 't> {
+    fn get_columns(&self) -> Vec<Column> {
+        self.columns.clone()
+    }
+
+    fn get_tuple(&self, handle: usize) -> Tuple {
+        self.table.get_fields_by_columns(handle, &self.columns)
+    }
+
+    fn set_next_handle(&mut self, next_handle: usize) {
+        self.seek_handle = next_handle;
+    }
+
+    fn next_handle(&mut self) -> Option<usize> {
         loop {
             if self.cursor >= self.ranges.len() {
                 return None;
@@ -49,10 +67,6 @@ impl<'ts, 't> MemoryTableScanExec<'ts, 't> {
             }
         }
     }
-
-    pub fn get_tuple(&self, handle: usize) -> Tuple {
-        self.table.get_fields_by_columns(handle, &self.columns)
-    }
 }
 
 impl<'ts, 't> Iterator for MemoryTableScanExec<'ts, 't> {
@@ -61,7 +75,7 @@ impl<'ts, 't> Iterator for MemoryTableScanExec<'ts, 't> {
         match self.next_handle() {
             None => None,
             Some(handle) => {
-                *&mut self.seek_handle = handle + 1;
+                &mut self.set_next_handle(handle + 1);
                 Some(self.get_tuple(handle))
             },
         }

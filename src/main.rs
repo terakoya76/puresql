@@ -8,6 +8,10 @@ mod meta;
 mod allocator;
 mod executor;
 
+// trait
+pub use executor::scan_exec::ScanExec;
+
+// struct
 pub use field::field::Field;
 pub use column::column::Column;
 pub use column::range::Range;
@@ -63,6 +67,7 @@ fn main() {
         println!("Scaned\n");
     }
 
+    /*
     println!("joined table scan");
     let mut m_kubun_tb_scan: MemoryTableScanExec = MemoryTableScanExec::new(&m_kubun, &m_kubun.name, vec![Range::new(0, 10)]);
 
@@ -74,10 +79,11 @@ fn main() {
         }
         println!("Scaned\n");
     }
+    */
 
     println!("selection");
     {
-        let mut selection: SelectionExec = SelectionExec::new(&mut m_shohin_tb_scan, vec![equal("shohin_name", Field::set_str("apple"))]);
+        let mut selection: SelectionExec<MemoryTableScanExec> = SelectionExec::new(&mut m_shohin_tb_scan, vec![equal("shohin_name", Field::set_str("apple"))]);
         loop {
             match selection.next() {
                 None => break,
@@ -88,7 +94,7 @@ fn main() {
     }
 
     {
-        let mut selection: SelectionExec = SelectionExec::new(&mut m_shohin_tb_scan, vec![le("shohin_id", Field::set_u64(3))]);
+        let mut selection: SelectionExec<MemoryTableScanExec> = SelectionExec::new(&mut m_shohin_tb_scan, vec![le("shohin_id", Field::set_u64(3))]);
         loop {
             match selection.next() {
                 None => break,
@@ -98,6 +104,7 @@ fn main() {
         println!("Scaned\n");
     }
 
+    /*
     println!("projection");
     {
         let mut projection: ProjectionExec = ProjectionExec::new(&mut m_shohin_tb_scan, vec!["shohin_name", "price"]);
@@ -127,7 +134,6 @@ fn main() {
     }
 
     println!("group by aggregation\n");
-
     {
         let mut grouped = AggregationExec::new(&mut m_shohin_tb_scan, vec!["price"], vec![AggrCount::new(), AggrSum::new("price"), AggrAvg::new("price")]);
         loop {
@@ -172,5 +178,6 @@ fn main() {
         }
         println!("Scaned\n");
     }
+    */
 }
 
