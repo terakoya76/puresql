@@ -1,20 +1,19 @@
 use std::collections::HashMap;
 
-use column::column::Column;
 use tuple::tuple::Tuple;
 use field::field::Field;
-use executor::table_scan::TableScanExec;
+use executor::memory_table_scan::MemoryTableScanExec;
 use executor::aggregator::Aggregator;
 
-pub struct AggregationExec<'a, 'ts: 'a, 't: 'ts, 'm: 't> {
+pub struct AggregationExec<'a, 'ts: 'a, 't: 'ts> {
     pub group_keys: Vec<String>,
-    pub inputs: &'a mut TableScanExec<'ts, 't, 'm>,
+    pub inputs: &'a mut MemoryTableScanExec<'ts, 't>,
     pub aggregators: Vec<Box<Aggregator>>,
     pub grouped_aggregators: HashMap<Vec<String>, Vec<Box<Aggregator>>>,
 }
 
-impl<'a, 'ts, 't, 'm> AggregationExec<'a, 'ts, 't, 'm> {
-    pub fn new(inputs: &'a mut TableScanExec<'ts, 't, 'm>, group_keys: Vec<&str>, aggregators: Vec<Box<Aggregator>>) -> AggregationExec<'a, 'ts, 't, 'm> {
+impl<'a, 'ts, 't> AggregationExec<'a, 'ts, 't> {
+    pub fn new(inputs: &'a mut MemoryTableScanExec<'ts, 't>, group_keys: Vec<&str>, aggregators: Vec<Box<Aggregator>>) -> AggregationExec<'a, 'ts, 't> {
         AggregationExec {
             group_keys: group_keys.iter().map(|k| k.to_string()).collect(),
             inputs: inputs,
@@ -51,7 +50,7 @@ impl<'a, 'ts, 't, 'm> AggregationExec<'a, 'ts, 't, 'm> {
     }
 }
 
-impl<'a, 'ts, 't, 'm> Iterator for AggregationExec<'a, 'ts, 't, 'm> {
+impl<'a, 'ts, 't> Iterator for AggregationExec<'a, 'ts, 't> {
     type Item = Vec<Tuple>;
     fn next(&mut self) -> Option<Vec<Tuple>> {
         loop {

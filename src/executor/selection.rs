@@ -1,14 +1,14 @@
 use column::column::Column;
 use tuple::tuple::Tuple;
-use executor::table_scan::TableScanExec;
+use executor::memory_table_scan::MemoryTableScanExec;
 
-pub struct SelectionExec<'s, 'ts: 's, 't: 'ts, 'm: 't> {
-    inputs: &'s mut TableScanExec<'ts, 't, 'm>,
+pub struct SelectionExec<'s, 'ts: 's, 't: 'ts> {
+    inputs: &'s mut MemoryTableScanExec<'ts, 't>,
     selectors: Vec<Box<Fn(&Tuple, &Vec<Column>) -> bool>>,
 }
 
-impl<'s, 'ts, 't, 'm> SelectionExec<'s, 'ts, 't, 'm> {
-    pub fn new(inputs: &'s mut TableScanExec<'ts, 't, 'm>, selectors: Vec<Box<Fn(&Tuple, &Vec<Column>) -> bool>>) -> SelectionExec<'s, 'ts, 't, 'm> {
+impl<'s, 'ts, 't> SelectionExec<'s, 'ts, 't> {
+    pub fn new(inputs: &'s mut MemoryTableScanExec<'ts, 't>, selectors: Vec<Box<Fn(&Tuple, &Vec<Column>) -> bool>>) -> SelectionExec<'s, 'ts, 't> {
         SelectionExec {
             inputs: inputs,
             selectors: selectors,
@@ -16,7 +16,7 @@ impl<'s, 'ts, 't, 'm> SelectionExec<'s, 'ts, 't, 'm> {
     }
 }
 
-impl<'s, 'ts, 't, 'm> Iterator for SelectionExec<'s, 'ts, 't, 'm> {
+impl<'s, 'ts, 't> Iterator for SelectionExec<'s, 'ts, 't> {
     type Item = Tuple;
     fn next(&mut self) -> Option<Tuple> {
         loop {

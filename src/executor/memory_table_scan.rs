@@ -1,10 +1,10 @@
 use column::column::Column;
 use column::range::Range;
 use tuple::tuple::Tuple;
-use tables::table::Table;
+use tables::memory_table::MemoryTable;
 
-pub struct TableScanExec<'ts, 't: 'ts, 'i: 't> {
-    pub table: &'ts Table<'t, 'i>,
+pub struct MemoryTableScanExec<'ts, 't: 'ts> {
+    pub table: &'ts MemoryTable<'t>,
     pub name: String,
     pub ranges: Vec<Range>,
     pub cursor: usize,
@@ -12,9 +12,9 @@ pub struct TableScanExec<'ts, 't: 'ts, 'i: 't> {
     pub columns: Vec<Column>,
 }
 
-impl<'ts, 't, 'i> TableScanExec<'ts, 't, 'i> {
-    pub fn new(table: &'ts Table<'t, 'i>, name: &str, ranges: Vec<Range>) -> TableScanExec<'ts, 't, 'i> {
-        TableScanExec {
+impl<'ts, 't> MemoryTableScanExec<'ts, 't> {
+    pub fn new(table: &'ts MemoryTable<'t>, name: &str, ranges: Vec<Range>) -> MemoryTableScanExec<'ts, 't> {
+        MemoryTableScanExec {
             table: table,
             name: name.to_string(),
             ranges: ranges,
@@ -55,7 +55,7 @@ impl<'ts, 't, 'i> TableScanExec<'ts, 't, 'i> {
     }
 }
 
-impl<'ts, 't, 'i> Iterator for TableScanExec<'ts, 't, 'i> {
+impl<'ts, 't> Iterator for MemoryTableScanExec<'ts, 't> {
     type Item = Tuple;
     fn next(&mut self) -> Option<Tuple> {
         match self.next_handle() {

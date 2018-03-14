@@ -1,15 +1,14 @@
-use column::column::Column;
 use tuple::tuple::Tuple;
 use field::field::Field;
-use executor::table_scan::TableScanExec;
+use executor::memory_table_scan::MemoryTableScanExec;
 
-pub struct ProjectionExec<'p, 'ts: 'p, 't: 'ts, 'm: 't> {
-    inputs: &'p mut TableScanExec<'ts, 't, 'm>,
+pub struct ProjectionExec<'p, 'ts: 'p, 't: 'ts> {
+    inputs: &'p mut MemoryTableScanExec<'ts, 't>,
     projectors: Vec<&'p str>,
 }
 
-impl<'p, 'ts, 't, 'm> ProjectionExec<'p, 'ts, 't, 'm> {
-    pub fn new(inputs: &'p mut TableScanExec<'ts, 't, 'm>, projectors: Vec<&'p str>) -> ProjectionExec<'p, 'ts, 't, 'm> {
+impl<'p, 'ts, 't> ProjectionExec<'p, 'ts, 't> {
+    pub fn new(inputs: &'p mut MemoryTableScanExec<'ts, 't>, projectors: Vec<&'p str>) -> ProjectionExec<'p, 'ts, 't> {
         ProjectionExec {
             inputs: inputs,
             projectors: projectors,
@@ -17,7 +16,7 @@ impl<'p, 'ts, 't, 'm> ProjectionExec<'p, 'ts, 't, 'm> {
     }
 }
 
-impl<'p, 'ts, 't, 'm> Iterator for ProjectionExec<'p, 'ts, 't, 'm> {
+impl<'p, 'ts, 't> Iterator for ProjectionExec<'p, 'ts, 't> {
     type Item = Tuple;
     fn next(&mut self) -> Option<Tuple> {
         loop {

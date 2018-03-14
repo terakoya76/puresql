@@ -1,15 +1,16 @@
 pub mod indexed {
+    use tuple::tuple::Tuple;
 
     #[derive(Clone)]
     pub struct Indexed {
         // kind: usize - impl each idx: PK, FK, Secondary
-        value: usize,
+        pub value: Tuple,
     }
 
     impl Indexed {
-        pub fn new(handle: usize) -> Indexed {
+        pub fn new(value: Tuple) -> Indexed {
             Indexed {
-                value: handle,
+                value: value,
             }
         }
     }
