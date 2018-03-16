@@ -2,13 +2,13 @@ pub mod indexed {
     use tuple::tuple::Tuple;
 
     #[derive(Clone)]
-    pub struct Indexed {
+    pub struct Indexed<T> {
         // kind: usize - impl each idx: PK, FK, Secondary
-        pub value: Tuple,
+        pub value: T,
     }
 
-    impl Indexed {
-        pub fn new(value: Tuple) -> Indexed {
+    impl<T> Indexed<T> {
+        pub fn new(value: T) -> Indexed<T> {
             Indexed {
                 value: value,
             }

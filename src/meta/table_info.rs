@@ -32,10 +32,10 @@ impl TableInfo {
         }
     }
 
-    pub fn get_column_infos_from_names(&self, column_names: Vec<&str>) -> Vec<ColumnInfo> {
+    pub fn find_column_infos_by_names(&self, column_names: &Vec<&str>) -> Vec<ColumnInfo> {
         let mut columns: Vec<ColumnInfo> = Vec::new();
         for column_info in &self.columns {
-            for column_name in &column_names {
+            for column_name in column_names {
                 if column_info.name == column_name.to_string() {
                     columns.push(column_info.clone());
                 }
@@ -43,18 +43,5 @@ impl TableInfo {
         }
         columns
     }
-
-    /*
-    fn column_is_indexed(&self, column: Column) -> bool {
-        for index in &self.indices {
-            for indexed_column in &index.clone().columns {
-                if indexed_column.name == column.name {
-                    return true;
-                }
-            }
-        }
-        false
-    }
-    */
 }
 

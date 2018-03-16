@@ -150,13 +150,13 @@ fn main() {
     }
 
     println!("Table with index");
-    let mut shohin_info: TableInfo = TableInfo::new(&mut alloc, "shohin", vec!["shohin_id", "shohin_name", "kubun_id", "price"], vec![/* IndexInfo */]);
-    let shohin_id_index_info: IndexInfo = IndexInfo::new(&mut shohin_info, "shohin_id", vec!["shohin_id"]);
+    let mut shohin_info: TableInfo = TableInfo::new(&mut alloc, "shohin", vec!["shohin_id", "shohin_name", "kubun_id", "price"], vec![/* shohin_id_index_info */]);
+    let shohin_id_index_info: IndexInfo = IndexInfo::new(&mut shohin_info, vec!["shohin_id"], true);
 
-    let mut shohin_id_index: Index = Index::new(&shohin_id_index_info);
-    let shohin_idx: Vec<&mut Index> = vec![&mut shohin_id_index];
+    //let mut shohin_id_index: Index = Index::new(&shohin_id_index_info);
+    //let shohin_idx: Vec<&mut Index> = vec![&mut shohin_id_index];
 
-    let mut shohin: Table = Table::new(&mut shohin_info, shohin_idx);
+    let mut shohin: Table = Table::new(&mut shohin_info);
     shohin.insert(vec![Field::set_u64(1), Field::set_str("apple"), Field::set_u64(1), Field::set_u64(300)]);
     shohin.insert(vec![Field::set_u64(2), Field::set_str("orange"), Field::set_u64(1), Field::set_u64(130)]);
     shohin.insert(vec![Field::set_u64(3), Field::set_str("cabbage"), Field::set_u64(2), Field::set_u64(200)]);
@@ -165,13 +165,13 @@ fn main() {
     shohin.print();
     println!("");
 
-    let mut kubun_info: TableInfo = TableInfo::new(&mut alloc, "kubun", vec!["kubun_id", "kubun_name"], vec![/* IndexInfo */]);
-    let kubun_id_index_info: IndexInfo = IndexInfo::new(&mut kubun_info, "kubun_id", vec!["kubun_id"]);
+    let mut kubun_info: TableInfo = TableInfo::new(&mut alloc, "kubun", vec!["kubun_id", "kubun_name"], vec![/* kubun_id_index_info */]);
+    let kubun_id_index_info: IndexInfo = IndexInfo::new(&mut kubun_info, vec!["kubun_id"], true);
 
-    let mut kubun_id_index: Index = Index::new(&kubun_id_index_info);
-    let kubun_idx: Vec<&mut Index> = vec![&mut kubun_id_index];
+    //let mut kubun_id_index: Index = Index::new(&kubun_id_index_info);
+    //let kubun_idx: Vec<&mut Index> = vec![&mut kubun_id_index];
 
-    let mut kubun: Table = Table::new(&mut kubun_info, kubun_idx);
+    let mut kubun: Table = Table::new(&mut kubun_info);
     kubun.insert(vec![Field::set_u64(1), Field::set_str("fruit")]);
     kubun.insert(vec![Field::set_u64(2), Field::set_str("vegetable")]);
     kubun.print();

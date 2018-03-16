@@ -6,24 +6,25 @@ pub mod index {
     use meta::index_info::IndexInfo;
     use tuple::tuple::Tuple;
 
-    pub struct Index<'i> {
+    pub struct Index<T> {
         // only adapt BTree index
         // TODO: impl BTree+, Range, Hash index
-        pub tree: BTreeMap<usize, Indexed>,
-        pub meta: &'i IndexInfo,
+        pub tree: BTreeMap<usize, Indexed<T>>,
+        pub meta: IndexInfo,
     }
 
-    impl<'i> Index<'i> {
-        pub fn new(index_info: &'i IndexInfo) -> Index<'i> {
+    impl<T> Index<T> {
+        pub fn new(index_info: IndexInfo) -> Index<T> {
             Index {
                 tree: BTreeMap::new(),
                 meta: index_info,
             }
         }
+
         // TODO: IMPL some response as API
-        pub fn insert(&mut self, internal_id: usize, tuple: Tuple) {
+        pub fn insert(&mut self, internal_id: usize, value: T) {
             if !self.tree.contains_key(&internal_id) {
-                let indexed: Indexed = Indexed::new(tuple);
+                let indexed: Indexed<T> = Indexed::new(value);
                 &mut self.tree.insert(internal_id, indexed);
             }
         }
