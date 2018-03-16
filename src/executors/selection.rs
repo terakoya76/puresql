@@ -1,11 +1,11 @@
 use std::marker::PhantomData;
 
 // trait
-use executor::scan_exec::ScanExec;
+use ScanExec;
 
 // struct
-use column::column::Column;
-use tuple::tuple::Tuple;
+use columns::column::Column;
+use tables::tuple::Tuple;
 
 pub struct SelectionExec<'s, 't: 's, T: 't> {
     inputs: &'s mut T,

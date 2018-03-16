@@ -1,10 +1,10 @@
 // trait
-use executor::scan_exec::ScanExec;
+use ScanExec;
 
 // struct
-use column::column::Column;
-use column::range::Range;
-use tuple::tuple::Tuple;
+use columns::column::Column;
+use columns::range::Range;
+use tables::tuple::Tuple;
 use tables::memory_table::MemoryTable;
 
 pub struct MemoryTableScanExec<'ts, 't: 'ts> {

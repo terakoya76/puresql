@@ -1,6 +1,6 @@
 use meta::column_info::ColumnInfo;
 use meta::index_info::IndexInfo;
-use allocator::allocator::Allocator;
+use allocators::allocator::Allocator;
 
 #[derive(Clone)]
 pub struct TableInfo {

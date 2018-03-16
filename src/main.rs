@@ -1,37 +1,33 @@
-mod field;
-mod column;
-mod tuple;
+mod columns;
 mod tables;
-mod index;
-mod indexed;
 mod meta;
-mod allocator;
-mod executor;
+mod allocators;
+mod executors;
 
 // trait
-pub use executor::scan_exec::ScanExec;
+pub use executors::scan_exec::ScanExec;
 
 // struct
-pub use field::field::Field;
-pub use column::column::Column;
-pub use column::range::Range;
-pub use tuple::tuple::Tuple;
+pub use columns::column::Column;
+pub use columns::range::Range;
+pub use tables::field::Field;
+pub use tables::tuple::Tuple;
 pub use tables::table::Table;
 pub use tables::memory_table::MemoryTable;
-pub use index::index::Index;
-pub use indexed::indexed::Indexed;
+pub use tables::index::Index;
+pub use tables::indexed::Indexed;
 pub use meta::table_info::TableInfo;
 pub use meta::column_info::ColumnInfo;
 pub use meta::index_info::IndexInfo;
-pub use allocator::allocator::Allocator;
-pub use executor::table_scan::TableScanExec;
-pub use executor::memory_table_scan::MemoryTableScanExec;
-pub use executor::join::NestedLoopJoinExec;
-pub use executor::selection::SelectionExec;
-pub use executor::selector::{equal, lt, le, gt, ge};
-pub use executor::projection::ProjectionExec;
-pub use executor::aggregation::AggregationExec;
-pub use executor::aggregator::{Aggregator, AggrCount, AggrSum, AggrAvg};
+pub use allocators::allocator::Allocator;
+pub use executors::table_scan::TableScanExec;
+pub use executors::memory_table_scan::MemoryTableScanExec;
+pub use executors::join::NestedLoopJoinExec;
+pub use executors::selection::SelectionExec;
+pub use executors::selector::{equal, lt, le, gt, ge};
+pub use executors::projection::ProjectionExec;
+pub use executors::aggregation::AggregationExec;
+pub use executors::aggregator::{Aggregator, AggrCount, AggrSum, AggrAvg};
 
 fn main() {
     println!("Table on memory");

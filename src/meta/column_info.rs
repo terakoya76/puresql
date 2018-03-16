@@ -1,4 +1,4 @@
-use column::column::Column;
+use columns::column::Column;
 
 #[derive(Clone)]
 pub struct ColumnInfo {

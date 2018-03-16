@@ -1,10 +1,10 @@
 use std::collections::BTreeMap;
 use std::collections::Bound::Included;
 
+use columns::column::Column;
+use Field;
+use Tuple;
 use meta::table_info::TableInfo;
-use field::field::Field;
-use column::column::Column;
-use tuple::tuple::Tuple;
 
 pub struct MemoryTable<'t> {
     pub id: usize,

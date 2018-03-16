@@ -1,11 +1,11 @@
 use std::marker::PhantomData;
 
 // trait
-use executor::scan_exec::ScanExec;
+use ScanExec;
 
 //struct
-use tuple::tuple::Tuple;
-use field::field::Field;
+use tables::tuple::Tuple;
+use tables::field::Field;
 
 pub struct ProjectionExec<'p, 't: 'p, T: 't> {
     inputs: &'p mut T,

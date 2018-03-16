@@ -2,12 +2,12 @@ use std::marker::PhantomData;
 use std::collections::HashMap;
 
 // trait
-use executor::scan_exec::ScanExec;
+use ScanExec;
 
 // struct
-use tuple::tuple::Tuple;
-use field::field::Field;
-use executor::aggregator::Aggregator;
+use Aggregator;
+use tables::tuple::Tuple;
+use tables::field::Field;
 
 pub struct AggregationExec<'a, 't: 'a, T: 't> {
     pub group_keys: Vec<String>,

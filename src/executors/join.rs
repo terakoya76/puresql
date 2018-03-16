@@ -1,10 +1,10 @@
 use std::marker::PhantomData;
 
 // trait
-use executor::scan_exec::ScanExec;
+use ScanExec;
 
 // struct
-use tuple::tuple::Tuple;
+use tables::tuple::Tuple;
 
 pub struct NestedLoopJoinExec<'n, 't: 'n, T1: 't, T2: 't> {
     cursor: usize,

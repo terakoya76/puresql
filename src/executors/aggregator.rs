@@ -1,6 +1,6 @@
-use column::column::Column;
-use tuple::tuple::Tuple;
-use field::field::Field;
+use columns::column::Column;
+use tables::tuple::Tuple;
+use tables::field::Field;
 
 pub trait Aggregator {
     fn update(&mut self, tuple: &Tuple, columns: &Vec<Column>);

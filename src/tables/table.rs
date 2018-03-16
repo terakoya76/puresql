@@ -1,10 +1,10 @@
 use std::collections::Bound::Included;
 
-use field::field::Field;
-use column::column::Column;
-use tuple::tuple::Tuple;
-use index::index::Index;
-use indexed::indexed::Indexed;
+use columns::column::Column;
+use Field;
+use Tuple;
+use Index;
+use Indexed;
 use meta::table_info::TableInfo;
 
 // TODO: rm pk_index and generalize impl of index
