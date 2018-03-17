@@ -6,6 +6,7 @@ use Field;
 use Tuple;
 use meta::table_info::TableInfo;
 
+#[derive(Debug)]
 pub struct MemoryTable<'t> {
     pub id: usize,
     pub name: String,

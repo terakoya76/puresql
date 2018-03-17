@@ -15,7 +15,6 @@ pub use tables::tuple::Tuple;
 pub use tables::table::Table;
 pub use tables::memory_table::MemoryTable;
 pub use tables::index::Index;
-pub use tables::indexed::Indexed;
 pub use meta::table_info::TableInfo;
 pub use meta::column_info::ColumnInfo;
 pub use meta::index_info::IndexInfo;

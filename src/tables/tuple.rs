@@ -1,6 +1,6 @@
 use Field;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Tuple {
     pub fields: Vec<Field>,
 }

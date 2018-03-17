@@ -1,5 +1,5 @@
 pub mod allocator {
-    #[derive(Clone)]
+    #[derive(Debug, Clone)]
     pub struct Allocator {
         pub table_id: usize,
         pub base: usize,

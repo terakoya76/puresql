@@ -2,7 +2,7 @@ use meta::column_info::ColumnInfo;
 use meta::index_info::IndexInfo;
 use allocators::allocator::Allocator;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct TableInfo {
     pub id: usize,
     pub name: String,

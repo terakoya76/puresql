@@ -14,7 +14,7 @@ impl Clone for Box<Aggregator> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct AggrCount {
     pub result: Field,
 }
@@ -44,7 +44,7 @@ impl Aggregator for AggrCount {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct AggrSum {
     pub result: Field,
     pub column_name: String,
@@ -82,7 +82,7 @@ impl Aggregator for AggrSum {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct AggrAvg {
     pub sum: Field,
     pub iterate_num: usize,

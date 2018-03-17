@@ -7,6 +7,7 @@ use columns::range::Range;
 use tables::tuple::Tuple;
 use tables::table::Table;
 
+#[derive(Debug)]
 pub struct TableScanExec<'ts, 't: 'ts> {
     pub table: &'ts Table<'t>,
     pub name: String,

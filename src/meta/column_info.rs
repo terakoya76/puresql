@@ -1,6 +1,6 @@
 use columns::column::Column;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ColumnInfo {
     pub id: usize,
     pub name: String,

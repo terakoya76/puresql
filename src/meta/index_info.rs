@@ -1,7 +1,7 @@
 use meta::table_info::TableInfo;
 use meta::column_info::ColumnInfo;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct IndexInfo {
     pub id: usize,
     pub name: String,

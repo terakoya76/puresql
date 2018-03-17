@@ -1,3 +1,4 @@
+#[derive(Debug, Clone)]
 pub struct Range {
     pub low: usize,
     pub high: usize,

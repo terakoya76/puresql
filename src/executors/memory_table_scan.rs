@@ -7,6 +7,7 @@ use columns::range::Range;
 use tables::tuple::Tuple;
 use tables::memory_table::MemoryTable;
 
+#[derive(Debug)]
 pub struct MemoryTableScanExec<'ts, 't: 'ts> {
     pub table: &'ts MemoryTable<'t>,
     pub name: String,

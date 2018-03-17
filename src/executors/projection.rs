@@ -7,6 +7,7 @@ use ScanExec;
 use tables::tuple::Tuple;
 use tables::field::Field;
 
+#[derive(Debug)]
 pub struct ProjectionExec<'p, 't: 'p, T: 't> {
     inputs: &'p mut T,
     projectors: Vec<&'p str>,

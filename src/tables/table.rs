@@ -4,11 +4,11 @@ use columns::column::Column;
 use Field;
 use Tuple;
 use Index;
-use Indexed;
 use meta::table_info::TableInfo;
 
 // TODO: rm pk_index and generalize impl of index
 // index<T> might be usize or RID for indexed data on disk
+#[derive(Debug)]
 pub struct Table<'t> {
     pub id: usize,
     pub name: String,
@@ -67,7 +67,7 @@ impl<'t> Table<'t> {
             Some(ref idx) => {
                 match idx.tree.get(&internal_id) {
                     None => Tuple::new(vec![]),
-                    Some(indexed) => indexed.value.clone(),
+                    Some(value) => value.clone(),
                 }
             },
         }
@@ -101,8 +101,8 @@ impl<'t> Table<'t> {
         match self.pk_index {
             None => {},
             Some(ref idx) => {
-                for indexed in idx.tree.values() {
-                    indexed.value.print();
+                for value in idx.tree.values() {
+                    value.print();
                 }
             },
         }

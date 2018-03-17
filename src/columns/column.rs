@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Column {
     pub table_name: String,
     pub name: String,

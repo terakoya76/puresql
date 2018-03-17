@@ -6,6 +6,7 @@ use ScanExec;
 // struct
 use tables::tuple::Tuple;
 
+#[derive(Debug)]
 pub struct NestedLoopJoinExec<'n, 't: 'n, T1: 't, T2: 't> {
     cursor: usize,
     inner_table: &'n mut T1,
