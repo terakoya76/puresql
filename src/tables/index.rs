@@ -1,7 +1,5 @@
 use std::collections::BTreeMap;
-use std::collections::Bound::Included;
 
-use tables::tuple::Tuple;
 use meta::index_info::IndexInfo;
 
 #[derive(Debug)]

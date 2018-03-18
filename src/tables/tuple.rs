@@ -22,13 +22,7 @@ impl Tuple {
         let mut buffer: String = String::new();
         for f in &self.fields {
             buffer += "|";
-            match f.kind {
-                KIND_I64 => buffer += &f.to_string(),
-                KIND_U64 => buffer += &f.to_string(),
-                KIND_F64 => buffer += &f.to_string(),
-                KIND_STR => buffer += &f.to_string(),
-                _ => buffer += "Unsupported Data Type",
-            }
+            buffer += &f.to_string();
         }
         println!("{}", buffer);
         buffer.clear();

@@ -15,22 +15,22 @@ impl Clone for Box<Aggregator> {
 }
 
 #[derive(Debug, Clone)]
-pub struct AggrCount {
+pub struct Count {
     pub result: Field,
 }
 
-impl AggrCount {
-    pub fn new() -> Box<AggrCount> {
+impl Count {
+    pub fn new() -> Box<Count> {
         Box::new(
-            AggrCount {
+            Count {
                 result: Field::set_init(),
             }
         )
     }
 }
 
-impl Aggregator for AggrCount {
-    fn update(&mut self, tuple: &Tuple, columns: &Vec<Column>) {
+impl Aggregator for Count {
+    fn update(&mut self, _tuple: &Tuple, _columns: &Vec<Column>) {
         let next_value: Field = self.result.clone() + Field::set_u64(1);
         self.result = next_value;
     }
@@ -45,15 +45,15 @@ impl Aggregator for AggrCount {
 }
 
 #[derive(Debug, Clone)]
-pub struct AggrSum {
+pub struct Sum {
     pub result: Field,
     pub column_name: String,
 }
 
-impl AggrSum {
-    pub fn new(col_name: &str) -> Box<AggrSum> {
+impl Sum {
+    pub fn new(col_name: &str) -> Box<Sum> {
         Box::new(
-            AggrSum {
+            Sum {
                 result: Field::set_init(),
                 column_name: col_name.to_string(),
             }
@@ -61,7 +61,7 @@ impl AggrSum {
     }
 }
 
-impl Aggregator for AggrSum {
+impl Aggregator for Sum {
     fn update(&mut self, tuple: &Tuple, columns: &Vec<Column>) {
         for column in columns {
             if column.name == self.column_name {
@@ -83,16 +83,16 @@ impl Aggregator for AggrSum {
 }
 
 #[derive(Debug, Clone)]
-pub struct AggrAvg {
+pub struct Average {
     pub sum: Field,
     pub iterate_num: usize,
     pub column_name: String,
 }
 
-impl AggrAvg {
-    pub fn new(col_name: &str) -> Box<AggrAvg> {
+impl Average {
+    pub fn new(col_name: &str) -> Box<Average> {
         Box::new(
-            AggrAvg {
+            Average {
                 sum: Field::set_init(),
                 iterate_num: 0,
                 column_name: col_name.to_string(),
@@ -101,7 +101,7 @@ impl AggrAvg {
     }
 }
 
-impl Aggregator for AggrAvg {
+impl Aggregator for Average {
     fn update(&mut self, tuple: &Tuple, columns: &Vec<Column>) {
         self.iterate_num += 1;
         for column in columns {

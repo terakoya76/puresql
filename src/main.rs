@@ -26,7 +26,7 @@ pub use executors::selection::SelectionExec;
 pub use executors::selector::{equal, lt, le, gt, ge};
 pub use executors::projection::ProjectionExec;
 pub use executors::aggregation::AggregationExec;
-pub use executors::aggregator::{Aggregator, AggrCount, AggrSum, AggrAvg};
+pub use executors::aggregator::{Aggregator, Count, Sum, Average};
 
 fn main() {
     println!("Table on memory");
@@ -113,7 +113,7 @@ fn main() {
 
     println!("aggregation\n");
     {
-        let mut aggregation = AggregationExec::new(&mut m_shohin_tb_scan, vec![], vec![AggrCount::new(), AggrSum::new("price"), AggrAvg::new("price")]);
+        let mut aggregation = AggregationExec::new(&mut m_shohin_tb_scan, vec![], vec![Count::new(), Sum::new("price"), Average::new("price")]);
         loop {
             match aggregation.next() {
                 None => break,
@@ -129,7 +129,7 @@ fn main() {
 
     println!("group by aggregation\n");
     {
-        let mut grouped = AggregationExec::new(&mut m_shohin_tb_scan, vec!["price"], vec![AggrCount::new(), AggrSum::new("price"), AggrAvg::new("price")]);
+        let mut grouped = AggregationExec::new(&mut m_shohin_tb_scan, vec!["price"], vec![Count::new(), Sum::new("price"), Average::new("price")]);
         loop {
             match grouped.next() {
                 None => break,
@@ -146,10 +146,7 @@ fn main() {
 
     println!("Table with index");
     let mut shohin_info: TableInfo = TableInfo::new(&mut alloc, "shohin", vec!["shohin_id", "shohin_name", "kubun_id", "price"], vec![/* shohin_id_index_info */]);
-    let shohin_id_index_info: IndexInfo = IndexInfo::new(&mut shohin_info, vec!["shohin_id"], true);
-
-    //let mut shohin_id_index: Index = Index::new(&shohin_id_index_info);
-    //let shohin_idx: Vec<&mut Index> = vec![&mut shohin_id_index];
+    IndexInfo::new(&mut shohin_info, vec!["shohin_id"], true);
 
     let mut shohin: Table = Table::new(&mut shohin_info);
     shohin.insert(vec![Field::set_u64(1), Field::set_str("apple"), Field::set_u64(1), Field::set_u64(300)]);
@@ -161,10 +158,7 @@ fn main() {
     println!("");
 
     let mut kubun_info: TableInfo = TableInfo::new(&mut alloc, "kubun", vec!["kubun_id", "kubun_name"], vec![/* kubun_id_index_info */]);
-    let kubun_id_index_info: IndexInfo = IndexInfo::new(&mut kubun_info, vec!["kubun_id"], true);
-
-    //let mut kubun_id_index: Index = Index::new(&kubun_id_index_info);
-    //let kubun_idx: Vec<&mut Index> = vec![&mut kubun_id_index];
+    IndexInfo::new(&mut kubun_info, vec!["kubun_id"], true);
 
     let mut kubun: Table = Table::new(&mut kubun_info);
     kubun.insert(vec![Field::set_u64(1), Field::set_str("fruit")]);
@@ -236,7 +230,7 @@ fn main() {
 
     println!("aggregation\n");
     {
-        let mut aggregation = AggregationExec::new(&mut shohin_tb_scan, vec![], vec![AggrCount::new(), AggrSum::new("price"), AggrAvg::new("price")]);
+        let mut aggregation = AggregationExec::new(&mut shohin_tb_scan, vec![], vec![Count::new(), Sum::new("price"), Average::new("price")]);
         loop {
             match aggregation.next() {
                 None => break,
@@ -252,7 +246,7 @@ fn main() {
 
     println!("group by aggregation\n");
     {
-        let mut grouped = AggregationExec::new(&mut shohin_tb_scan, vec!["price"], vec![AggrCount::new(), AggrSum::new("price"), AggrAvg::new("price")]);
+        let mut grouped = AggregationExec::new(&mut shohin_tb_scan, vec!["price"], vec![Count::new(), Sum::new("price"), Average::new("price")]);
         loop {
             match grouped.next() {
                 None => break,
