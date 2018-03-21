@@ -1,3 +1,9 @@
+use std::str::Chars;
+
+use parser::token::{Token, Literal};
+use parser::span::Span;
+use parser::token_span::TokenSpan;
+
 #[derive(Debug, Clone)]
 pub struct Lexer<'c> {
     chars: Chars<'c>,
@@ -10,7 +16,7 @@ pub struct Lexer<'c> {
 }
 
 impl<'c> Lexer<'c> {
-    pub fn new(query: &str) -> Lexer<'c> {
+    pub fn new(query: &'c str) -> Lexer<'c> {
         let mut lexer: Lexer = Lexer {
             chars: query.chars(),
             last_char: None,
@@ -49,7 +55,7 @@ impl<'c> Lexer<'c> {
     pub fn scan_words(&mut self) -> String {
         let mut s: String = String::new();
         loop {
-            match self.curr_unwrap_or(' ') {
+            match self.curr_char.unwrap_or(' ') {
                 c @ 'a' ... 'z' |
                 c @ 'A' ... 'Z' |
                 c @ '0' ... '9' |
@@ -66,7 +72,7 @@ impl<'c> Lexer<'c> {
     pub fn scan_nums(&mut self) -> String {
         let mut s: String = String::new();
         loop {
-            match self.curr.unwrap_or(' ') {
+            match self.curr_char.unwrap_or(' ') {
                 c @ '0' ... '9' |
                 c @ '.' => {
                     s.push(c);
@@ -86,7 +92,7 @@ impl<'c> Lexer<'c> {
             match self.curr_char {
                 None => return Err(LexError::UnclosedQuationmark),
                 Some(c) => {
-                    match c.unwrap_or('') {
+                    match c {
                         c @ '\'' |
                         c @ '"' => break,
                         c @ _ => l.push(c),
@@ -99,29 +105,38 @@ impl<'c> Lexer<'c> {
         Ok(l)
     }
 
-    pub skip_whitespace(&mut self) {
-        while is_whitespace(self.curr_char.unwrap_or('')) {
+    pub fn next_parsable_token(&mut self) -> Result<Option<TokenSpan>, LexError> {
+        let token_span: Option<TokenSpan> = try!(self.next());
+        let is_ws: bool = match token_span {
+            None => false,
+            Some(ref ts) => {
+                match ts.token {
+                    Token::WS => true,
+                    _ => false,
+                }
+            }
+        };
+
+        if is_ws {
+            self.next()
+        } else {
+            Ok(token_span)
+        }
+    }
+
+    pub fn skip_whitespace(&mut self) {
+        while is_whitespace(self.curr_char.unwrap_or(' ')) {
             self.bump();
         }
     }
-}
 
-fn is_whitespace(c: char) -> bool {
-    match c {
-        ' ' | '\n' | '\t' => true,
-        _ => false,
-    }
-}
-
-impl<'c> Iterator for Lexer<'c> {
-    fn next(&mut self) -> Result<Option<Token>, LexError> {
-        type Item = Token;
+    pub fn next(&mut self) -> Result<Option<TokenSpan>, LexError> {
         let next_char = self.next_char.unwrap_or('\x00');
 
         self.span_start = self.curr_pos;
 
-        let curr_char = self.curr_char {
-            None => return None,
+        let curr_char = match self.curr_char {
+            None => return Ok(None),
             Some(c) => c,
         };
 
@@ -133,10 +148,10 @@ impl<'c> Iterator for Lexer<'c> {
 
             '0' ... '9' => {
                 let n = self.scan_nums();
-                if let i = n.parse::<i64>() {
+                if let Ok(i) = n.parse::<i64>() {
                     Token::Lit(Literal::Int(i))
                 } else {
-                    if let f = n.parse::<f64>() {
+                    if let Ok(f) = n.parse::<f64>() {
                         Token::Lit(Literal::Float(f))
                     } else {
                         Token::Unknown
@@ -148,8 +163,7 @@ impl<'c> Iterator for Lexer<'c> {
                 self.bump();
                 Token::Semi
             },
-
-            '.' => {
+'.' => {
                 self.bump();
                 Token::Dot
             },
@@ -231,7 +245,7 @@ impl<'c> Iterator for Lexer<'c> {
 
             _ => {
                 self.bump();
-                Token::Unknow
+                Token::Unknown
             },
         };
 
@@ -242,6 +256,13 @@ impl<'c> Iterator for Lexer<'c> {
                 end: self.curr_pos.unwrap(),
             },
         }))
+    }
+}
+
+fn is_whitespace(c: char) -> bool {
+    match c {
+        ' ' | '\n' | '\t' => true,
+        _ => false,
     }
 }
 

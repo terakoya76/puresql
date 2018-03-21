@@ -1,7 +1,7 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Word(String),
-    Lit,
+    Lit(Literal),
     Semi,
     Dot,
     Comma,
@@ -23,6 +23,7 @@ pub enum Token {
     Unknown,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum Literal {
     String(String),
     Int(i64),
@@ -30,6 +31,7 @@ pub enum Literal {
     Bool(u8),
 }
 
+/*
 impl Literal {
     pub fn into_data_src(&self) -> DataSrc {
         match self {
@@ -40,4 +42,5 @@ impl Literal {
         }
     }
 }
+*/
 
