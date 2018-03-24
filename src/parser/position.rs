@@ -1,5 +1,5 @@
 #[derive(Debug, Clone, PartialEq)]
-pub struct Span {
+pub struct Position {
     pub start: usize,
     pub end: usize,
 }

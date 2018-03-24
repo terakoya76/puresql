@@ -1,8 +1,8 @@
 use std::str::Chars;
 
 use parser::token::{Token, Literal};
-use parser::span::Span;
-use parser::token_span::TokenSpan;
+use parser::position::Position;
+use parser::token_pos::TokenPos;
 
 #[derive(Debug, Clone)]
 pub struct Lexer<'c> {
@@ -105,9 +105,9 @@ impl<'c> Lexer<'c> {
         Ok(l)
     }
 
-    pub fn next_parsable_token(&mut self) -> Result<Option<TokenSpan>, LexError> {
-        let token_span: Option<TokenSpan> = try!(self.next());
-        let is_ws: bool = match token_span {
+    pub fn next_parsable_token(&mut self) -> Result<Option<TokenPos>, LexError> {
+        let token_pos: Option<TokenPos> = try!(self.next());
+        let is_ws: bool = match token_pos {
             None => false,
             Some(ref ts) => {
                 match ts.token {
@@ -120,7 +120,7 @@ impl<'c> Lexer<'c> {
         if is_ws {
             self.next()
         } else {
-            Ok(token_span)
+            Ok(token_pos)
         }
     }
 
@@ -130,7 +130,7 @@ impl<'c> Lexer<'c> {
         }
     }
 
-    pub fn next(&mut self) -> Result<Option<TokenSpan>, LexError> {
+    pub fn next(&mut self) -> Result<Option<TokenPos>, LexError> {
         let next_char = self.next_char.unwrap_or('\x00');
 
         self.span_start = self.curr_pos;
@@ -249,9 +249,9 @@ impl<'c> Lexer<'c> {
             },
         };
 
-        Ok(Some(TokenSpan {
+        Ok(Some(TokenPos {
             token: token,
-            span: Span {
+            pos: Position {
                 start: self.span_start.unwrap(),
                 end: self.curr_pos.unwrap(),
             },

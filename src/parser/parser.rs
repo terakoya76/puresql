@@ -2,8 +2,7 @@ use std::mem::swap;
 
 use data_type::DataType;
 use parser::token::{Token, Literal};
-use parser::span::Span;
-use parser::token_span::TokenSpan;
+use parser::token_pos::TokenPos;
 use parser::lexer::{Lexer, LexError};
 use parser::keyword::Keyword;
 use parser::statement::*;
@@ -11,15 +10,14 @@ use parser::statement::*;
 #[derive(Debug)]
 pub struct Parser<'c> {
     lexer: Lexer<'c>,
-    last_token: Option<TokenSpan>,
-    curr_token: Option<TokenSpan>,
-    next_token: Option<TokenSpan>,
+    last_token: Option<TokenPos>,
+    curr_token: Option<TokenPos>,
+    next_token: Option<TokenPos>,
 }
 
 impl<'c> Parser<'c> {
     pub fn new(query: &'c str) -> Parser<'c> {
-        let lexer: Lexer = Lexer::new(query);
-        let mut parser: Parser = Parser {
+        let lexer: Lexer = Lexer::new(query); let mut parser: Parser = Parser {
             lexer: lexer,
             last_token: None,
             curr_token: None,
@@ -37,8 +35,8 @@ impl<'c> Parser<'c> {
     }
 
     pub fn double_bump(&mut self) {
-        self.bump();
-        self.bump();
+        let _ = self.bump();
+        let _ = self.bump();
     }
 
     pub fn build_ast(&mut self, stmt: Statement) -> Result<Statement, ParseError> {
@@ -51,25 +49,19 @@ impl<'c> Parser<'c> {
     }
 
     pub fn validate_datatype(&mut self) -> Result<DataType, ParseError> {
-        let mut span_start;
-        let mut span_end;
-        let mut datatype;
+        let debug_token_pos: TokenPos;
+        let datatype: String;
 
         {
-            let token_span: &TokenSpan = match self.curr_token {
+            let token_pos: &TokenPos = match self.curr_token {
                 None => return Err(ParseError::UnexepectedEoq),
                 Some(ref ts) => ts,
             };
+            debug_token_pos = token_pos.clone();
 
-            span_start = token_span.span.start;
-            span_end = token_span.span.end;
-
-            let word: &str = match token_span.token {
+            let word: &str = match token_pos.token {
                 Token::Word(ref s) => s,
-                _ => return Err(ParseError::UndefinedDatatype(Span {
-                    start: span_start,
-                    end: span_end,
-                })),
+                _ => return Err(ParseError::UndefinedDatatype(debug_token_pos)),
             };
             datatype = word.to_lowercase();
         }
@@ -90,70 +82,46 @@ impl<'c> Parser<'c> {
                         if 0 <= i && i <= (u8::max_value() as i64) {
                             i as u8
                         } else {
-                            return Err(ParseError::UnexpectedDatatype(Span {
-                                start: span_start,
-                                end: span_end,
-                            }));
+                            return Err(ParseError::UnexpectedDatatype(debug_token_pos));
                         }
                     },
-                    _ => return Err(ParseError::UnexpectedDatatype(Span {
-                        start: span_start,
-                        end: span_end,
-                    })),
+                    _ => return Err(ParseError::UnexpectedDatatype(debug_token_pos)),
                 };
                 DataType::Char(l)
             },
-            _ => return Err(ParseError::UndefinedDatatype(Span {
-                start: span_start,
-                end: span_end,
-            })),
+            _ => return Err(ParseError::UndefinedDatatype(debug_token_pos)),
         };
         Ok(found_datatype)
     }
 
     pub fn validate_number(&self) -> Result<Literal, ParseError> {
-        let token_span: &TokenSpan = match self.curr_token {
+        let token_pos: &TokenPos = match self.curr_token {
             None => return Err(ParseError::UnexepectedEoq),
             Some(ref ts) => ts,
         };
 
-        let span_start: usize = token_span.span.start;
-        let span_end: usize = token_span.span.end;
-
-        let found_number: Literal = match token_span.token {
+        let found_number: Literal = match token_pos.token {
             Token::Lit(Literal::Int(s)) => Literal::Int(s),
             Token::Lit(Literal::Float(s)) => Literal::Float(s),
-            _ => return Err(ParseError::UndefinedNumber(Span {
-                start: span_start,
-                end: span_end,
-            })),
+            _ => return Err(ParseError::UndefinedNumber(token_pos.clone())),
         };
 
         Ok(found_number)
     }
 
     pub fn validate_word(&self, allow_keyword: bool) -> Result<String, ParseError> {
-        let token_span: &TokenSpan = match self.curr_token {
+        let token_pos: &TokenPos = match self.curr_token {
             None => return Err(ParseError::UnexepectedEoq),
-            Some(ref token_span) => token_span,
+            Some(ref token_pos) => token_pos,
         };
 
-        let span_start: usize = token_span.span.start;
-        let span_end: usize = token_span.span.end;
-
-        let found_word: &str = match token_span.token {
+        let found_word: &str = match token_pos.token {
             Token::Word(ref s) => s,
-            _ => return Err(ParseError::UnexpectedToken(Span {
-                start: span_start,
-                end: span_end,
-            })),
+            _ => return Err(ParseError::UnexpectedToken(token_pos.clone())),
         };
 
         if keyword_from_str(&found_word).is_some() && !allow_keyword {
-            Err(ParseError::ReservedKeyword(Span {
-                start: span_start,
-                end: span_end,
-            }))
+            Err(ParseError::ReservedKeyword(token_pos.clone()))
         } else {
             Ok(found_word.to_string())
         }
@@ -175,18 +143,15 @@ impl<'c> Parser<'c> {
     }
 
     pub fn validate_token(&self, expected_tokens: &[Token]) -> Result<Token, ParseError> {
-        let token_span: &TokenSpan = match self.curr_token {
+        let token_pos: &TokenPos = match self.curr_token {
             None => return Err(ParseError::UnexepectedEoq),
-            Some(ref token_span) => token_span,
+            Some(ref token_pos) => token_pos,
         };
 
-        if expected_tokens.contains(&(token_span.token)) {
-            Ok(token_span.token.clone())
+        if expected_tokens.contains(&(token_pos.token)) {
+            Ok(token_pos.token.clone())
         } else {
-            Err(ParseError::UnexpectedToken(Span {
-                start: token_span.span.start,
-                end: token_span.span.end,
-            }))
+            Err(ParseError::UnexpectedToken(token_pos.clone()))
         }
     }
 
@@ -198,47 +163,35 @@ impl<'c> Parser<'c> {
     }
 
     pub fn validate_keyword(&self, expected_keywords: &[Keyword]) -> Result<Keyword, ParseError> {
-        let token_span: &TokenSpan = match self.curr_token {
+        let token_pos: &TokenPos = match self.curr_token {
             None => return Err(ParseError::UnexepectedEoq),
             Some(ref ts) => ts,
         };
 
-        let span_start: usize = token_span.span.start;
-        let span_end: usize = token_span.span.end;
-
-        let word: &str = match token_span.token {
+        let word: &str = match token_pos.token {
             Token::Word(ref s) => s,
-            _ => return Err(ParseError::UnexpectedToken(Span {
-                start: span_start,
-                end: span_end,
-            })),
+            _ => return Err(ParseError::UnexpectedToken(token_pos.clone())),
         };
 
         let found_keyword: Keyword = match keyword_from_str(&word) {
-            None => return Err(ParseError::UndefinedKeyword(Span {
-                start: span_start,
-                end: span_end,
-            })),
+            None => return Err(ParseError::UndefinedKeyword(token_pos.clone())),
             Some(keyword) => keyword,
         };
 
         if expected_keywords.contains(&found_keyword) {
             Ok(found_keyword)
         } else {
-            Err(ParseError::UnexpectedKeyword(Span {
-                start: span_start,
-                end: span_end,
-            }))
+            Err(ParseError::UnexpectedKeyword(token_pos.clone()))
         }
     }
 
     pub fn check_next_keyword(&self, expected_keywords: &[Keyword]) -> bool {
-        let token_span: &TokenSpan = match self.next_token {
+        let token_pos: &TokenPos = match self.next_token {
             None => return false,
             Some(ref ts) => ts,
         };
 
-        let keyword_opt: &str = match token_span.token {
+        let keyword_opt: &str = match token_pos.token {
             Token::Word(ref s) => s,
             _ => return false,
         };
@@ -408,16 +361,16 @@ fn keyword_from_str(string: &str) -> Option<Keyword> {
 #[derive(Debug, PartialEq)]
 pub enum ParseError {
     LexError(LexError),
-    ReservedKeyword(Span),
+    ReservedKeyword(TokenPos),
     InvalidEoq,
     UndefinedStatementError,
-    UndefinedKeyword(Span),
-    UndefinedDatatype(Span),
-    UndefinedNumber(Span),
+    UndefinedKeyword(TokenPos),
+    UndefinedDatatype(TokenPos),
+    UndefinedNumber(TokenPos),
     UnexepectedEoq,
-    UnexpectedKeyword(Span),
-    UnexpectedDatatype(Span),
-    UnexpectedToken(Span),
+    UnexpectedKeyword(TokenPos),
+    UnexpectedDatatype(TokenPos),
+    UnexpectedToken(TokenPos),
 }
 
 impl From<LexError> for ParseError {
