@@ -1,8 +1,10 @@
 mod columns;
 mod tables;
+mod data_type;
 mod meta;
 mod allocators;
 mod executors;
+mod parser;
 
 // trait
 pub use executors::scan_exec::ScanExec;
@@ -15,6 +17,7 @@ pub use tables::tuple::Tuple;
 pub use tables::table::Table;
 pub use tables::memory_table::MemoryTable;
 pub use tables::index::Index;
+pub use data_type::DataType;
 pub use meta::table_info::TableInfo;
 pub use meta::column_info::ColumnInfo;
 pub use meta::index_info::IndexInfo;
@@ -27,6 +30,8 @@ pub use executors::selector::{equal, lt, le, gt, ge};
 pub use executors::projection::ProjectionExec;
 pub use executors::aggregation::AggregationExec;
 pub use executors::aggregator::{Aggregator, Count, Sum, Average};
+pub use parser::statement::*;
+pub use parser::parser::Parser;
 
 fn main() {
     println!("Table on memory");
@@ -260,5 +265,10 @@ fn main() {
         }
         println!("Scaned\n");
     }
+
+    println!("Test Parser");
+    let mut parser: Parser = Parser::new("create table table_name ( hoge int, fuga bool, foo char(8) )");
+    let stmt = parser.parse();
+    println!("{:?}", stmt);
 }
 

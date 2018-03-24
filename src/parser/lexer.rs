@@ -38,6 +38,7 @@ impl<'c> Lexer<'c> {
         self.last_pos = self.curr_pos;
 
         match self.next_char {
+            None => {},
             Some(c) => {
                 self.curr_pos = match self.curr_pos {
                     Some(n) => Some(n + c.len_utf8()),
@@ -93,9 +94,8 @@ impl<'c> Lexer<'c> {
                 None => return Err(LexError::UnclosedQuationmark),
                 Some(c) => {
                     match c {
-                        c @ '\'' |
-                        c @ '"' => break,
-                        c @ _ => l.push(c),
+                        '\'' | '"' => break,
+                        _ => l.push(c),
                     }
                 }
             }
@@ -203,14 +203,14 @@ impl<'c> Lexer<'c> {
                 Token::LE
             },
 
-            '<' => {
-                self.bump();
-                Token::LT
-            },
-
             '<' if next_char == '>' => {
                 self.double_bump();
                 Token::NEqu
+            },
+
+            '<' => {
+                self.bump();
+                Token::LT
             },
 
             '+' => {
