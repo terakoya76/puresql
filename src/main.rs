@@ -22,6 +22,7 @@ pub use meta::table_info::TableInfo;
 pub use meta::column_info::ColumnInfo;
 pub use meta::index_info::IndexInfo;
 pub use allocators::allocator::Allocator;
+pub use executors::prepare::PrepareExec;
 pub use executors::table_scan::TableScanExec;
 pub use executors::memory_table_scan::MemoryTableScanExec;
 pub use executors::join::NestedLoopJoinExec;
@@ -37,7 +38,12 @@ fn main() {
     println!("Table on memory");
     let mut alloc: Box<Allocator> = Allocator::new(1);
 
-    let mut shohin_info: TableInfo = TableInfo::new(&mut alloc, "shohin", vec!["shohin_id", "shohin_name", "kubun_id", "price"], vec![/* IndexInfo */]);
+    let shohin_prepare: PrepareExec = PrepareExec::new("create table shohin ( shohin_id int, shohin_name char(10), kubun_id int, price int )");
+    let mut shohin_info: TableInfo = match shohin_prepare.exec() {
+        Ok(tbl_info) => tbl_info,
+        _ => return,
+    };
+
     let mut m_shohin: MemoryTable = MemoryTable::new(&mut shohin_info);
     m_shohin.insert(vec![Field::set_u64(1), Field::set_str("apple"), Field::set_u64(1), Field::set_u64(300)]);
     m_shohin.insert(vec![Field::set_u64(2), Field::set_str("orange"), Field::set_u64(1), Field::set_u64(130)]);
@@ -47,7 +53,12 @@ fn main() {
     m_shohin.print();
     println!("");
 
-    let mut kubun_info: TableInfo = TableInfo::new(&mut alloc, "kubun", vec!["kubun_id", "kubun_name"], vec![]);
+    let kubun_prepare: PrepareExec = PrepareExec::new("create table kubun ( kubun_id int, kubun_name char(10) )");
+    let mut kubun_info: TableInfo = match kubun_prepare.exec() {
+        Ok(tbl_info) => tbl_info,
+        _ => return,
+    };
+
     let mut m_kubun: MemoryTable = MemoryTable::new(&mut kubun_info);
     m_kubun.insert(vec![Field::set_u64(1), Field::set_str("fruit")]);
     m_kubun.insert(vec![Field::set_u64(2), Field::set_str("vegetable")]);
@@ -150,7 +161,11 @@ fn main() {
     }
 
     println!("Table with index");
-    let mut shohin_info: TableInfo = TableInfo::new(&mut alloc, "shohin", vec!["shohin_id", "shohin_name", "kubun_id", "price"], vec![/* shohin_id_index_info */]);
+    let shohin_prepare: PrepareExec = PrepareExec::new("create table shohin ( shohin_id int, shohin_name char(10), kubun_id int, price int )");
+    let mut shohin_info: TableInfo = match shohin_prepare.exec() {
+        Ok(tbl_info) => tbl_info,
+        _ => return,
+    };
     IndexInfo::new(&mut shohin_info, vec!["shohin_id"], true);
 
     let mut shohin: Table = Table::new(&mut shohin_info);
@@ -162,7 +177,11 @@ fn main() {
     shohin.print();
     println!("");
 
-    let mut kubun_info: TableInfo = TableInfo::new(&mut alloc, "kubun", vec!["kubun_id", "kubun_name"], vec![/* kubun_id_index_info */]);
+    let kubun_prepare: PrepareExec = PrepareExec::new("create table kubun ( kubun_id int, kubun_name char(10) )");
+    let mut kubun_info: TableInfo = match kubun_prepare.exec() {
+        Ok(tbl_info) => tbl_info,
+        _ => return,
+    };
     IndexInfo::new(&mut kubun_info, vec!["kubun_id"], true);
 
     let mut kubun: Table = Table::new(&mut kubun_info);
@@ -265,10 +284,5 @@ fn main() {
         }
         println!("Scaned\n");
     }
-
-    println!("Test Parser");
-    let mut parser: Parser = Parser::new("create table table_name ( hoge int, fuga bool, foo char(8) )");
-    let stmt = parser.parse();
-    println!("{:?}", stmt);
 }
 

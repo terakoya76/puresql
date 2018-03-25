@@ -61,11 +61,11 @@ pub enum DeleteStmt {
 #[derive(Debug, Clone, PartialEq)]
 pub struct CreateTableStmt {
     pub table_name: String,
-    pub columns: Vec<ColumnInfo>,
+    pub columns: Vec<ColumnDef>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct ColumnInfo {
+pub struct ColumnDef {
     pub name: String,
     pub datatype: DataType,
 }

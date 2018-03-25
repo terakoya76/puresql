@@ -127,7 +127,7 @@ impl<'c> Parser<'c> {
         }
     }
 
-    pub fn validate_column_info(&mut self) -> Result<ColumnInfo, ParseError> {
+    pub fn validate_column_def(&mut self) -> Result<ColumnDef, ParseError> {
         let name: String = try!(self.validate_word(true));
         try!(self.bump());
         let dtype: DataType = try!(self.validate_datatype());
@@ -136,7 +136,7 @@ impl<'c> Parser<'c> {
             //try!(self.bump());
         }
 
-        Ok(ColumnInfo {
+        Ok(ColumnDef {
             name: name,
             datatype: dtype,
         })
@@ -286,12 +286,12 @@ impl<'c> Parser<'c> {
         Ok(stmt)
     }
 
-    pub fn parse_create_columns(&mut self) -> Result<Vec<ColumnInfo>, ParseError> {
+    pub fn parse_create_columns(&mut self) -> Result<Vec<ColumnDef>, ParseError> {
         try!(self.bump());
-        let mut columns: Vec<ColumnInfo> = Vec::new();
+        let mut columns: Vec<ColumnDef> = Vec::new();
 
         while !self.validate_token(&[Token::ClPar]).is_ok() {
-            columns.push(try!(self.validate_column_info()));
+            columns.push(try!(self.validate_column_def()));
             try!(self.bump());
             match try!(self.validate_token(&[Token::Comma, Token::ClPar])) {
                 Token::Comma => try!(self.bump()),

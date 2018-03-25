@@ -12,26 +12,6 @@ pub struct TableInfo {
 }
 
 impl TableInfo {
-    pub fn new(alloc: &mut Box<Allocator>, name: &str, column_names: Vec<&str>, indices: Vec<IndexInfo>) -> TableInfo {
-        let table_id: usize = alloc.base;
-        alloc.increament();
-
-        let mut columns: Vec<ColumnInfo> = Vec::new();
-        for (i, column_name) in column_names.iter().enumerate() {
-            columns.push(ColumnInfo::new(column_name, i));
-        }
-
-        let alloc: Box<Allocator> = Allocator::new(table_id);
-
-        TableInfo {
-            id: table_id,
-            name: name.to_string(),
-            columns: columns,
-            indices: indices,
-            next_record_id: alloc,
-        }
-    }
-
     pub fn find_column_infos_by_names(&self, column_names: &Vec<&str>) -> Vec<ColumnInfo> {
         let mut columns: Vec<ColumnInfo> = Vec::new();
         for column_info in &self.columns {
