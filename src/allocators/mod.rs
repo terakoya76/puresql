@@ -15,7 +15,7 @@ pub mod allocator {
             )
         }
 
-        pub fn increament(&mut self) {
+        pub fn increment(&mut self) {
             self.base += 1;
         }
     }

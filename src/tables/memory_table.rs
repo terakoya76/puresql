@@ -37,7 +37,7 @@ impl<'t> MemoryTable<'t> {
         if !self.tree.contains_key(&internal_id) {
             let tuple: Tuple = Tuple::new(fields);
             &mut self.tree.insert(internal_id, tuple);
-            &mut self.meta.next_record_id.increament();
+            &mut self.meta.next_record_id.increment();
         }
     }
 

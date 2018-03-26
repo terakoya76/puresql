@@ -3,8 +3,7 @@ use std::mem::swap;
 use data_type::DataType;
 use parser::token::{Token, Literal};
 use parser::token_pos::TokenPos;
-use parser::lexer::{Lexer, LexError};
-use parser::keyword::Keyword;
+use parser::lexer::{Lexer, LexError}; use parser::keyword::Keyword;
 use parser::statement::*;
 
 #[derive(Debug)]
@@ -94,21 +93,6 @@ impl<'c> Parser<'c> {
         Ok(found_datatype)
     }
 
-    pub fn validate_number(&self) -> Result<Literal, ParseError> {
-        let token_pos: &TokenPos = match self.curr_token {
-            None => return Err(ParseError::UnexepectedEoq),
-            Some(ref ts) => ts,
-        };
-
-        let found_number: Literal = match token_pos.token {
-            Token::Lit(Literal::Int(s)) => Literal::Int(s),
-            Token::Lit(Literal::Float(s)) => Literal::Float(s),
-            _ => return Err(ParseError::UndefinedNumber(token_pos.clone())),
-        };
-
-        Ok(found_number)
-    }
-
     pub fn validate_word(&self, allow_keyword: bool) -> Result<String, ParseError> {
         let token_pos: &TokenPos = match self.curr_token {
             None => return Err(ParseError::UnexepectedEoq),
@@ -125,6 +109,43 @@ impl<'c> Parser<'c> {
         } else {
             Ok(found_word.to_string())
         }
+    }
+
+    pub fn validate_number(&self) -> Result<Literal, ParseError> {
+        let token_pos: &TokenPos = match self.curr_token {
+            None => return Err(ParseError::UnexepectedEoq),
+            Some(ref ts) => ts,
+        };
+
+        let found_number: Literal = match token_pos.token {
+            Token::Lit(Literal::Int(s)) => Literal::Int(s),
+            Token::Lit(Literal::Float(s)) => Literal::Float(s),
+            _ => return Err(ParseError::UndefinedNumber(token_pos.clone())),
+        };
+
+        Ok(found_number)
+    }
+
+    pub fn validate_literal(&self) -> Result<Literal, ParseError> {
+        let token_pos: &TokenPos = match self.curr_token {
+            None => return Err(ParseError::UnexepectedEoq),
+            Some(ref ts) => ts,
+        };
+
+        let found_lit: Literal = match token_pos.token {
+            Token::Word(ref s) => {
+                let lower_str: String = s.to_lowercase();
+                match &lower_str[..] {
+                    "true" => Literal::Bool(1),
+                    "false" => Literal::Bool(0),
+                    _ => return Err(ParseError::UnexpectedToken(token_pos.clone())),
+                }
+            },
+            Token::Lit(ref l) => l.clone(),
+            _ => return Err(ParseError::UnexpectedToken(token_pos.clone())),
+        };
+
+        Ok(found_lit)
     }
 
     pub fn validate_column_def(&mut self) -> Result<ColumnDef, ParseError> {
@@ -245,12 +266,10 @@ impl<'c> Parser<'c> {
                 Ok(try!(self.build_ast(stmt)))
             },
             */
-            /*
             Keyword::Insert => {
                 let stmt: Statement = Statement::DML(DML::Insert(try!(self.parse_insert_stmt())));
                 Ok(try!(self.build_ast(stmt)))
             },
-            */
             /*
             Keyword::Delete => {
                 let stmt: Statement = Statement::DML(DML::Delete(try!(self.parse_delete_stmt())));
@@ -299,6 +318,68 @@ impl<'c> Parser<'c> {
             }
         }
         Ok(columns)
+    }
+
+    pub fn parse_insert_stmt(&mut self) -> Result<InsertStmt, ParseError> {
+        try!(self.bump());
+        try!(self.validate_keyword(&[Keyword::Into]));
+
+        try!(self.bump());
+        let stmt: InsertStmt = InsertStmt {
+            table_name: try!(self.validate_word(false)),
+            column_names: try!(self.parse_insert_columns()),
+            values: try!(self.parse_insert_values()),
+        };
+
+        if stmt.column_names.len() != stmt.values.len() {
+            return Err(ParseError::MissmatchColumnNumber);
+        }
+        Ok(stmt)
+    }
+
+    pub fn parse_insert_columns(&mut self) -> Result<Vec<String>, ParseError> {
+        try!(self.bump());
+        try!(self.validate_token(&[Token::OpPar]));
+
+        let mut column_names: Vec<String> = Vec::new();
+        try!(self.bump());
+        while !self.validate_token(&[Token::ClPar]).is_ok() {
+            column_names.push(try!(self.validate_word(true)));
+            try!(self.bump());
+            match try!(self.validate_token(&[Token::Comma, Token::ClPar])) {
+                Token::Comma => try!(self.bump()),
+                _ => (),
+            }
+        }
+
+        match column_names.len() {
+            0 => Err(ParseError::MissmatchColumnNumber),
+            _ => Ok(column_names)
+        }
+    }
+
+    pub fn parse_insert_values(&mut self) -> Result<Vec<Literal>, ParseError> {
+        try!(self.bump());
+        try!(self.validate_keyword(&[Keyword::Values]));
+
+        try!(self.bump());
+        try!(self.validate_token(&[Token::OpPar]));
+
+        let mut values: Vec<Literal> = Vec::new();
+        try!(self.bump());
+        while !self.validate_token(&[Token::ClPar]).is_ok() {
+            values.push(try!(self.validate_literal()));
+            try!(self.bump());
+            match try!(self.validate_token(&[Token::Comma, Token::ClPar])) {
+                Token::Comma => try!(self.bump()),
+                _ => (),
+            }
+        }
+
+        match values.len() {
+            0 => Err(ParseError::MissmatchColumnNumber),
+            _ => Ok(values),
+        }
     }
 }
 
@@ -371,6 +452,7 @@ pub enum ParseError {
     UnexpectedKeyword(TokenPos),
     UnexpectedDatatype(TokenPos),
     UnexpectedToken(TokenPos),
+    MissmatchColumnNumber,
 }
 
 impl From<LexError> for ParseError {

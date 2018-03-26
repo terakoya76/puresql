@@ -58,7 +58,7 @@ impl<'t> Table<'t> {
         //    &mut index.insert(internal_id, Tuple::new(fields.clone()));
         //}
 
-        &mut self.meta.next_record_id.increament();
+        &mut self.meta.next_record_id.increment();
     }
 
     pub fn get_tuple(&self, internal_id: usize) -> Tuple {

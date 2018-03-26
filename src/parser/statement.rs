@@ -1,4 +1,5 @@
 use data_type::DataType;
+use parser::token::Literal;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Statement {
@@ -51,7 +52,10 @@ pub enum UpdateStmt {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum InsertStmt {
+pub struct InsertStmt {
+    pub table_name: String,
+    pub column_names: Vec<String>,
+    pub values: Vec<Literal>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
