@@ -14,8 +14,7 @@ pub struct Parser<'c> {
     next_token: Option<TokenPos>,
 }
 
-impl<'c> Parser<'c> {
-    pub fn new(query: &'c str) -> Parser<'c> {
+impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         let lexer: Lexer = Lexer::new(query); let mut parser: Parser = Parser {
             lexer: lexer,
             last_token: None,

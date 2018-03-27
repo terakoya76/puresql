@@ -1,3 +1,4 @@
+mod client;
 mod database;
 mod context;
 mod columns;
@@ -12,6 +13,7 @@ mod parser;
 pub use executors::scan_exec::ScanExec;
 
 // struct
+pub use client::Client;
 pub use database::Database;
 pub use context::Context;
 pub use columns::column::Column;
@@ -26,7 +28,6 @@ pub use meta::table_info::TableInfo;
 pub use meta::column_info::ColumnInfo;
 pub use meta::index_info::IndexInfo;
 pub use allocators::allocator::Allocator;
-pub use executors::prepare::PrepareExec;
 pub use executors::table_scan::TableScanExec;
 pub use executors::memory_table_scan::MemoryTableScanExec;
 pub use executors::join::NestedLoopJoinExec;
@@ -45,21 +46,21 @@ fn main() {
         tables: Vec::new(),
     };
 
-    let mut ctx: Context = Context {
+    let ctx: Context = Context {
         db: Some(db),
         table_id_alloc: Allocator::new(1),
     };
 
+    let mut client: Client = Client::new(ctx);
+
     println!("Table on memory");
     let mut alloc: Box<Allocator> = Allocator::new(1);
 
-    let shohin_prepare: PrepareExec = PrepareExec::new("create table shohin ( shohin_id int, shohin_name char(10), kubun_id int, price int )");
-    shohin_prepare.exec(&mut ctx);
-    let shohin_info: &mut TableInfo = &mut ctx.db.clone().unwrap().tables[0];
+    client.handle_query("create table shohin ( shohin_id int, shohin_name char(10), kubun_id int, price int )");
+    let shohin_info: &mut TableInfo = &mut client.ctx.db.clone().unwrap().tables[0];
 
     let mut m_shohin: MemoryTable = MemoryTable::new(shohin_info);
-    let p = PrepareExec::new("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 1, apple, 1, 300 )");
-    p.exec(&mut ctx);
+    client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 1, 'apple', 1, 300 )");
 
     m_shohin.insert(vec![Field::set_u64(1), Field::set_str("apple"), Field::set_u64(1), Field::set_u64(300)]);
     m_shohin.insert(vec![Field::set_u64(2), Field::set_str("orange"), Field::set_u64(1), Field::set_u64(130)]);
@@ -69,9 +70,8 @@ fn main() {
     m_shohin.print();
     println!("");
 
-    let kubun_prepare: PrepareExec = PrepareExec::new("create table kubun ( kubun_id int, kubun_name char(10) )");
-    kubun_prepare.exec(&mut ctx);
-    let kubun_info: &mut TableInfo = &mut ctx.db.clone().unwrap().tables[1];
+    client.handle_query("create table kubun ( kubun_id int, kubun_name char(10) )");
+    let kubun_info: &mut TableInfo = &mut client.ctx.db.clone().unwrap().tables[1];
 
     let mut m_kubun: MemoryTable = MemoryTable::new(kubun_info);
     m_kubun.insert(vec![Field::set_u64(1), Field::set_str("fruit")]);
@@ -176,7 +176,7 @@ fn main() {
 
     /*
     println!("Table with index");
-    let shohin_prepare: PrepareExec = PrepareExec::new("create table shohin ( shohin_id int, shohin_name char(10), kubun_id int, price int )");
+    let shohin_prepare: Client = Client::new("create table shohin ( shohin_id int, shohin_name char(10), kubun_id int, price int )");
     let mut shohin_info: TableInfo = match shohin_prepare.exec() {
         Ok(tbl_info) => tbl_info,
         _ => return,
@@ -192,7 +192,7 @@ fn main() {
     shohin.print();
     println!("");
 
-    let kubun_prepare: PrepareExec = PrepareExec::new("create table kubun ( kubun_id int, kubun_name char(10) )");
+    let kubun_prepare: Client = Client::new("create table kubun ( kubun_id int, kubun_name char(10) )");
     let mut kubun_info: TableInfo = match kubun_prepare.exec() {
         Ok(tbl_info) => tbl_info,
         _ => return,

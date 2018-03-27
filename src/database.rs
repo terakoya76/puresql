@@ -7,3 +7,9 @@ pub struct Database {
     pub tables: Vec<TableInfo>,
 }
 
+impl Database {
+    pub fn add_table(&mut self, table_info: TableInfo) {
+        self.tables.push(table_info);
+    }
+}
+
