@@ -9,7 +9,7 @@ pub const KIND_U64: usize = 2;
 pub const KIND_F64: usize = 3;
 pub const KIND_STR: usize = 4;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Field {
     pub kind: usize,
     pub i: Option<i64>,

@@ -1,6 +1,10 @@
+use bincode::{serialize, deserialize_from};
+
+use std::io::Read;
+
 use Field;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tuple {
     pub fields: Vec<Field>,
 }
@@ -18,6 +22,20 @@ impl Tuple {
         Tuple::new(fields)
     }
 
+    pub fn encode(&self) -> Result<Vec<u8>, BinaryError> {
+        match serialize(&self) {
+            Ok(bin) => Ok(bin),
+            _ => Err(BinaryError::EncodeError),
+        }
+    }
+
+    pub fn decode<R: Read>(reader: R) -> Result<Tuple, BinaryError> {
+        match deserialize_from(reader) {
+            Ok(tuple) => Ok(tuple),
+            _ => Err(BinaryError::DecodeError),
+        }
+    }
+
     pub fn print(&self) {
         let mut buffer: String = String::new();
         for f in &self.fields {
@@ -27,5 +45,10 @@ impl Tuple {
         println!("{}", buffer);
         buffer.clear();
     }
+}
+
+pub enum BinaryError {
+    EncodeError,
+    DecodeError,
 }
 
