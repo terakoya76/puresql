@@ -9,8 +9,7 @@ use tables::memory_table::MemoryTable;
 
 #[derive(Debug)]
 pub struct MemoryTableScanExec<'ts, 't: 'ts> {
-    pub table: &'ts MemoryTable<'t>,
-    pub name: String,
+    pub table: &'ts mut MemoryTable<'t>,
     pub ranges: Vec<Range>,
     pub cursor: usize,
     pub seek_handle: usize,
@@ -18,14 +17,14 @@ pub struct MemoryTableScanExec<'ts, 't: 'ts> {
 }
 
 impl<'ts, 't> MemoryTableScanExec<'ts, 't> {
-    pub fn new(table: &'ts MemoryTable<'t>, name: &str, ranges: Vec<Range>) -> MemoryTableScanExec<'ts, 't> {
+    pub fn new(table: &'ts mut MemoryTable<'t>, ranges: Vec<Range>) -> MemoryTableScanExec<'ts, 't> {
+        let columns: Vec<Column> = table.columns.iter().map(|c| c.clone()).collect();
         MemoryTableScanExec {
             table: table,
-            name: name.to_string(),
             ranges: ranges,
             cursor: 0,
             seek_handle: 0,
-            columns: table.columns.iter().map(|c| c.clone()).collect(),
+            columns: columns,
         }
     }
 }
@@ -35,7 +34,7 @@ impl<'ts, 't> ScanExec for MemoryTableScanExec<'ts, 't> {
         self.columns.clone()
     }
 
-    fn get_tuple(&self, handle: usize) -> Tuple {
+    fn get_tuple(&mut self, handle: usize) -> Tuple {
         self.table.get_tuple(handle)
     }
 

@@ -1,4 +1,4 @@
-use bincode::{serialize, deserialize_from};
+use bincode::{serialize, deserialize};
 
 use std::io::Read;
 
@@ -29,8 +29,8 @@ impl Tuple {
         }
     }
 
-    pub fn decode<R: Read>(reader: R) -> Result<Tuple, BinaryError> {
-        match deserialize_from(reader) {
+    pub fn decode(bytes: &[u8]) -> Result<Tuple, BinaryError> {
+        match deserialize(bytes) {
             Ok(tuple) => Ok(tuple),
             _ => Err(BinaryError::DecodeError),
         }

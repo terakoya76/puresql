@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::collections::Bound::Included;
 
+use storage::b_tree::BTree;
 use columns::column::Column;
 use Field;
 use Tuple;
@@ -11,55 +12,66 @@ pub struct MemoryTable<'t> {
     pub id: usize,
     pub name: String,
     pub columns: Vec<Column>,
-    pub tree: BTreeMap<usize, Tuple>,
+    pub tree: BTree,
     pub meta: &'t mut TableInfo,
 }
 
 impl<'t> MemoryTable<'t> {
-    pub fn new(meta: &'t mut TableInfo) -> MemoryTable<'t> {
+    pub fn new(meta: &'t mut TableInfo) -> Result<MemoryTable<'t>, ()> {
         let mut columns: Vec<Column> = Vec::new();
         for column_info in &meta.columns {
             columns.push(column_info.to_column(&meta.name));
         }
 
-        MemoryTable {
+        let file_path: String = meta.get_bin_path();
+        let btree: BTree = match BTree::new(&file_path) {
+            Ok(btree) => btree,
+            _ => return Err(()),
+        };
+
+        Ok(MemoryTable {
             id: meta.id,
             name: meta.name.clone(),
             columns: columns,
-            tree: BTreeMap::new(),
+            tree: btree,
             meta: meta,
-        }
+        })
     }
 
     // TODO: IMPL some response as API
     pub fn insert(&mut self, fields: Vec<Field>) {
-        let internal_id: usize = self.meta.next_record_id.base;
-        if !self.tree.contains_key(&internal_id) {
-            let tuple: Tuple = Tuple::new(fields);
-            &mut self.tree.insert(internal_id, tuple);
-            &mut self.meta.next_record_id.increment();
-        }
+        let record_id = self.meta.next_record_id.base;
+        let tuple: Tuple = Tuple::new(fields);
+        let encoded: Vec<u8> = match tuple.encode() {
+            Ok(bytes) => bytes,
+            _ => return (),
+        };
+        &mut self.tree.insert(record_id, &encoded);
+        &mut self.meta.next_record_id.increment();
     }
 
-    pub fn get_tuple(&self, internal_id: usize) -> Tuple {
-        match self.tree.get(&internal_id) {
-            None => Tuple::new(vec![]),
-            Some(tuple) => tuple.clone(),
+    pub fn get_tuple(&mut self, internal_id: usize) -> Tuple {
+        let mut buf: Vec<u8> = self.tree.get_record(internal_id);
+        match Tuple::decode(&mut buf) {
+            Ok(tuple) => tuple,
+            _ => Tuple::new(vec![]),
         }
     }
 
     pub fn seek(&self, current_handle: usize) -> Option<usize> {
-        let offset: usize = self.tree.len();
+        let offset: usize = self.tree.tree.len();
         if current_handle > offset {
             return None;
         }
-        match self.tree.range((Included(&current_handle), Included(&offset))).next() {
+
+        match self.tree.tree.range((Included(&current_handle), Included(&offset))).next() {
             None => self.seek(current_handle+1),
             Some(node) => Some(node.0.clone()),
         }
     }
 
-    pub fn print(&self) {
+    /*
+    pub fn print(&mut self) {
         let mut col_buffer: String = String::new();
         for col in &self.columns {
             col_buffer += "|";
@@ -67,9 +79,10 @@ impl<'t> MemoryTable<'t> {
         }
         println!("{}", col_buffer);
 
-        for tuple in self.tree.values() {
-            tuple.print();
+        for rid in self.tree.tree.keys() {
+            self.get_tuple(rid.clone() as usize).print();
         }
     }
+    */
 }
 

@@ -35,7 +35,7 @@ impl<'ts, 't> ScanExec for TableScanExec<'ts, 't> {
         self.columns.clone()
     }
 
-    fn get_tuple(&self, handle: usize) -> Tuple {
+    fn get_tuple(&mut self, handle: usize) -> Tuple {
         self.table.get_tuple(handle)
     }
 

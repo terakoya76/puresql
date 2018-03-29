@@ -6,6 +6,7 @@ extern crate serde;
 mod client;
 mod database;
 mod context;
+mod storage;
 mod columns;
 mod tables;
 mod data_type;
@@ -21,6 +22,7 @@ pub use executors::scan_exec::ScanExec;
 pub use client::Client;
 pub use database::Database;
 pub use context::Context;
+pub use storage::b_tree::BTree;
 pub use columns::column::Column;
 pub use columns::range::Range;
 pub use tables::field::Field;
@@ -64,7 +66,7 @@ fn main() {
     client.handle_query("create table shohin ( shohin_id int, shohin_name char(10), kubun_id int, price int )");
     let shohin_info: &mut TableInfo = &mut client.ctx.db.clone().unwrap().tables[0];
 
-    let mut m_shohin: MemoryTable = MemoryTable::new(shohin_info);
+    let mut m_shohin: MemoryTable = MemoryTable::new(shohin_info).unwrap();
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 1, 'apple', 1, 300 )");
 
     m_shohin.insert(vec![Field::set_u64(1), Field::set_str("apple"), Field::set_u64(1), Field::set_u64(300)]);
@@ -72,20 +74,20 @@ fn main() {
     m_shohin.insert(vec![Field::set_u64(3), Field::set_str("cabbage"), Field::set_u64(2), Field::set_u64(200)]);
     m_shohin.insert(vec![Field::set_u64(4), Field::set_str("sea weed"), Field::set_u64(5), Field::set_u64(250)]);
     m_shohin.insert(vec![Field::set_u64(5), Field::set_str("mushroom"), Field::set_u64(3), Field::set_u64(100)]);
-    m_shohin.print();
+    //m_shohin.print();
     println!("");
 
     client.handle_query("create table kubun ( kubun_id int, kubun_name char(10) )");
     let kubun_info: &mut TableInfo = &mut client.ctx.db.clone().unwrap().tables[1];
 
-    let mut m_kubun: MemoryTable = MemoryTable::new(kubun_info);
+    let mut m_kubun: MemoryTable = MemoryTable::new(kubun_info).unwrap();
     m_kubun.insert(vec![Field::set_u64(1), Field::set_str("fruit")]);
     m_kubun.insert(vec![Field::set_u64(2), Field::set_str("vegetable")]);
-    m_kubun.print();
+    //m_kubun.print();
     println!("");
 
     println!("table scan");
-    let mut m_shohin_tb_scan: MemoryTableScanExec = MemoryTableScanExec::new(&m_shohin, &m_shohin.name, vec![Range::new(0, 10)]);
+    let mut m_shohin_tb_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut m_shohin, vec![Range::new(0, 10)]);
 
     {
         loop {
@@ -98,7 +100,7 @@ fn main() {
     }
 
     println!("joined table scan");
-    let mut m_kubun_tb_scan: MemoryTableScanExec = MemoryTableScanExec::new(&m_kubun, &m_kubun.name, vec![Range::new(0, 10)]);
+    let mut m_kubun_tb_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut m_kubun, vec![Range::new(0, 10)]);
 
     {
         let mut join_exec: NestedLoopJoinExec<MemoryTableScanExec, MemoryTableScanExec> = NestedLoopJoinExec::new(&mut m_shohin_tb_scan, &mut m_kubun_tb_scan);
