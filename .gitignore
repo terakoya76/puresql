@@ -1,5 +1,9 @@
 /swp/
 src/*.rs.swp
+src/*/*.rs.swp
+
+/dump file/
+*.txt
 
 /target/
 **/*.rs.bk
