@@ -1,7 +1,8 @@
-use std::string::String;
-use std::cmp::Ordering;
+use std::string::String; use std::cmp::Ordering;
 use std::ops::Add;
 use std::ops::Div;
+
+use parser::token::Literal;
 
 pub const INIT:     usize = 0;
 pub const KIND_I64: usize = 1;
@@ -26,6 +27,15 @@ impl Field {
             u: None,
             f: None,
             s: None,
+        }
+    }
+
+    pub fn from_literal(lit: Literal) -> Field {
+        match lit {
+            Literal::Int(i) => Self::set_i64(i),
+            Literal::Float(f) => Self::set_f64(f),
+            Literal::String(s) => Self::set_str(&s),
+            _ => Self::set_init(),
         }
     }
 

@@ -1,7 +1,7 @@
 use context::Context;
 use meta::table_info::TableInfo;
 use meta::column_info::ColumnInfo;
-
+use tables::field::Field;
 use allocators::allocator::Allocator;
 
 use parser::statement::*;
@@ -42,7 +42,7 @@ pub fn exec_create(ctx: &mut Context, stmt: CreateStmt) -> Result<(), ClientErro
 }
 
 pub fn create_table_stmt(ctx: &mut Context, stmt: CreateTableStmt) -> Result<(), ClientError> {
-    let columns = stmt.columns.into_iter().enumerate().map(|(i, col)| ColumnInfo {
+    let columns: Vec<ColumnInfo> = stmt.columns.into_iter().enumerate().map(|(i, col)| ColumnInfo {
         name: col.name,
         dtype: col.datatype,
         offset: i,
@@ -73,8 +73,21 @@ pub fn exec_dml(ctx: &mut Context, stmt: DML) -> Result<(), ClientError> {
 }
 
 pub fn exec_insert(ctx: &mut Context, stmt: InsertStmt) -> Result<(), ClientError> {
-    println!("{:?}", stmt);
-    Ok(())
+    let mut fields: Vec<Field> = Vec::new();
+    let literals = stmt.values;
+    for lit in literals {
+        fields.push(Field::from_literal(lit));
+    }
+
+    match ctx.db {
+        None => Err(ClientError::BuildExecutorError),
+        Some(ref mut db) => {
+            match db.load_table(&stmt.table_name) {
+                Ok(ref mut mem_tbl) => Ok(mem_tbl.insert(fields)),
+                _ => Err(ClientError::BuildExecutorError),
+            }
+        },
+    }
 }
 
 #[derive(Debug, PartialEq)]

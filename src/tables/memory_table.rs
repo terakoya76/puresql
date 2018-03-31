@@ -79,8 +79,8 @@ impl<'t> MemoryTable<'t> {
         }
         println!("{}", col_buffer);
 
-        for rid in self.tree.tree.keys() {
-            self.get_tuple(rid.clone() as usize).print();
+        for r_addr in &self.tree.tree {
+            &mut self.get_tuple(r_addr.0.clone()).print();
         }
     }
     */

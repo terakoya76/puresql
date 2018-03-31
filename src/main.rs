@@ -3,6 +3,8 @@ extern crate bincode;
 extern crate serde_derive;
 extern crate serde;
 
+use std::collections::HashMap;
+
 mod client;
 mod database;
 mod context;
@@ -50,7 +52,7 @@ fn main() {
     let db: Database = Database {
         id: 1,
         name: "test".to_string(),
-        tables: Vec::new(),
+        tables: HashMap::new(),
     };
 
     let ctx: Context = Context {
@@ -64,28 +66,21 @@ fn main() {
     let mut alloc: Box<Allocator> = Allocator::new(1);
 
     client.handle_query("create table shohin ( shohin_id int, shohin_name char(10), kubun_id int, price int )");
-    let shohin_info: &mut TableInfo = &mut client.ctx.db.clone().unwrap().tables[0];
 
-    let mut m_shohin: MemoryTable = MemoryTable::new(shohin_info).unwrap();
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 1, 'apple', 1, 300 )");
-
-    m_shohin.insert(vec![Field::set_u64(1), Field::set_str("apple"), Field::set_u64(1), Field::set_u64(300)]);
-    m_shohin.insert(vec![Field::set_u64(2), Field::set_str("orange"), Field::set_u64(1), Field::set_u64(130)]);
-    m_shohin.insert(vec![Field::set_u64(3), Field::set_str("cabbage"), Field::set_u64(2), Field::set_u64(200)]);
-    m_shohin.insert(vec![Field::set_u64(4), Field::set_str("sea weed"), Field::set_u64(5), Field::set_u64(250)]);
-    m_shohin.insert(vec![Field::set_u64(5), Field::set_str("mushroom"), Field::set_u64(3), Field::set_u64(100)]);
-    //m_shohin.print();
+    client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 2, 'orange', 1, 130)");
+    client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 3, 'cabbage', 2, 200 )");
+    client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 4, 'sea weed', 5, 250)");
+    client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 5, 'mushroom', 3, 100 )");
     println!("");
 
     client.handle_query("create table kubun ( kubun_id int, kubun_name char(10) )");
-    let kubun_info: &mut TableInfo = &mut client.ctx.db.clone().unwrap().tables[1];
 
-    let mut m_kubun: MemoryTable = MemoryTable::new(kubun_info).unwrap();
-    m_kubun.insert(vec![Field::set_u64(1), Field::set_str("fruit")]);
-    m_kubun.insert(vec![Field::set_u64(2), Field::set_str("vegetable")]);
-    //m_kubun.print();
+    client.handle_query("insert into kubun ( kubun_id, kubun_name) values ( 1, 'fruit' )");
+    client.handle_query("insert into kubun ( kubun_id, kubun_name) values ( 2, 'vegetable' )");
     println!("");
 
+    /*
     println!("table scan");
     let mut m_shohin_tb_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut m_shohin, vec![Range::new(0, 10)]);
 
@@ -306,6 +301,7 @@ fn main() {
         }
         println!("Scaned\n");
     }
+    */
     */
 }
 

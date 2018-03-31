@@ -1,5 +1,6 @@
 use database::Database;
 use allocators::allocator::Allocator;
+use tables::memory_table::MemoryTable;
 
 #[derive(Debug, Clone)]
 pub struct Context {
