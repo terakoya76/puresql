@@ -163,7 +163,8 @@ impl<'c> Lexer<'c> {
                 self.bump();
                 Token::Semi
             },
-'.' => {
+
+            '.' => {
                 self.bump();
                 Token::Dot
             },

@@ -1,31 +1,50 @@
-use bincode::serialize;
+use bincode::{serialize, deserialize};
 
 use std::io::prelude::*;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write, SeekFrom, Error};
 use std::collections::BTreeMap;
 
-use tables::tuple::Tuple;
-
 #[derive(Debug)]
 pub struct BTree {
     pub tree: BTreeMap<usize, RecordAddress>,
-    pub file: File,
-    pub cursor: u64,
+    pub file_path: String,
+    pub datus: File,
 }
 
 impl BTree {
     pub fn new(file_path: &str) -> Result<BTree, Error> {
-        let file: File = try!(OpenOptions::new()
+        let mut datus_path: String = file_path.to_string();
+        datus_path.push_str(".datus");
+        let datus: File = try!(OpenOptions::new()
                                 .read(true)
                                 .write(true)
                                 .create(true)
-                                .open(file_path));
+                                .open(datus_path));
+
+        let mut file_path: String = file_path.to_string();
+        file_path.push_str(".btree");
+
+        let mut buf: Vec<u8> = Vec::new();
+        let mut btree_dump: File = try!(OpenOptions::new()
+                                                .read(true)
+                                                .write(true)
+                                                .create(true)
+                                                .open(&file_path));
+        btree_dump.seek(SeekFrom::Start(0));
+        btree_dump.read_to_end(&mut buf);
+        let btree: BTreeMap<usize, RecordAddress> = match deserialize(&buf) {
+            Ok(btree) => btree,
+            Err(e) => {
+                println!("{:?}", e);
+                BTreeMap::new()
+            },
+        };
 
         Ok(BTree {
-            tree: BTreeMap::new(),
-            file: file,
-            cursor: 0,
+            tree: btree,
+            file_path: file_path,
+            datus: datus,
         })
     }
 
@@ -34,42 +53,75 @@ impl BTree {
             return ();
         }
 
-        match self.file.write(data) {
-            Ok(size) => {
+        let offset = match self.datus.seek(SeekFrom::End(0)) {
+            Ok(offset) => offset,
+            Err(e) => {
+                println!("{:?}", e);
+                return ();
+            },
+        };
+
+        match self.datus.write_all(data) {
+            Ok(_void) => {
                 let r_addr: RecordAddress = RecordAddress {
-                    addr: self.cursor,
-                    size: size as u64,
+                    addr: offset,
+                    size: data.len().clone() as u64,
                 };
                 &mut self.tree.insert(record_id, r_addr);
-                self.cursor += size as u64;
             },
-            _ => {},
+            Err(e) => println!("{:?}", e),
         }
     }
 
     pub fn get_record(&mut self, record_id: usize) -> Vec<u8> {
         match self.tree.get(&record_id) {
-            None => {
-                println!("not found");
-                Vec::new()
-            },
+            None => Vec::new(),
             Some(r_addr) => {
                 let mut buf: Vec<u8> = vec![0; r_addr.size as usize];
-                self.file.seek(SeekFrom::Start(r_addr.addr));
-                self.file.read_exact(&mut buf);
+                self.datus.seek(SeekFrom::Start(r_addr.addr));
+                self.datus.read_exact(&mut buf);
                 buf
             },
         }
     }
 }
 
-pub fn gen_blank_tuple() -> Tuple {
-    Tuple::new(vec![])
+impl Drop for BTree {
+    fn drop(&mut self) {
+        let opt = OpenOptions::new()
+                            .read(true)
+                            .write(true)
+                            .create(true)
+                            .open(&self.file_path);
+
+        let mut file: File = match opt {
+            Ok(file) => file,
+            Err(e) => {
+                println!("{:?}", e);
+                return ();
+            },
+        };
+
+        file.seek(SeekFrom::Start(0));
+        match serialize(&self.tree) {
+            Ok(btree) => file.write_all(&btree),
+            Err(e) => {
+                println!("{:?}", e);
+                return ();
+            },
+        };
+    }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RecordAddress {
     pub addr: u64,
     pub size: u64,
+}
+
+#[derive(Debug)]
+pub enum BinaryError {
+    EncodeError,
+    DecodeError,
 }
 

@@ -54,7 +54,10 @@ impl<'t> MemoryTable<'t> {
         let mut buf: Vec<u8> = self.tree.get_record(internal_id);
         match Tuple::decode(&mut buf) {
             Ok(tuple) => tuple,
-            _ => Tuple::new(vec![]),
+            Err(e) => {
+                println!("{:?}", e);
+                Tuple::new(vec![])
+            },
         }
     }
 
@@ -69,20 +72,5 @@ impl<'t> MemoryTable<'t> {
             Some(node) => Some(node.0.clone()),
         }
     }
-
-    /*
-    pub fn print(&mut self) {
-        let mut col_buffer: String = String::new();
-        for col in &self.columns {
-            col_buffer += "|";
-            col_buffer += &col.name;
-        }
-        println!("{}", col_buffer);
-
-        for r_addr in &self.tree.tree {
-            &mut self.get_tuple(r_addr.0.clone()).print();
-        }
-    }
-    */
 }
 

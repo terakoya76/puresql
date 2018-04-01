@@ -253,12 +253,10 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                 Ok(try!(self.build_ast(stmt)))
             },
             */
-            /*
             Keyword::Select => {
                 let stmt: Statement = Statement::DML(DML::Select(try!(self.parse_select_stmt())));
                 Ok(try!(self.build_ast(stmt)))
             },
-            */
             /*
             Keyword::Update => {
                 let stmt: Statement = Statement::DML(DML::Update(try!(self.parse_update_stmt())));
@@ -379,6 +377,104 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
             0 => Err(ParseError::MissmatchColumnNumber),
             _ => Ok(values),
         }
+    }
+
+    // TODO: impl alias
+    pub fn parse_select_stmt(&mut self) -> Result<SelectStmt, ParseError> {
+        try!(self.bump());
+        // SELECT xx, yy
+        let mut targets: Vec<String> = Vec::new();
+        while !self.validate_keyword(&[Keyword::From]).is_ok() {
+            match self.validate_token(&[Token::Star]) {
+                Ok(t) => println!("{:?}", self.curr_token),
+                _ => {
+                    let column_name: String = try!(self.validate_word(true));
+                    targets.push(column_name);
+                    try!(self.bump());
+                },
+            }
+
+            match self.validate_token(&[Token::Comma]) {
+                Ok(t) => try!(self.bump()),
+                _ => (),
+            }
+        }
+
+        // FROM xx, yy
+        try!(self.bump());
+        let mut sources: Vec<String> = Vec::new();
+        loop {
+            // TODO: impl sub query parse
+            let table_name = try!(self.validate_word(true));
+            if self.check_next_token(&[Token::Comma]) {
+                try!(self.bump());
+                continue;
+            }
+            if self.check_next_keyword(&[Keyword::Where, Keyword::Limit, Keyword::Group, Keyword::Order]) {
+                break;
+            }
+            sources.push(table_name);
+            try!(self.bump());
+            if !self.check_next_token(&[Token::Comma]) {
+                break;
+            }
+        }
+
+        // WHERE xx and yy
+        let mut condition: Option<Condition> = None;
+        if self.validate_keyword(&[Keyword::Where]).is_ok() {
+            condition = Some(try!(self.parse_where()));
+        }
+
+        // GROUP BY xx, yy
+        let mut group_by: Option<GroupBy> = None;
+        if self.validate_keyword(&[Keyword::Group]).is_ok() {
+            try!(self.bump());
+            try!(self.validate_keyword(&[Keyword::By]));
+            try!(self.bump());
+            group_by = Some(try!(self.parse_groupby()));
+        }
+
+        // ORDER BY xx ASC, yy DESC
+        let mut order_by: Option<OrderBy> = None;
+        if self.validate_keyword(&[Keyword::Order]).is_ok() {
+            try!(self.bump());
+            try!(self.validate_keyword(&[Keyword::By]));
+            try!(self.bump());
+            order_by = Some(try!(self.parse_orderby()));
+        }
+
+        // LIMIT xx
+        let mut limit: Option<Limit> = None;
+        if self.validate_keyword(&[Keyword::Limit]).is_ok() {
+            try!(self.bump());
+            limit = Some(try!(self.parse_limit()));
+        }
+
+        Ok(SelectStmt {
+            targets: targets,
+            sources: sources,
+            condition: condition,
+            group_by: group_by,
+            order_by: order_by,
+            limit: limit,
+        })
+    }
+
+    pub fn parse_where(&self) -> Result<Condition, ParseError> {
+        Err(ParseError::UndefinedStatementError)
+    }
+
+    pub fn parse_groupby(&self) -> Result<GroupBy, ParseError> {
+        Err(ParseError::UndefinedStatementError)
+    }
+
+    pub fn parse_orderby(&self) -> Result<OrderBy, ParseError> {
+        Err(ParseError::UndefinedStatementError)
+    }
+
+    pub fn parse_limit(&self) -> Result<Limit, ParseError> {
+        Err(ParseError::UndefinedStatementError)
     }
 }
 

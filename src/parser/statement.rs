@@ -44,7 +44,29 @@ pub enum UseStmt {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum SelectStmt {
+pub struct SelectStmt {
+    pub targets: Vec<String>,
+    pub sources: Vec<String>,
+    pub condition: Option<Condition>,
+    pub group_by: Option<GroupBy>,
+    pub order_by: Option<OrderBy>,
+    pub limit: Option<Limit>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Condition {
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct GroupBy {
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct OrderBy {
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Limit {
 }
 
 #[derive(Debug, Clone, PartialEq)]

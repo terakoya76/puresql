@@ -13,10 +13,7 @@ pub struct TableInfo {
 
 impl TableInfo {
     pub fn get_bin_path(&self) -> String {
-        let mut path: String = "".to_string();
-        path.push_str(&self.name);
-        path.push_str(".txt");
-        path
+        self.name.to_string()
     }
 
     pub fn find_column_infos_by_names(&self, column_names: &Vec<&str>) -> Vec<ColumnInfo> {

@@ -3,7 +3,10 @@ src/*.rs.swp
 src/*/*.rs.swp
 
 /dump file/
+.DS_Store
 *.txt
+*.datus
+*.btree
 
 /target/
 **/*.rs.bk

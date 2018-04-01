@@ -66,34 +66,22 @@ fn main() {
     let mut alloc: Box<Allocator> = Allocator::new(1);
 
     client.handle_query("create table shohin ( shohin_id int, shohin_name char(10), kubun_id int, price int )");
-
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 1, 'apple', 1, 300 )");
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 2, 'orange', 1, 130)");
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 3, 'cabbage', 2, 200 )");
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 4, 'sea weed', 5, 250)");
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 5, 'mushroom', 3, 100 )");
-    println!("");
 
     client.handle_query("create table kubun ( kubun_id int, kubun_name char(10) )");
-
     client.handle_query("insert into kubun ( kubun_id, kubun_name) values ( 1, 'fruit' )");
     client.handle_query("insert into kubun ( kubun_id, kubun_name) values ( 2, 'vegetable' )");
-    println!("");
+
+    println!("table scan");
+    client.handle_query("select shohin_id, shohin_name, kubun_id, price from shohin");
+    client.handle_query("select kubun_id, kubun_name from kubun");
+
 
     /*
-    println!("table scan");
-    let mut m_shohin_tb_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut m_shohin, vec![Range::new(0, 10)]);
-
-    {
-        loop {
-            match m_shohin_tb_scan.next() {
-                None => break,
-                Some(tuple) => tuple.print(),
-            }
-        }
-        println!("Scaned\n");
-    }
-
     println!("joined table scan");
     let mut m_kubun_tb_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut m_kubun, vec![Range::new(0, 10)]);
 

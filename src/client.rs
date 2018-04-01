@@ -1,11 +1,13 @@
 use context::Context;
 use meta::table_info::TableInfo;
 use meta::column_info::ColumnInfo;
+use columns::range::Range;
 use tables::field::Field;
 use allocators::allocator::Allocator;
 
 use parser::statement::*;
 use parser::parser::{Parser, ParseError};
+use executors::memory_table_scan::MemoryTableScanExec;
 
 #[derive(Debug)]
 pub struct Client {
@@ -68,6 +70,7 @@ pub fn create_table_stmt(ctx: &mut Context, stmt: CreateTableStmt) -> Result<(),
 pub fn exec_dml(ctx: &mut Context, stmt: DML) -> Result<(), ClientError> {
     match stmt {
         DML::Insert(stmt) => exec_insert(ctx, stmt),
+        DML::Select(stmt) => exec_select(ctx, stmt),
         _ => Err(ClientError::BuildExecutorError),
     }
 }
@@ -84,6 +87,34 @@ pub fn exec_insert(ctx: &mut Context, stmt: InsertStmt) -> Result<(), ClientErro
         Some(ref mut db) => {
             match db.load_table(&stmt.table_name) {
                 Ok(ref mut mem_tbl) => Ok(mem_tbl.insert(fields)),
+                _ => Err(ClientError::BuildExecutorError),
+            }
+        },
+    }
+}
+
+pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientError> {
+    match ctx.db {
+        None => Err(ClientError::BuildExecutorError),
+        Some(ref mut db) => {
+            let table_name: String = stmt.sources[0].clone();
+            match db.load_table(&table_name) {
+                Ok(ref mut mem_tbl) => {
+                    match stmt.sources.len() {
+                        1 => {
+                            let mut scan_exec: MemoryTableScanExec = MemoryTableScanExec::new(mem_tbl, vec![Range::new(0, 10)]);
+                            loop {
+                                match scan_exec.next() {
+                                    None => break,
+                                    Some(tuple) => tuple.print(),
+                                };
+                            }
+                            println!("Scaned\n");
+                            Ok(())
+                        },
+                        _ => Err(ClientError::BuildExecutorError),
+                    }
+                },
                 _ => Err(ClientError::BuildExecutorError),
             }
         },

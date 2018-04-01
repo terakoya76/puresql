@@ -47,6 +47,7 @@ impl Tuple {
     }
 }
 
+#[derive(Debug)]
 pub enum BinaryError {
     EncodeError,
     DecodeError,
