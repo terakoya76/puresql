@@ -9,6 +9,7 @@ use allocators::allocator::Allocator;
 use parser::statement::*;
 use parser::parser::{Parser, ParseError};
 use executors::memory_table_scan::MemoryTableScanExec;
+use executors::projection::ProjectionExec;
 use executors::join::NestedLoopJoinExec;
 
 #[derive(Debug)]
@@ -106,8 +107,9 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                     match db.load_table(&table_name) {
                         Ok(ref mut mem_tbl) => {
                             let mut scan_exec: MemoryTableScanExec = MemoryTableScanExec::new(mem_tbl, vec![Range::new(0, 10)]);
+                            let mut proj_exec: ProjectionExec<MemoryTableScanExec> = ProjectionExec::new(&mut scan_exec, stmt.targets);
                             loop {
-                                match scan_exec.next() {
+                                match proj_exec.next() {
                                     None => break,
                                     Some(tuple) => tuple.print(),
                                 };
@@ -136,9 +138,10 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                     let mut rht_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut rht_tbl, vec![Range::new(0, 10)]);
 
                     let mut join_exec: NestedLoopJoinExec<MemoryTableScanExec, MemoryTableScanExec> = NestedLoopJoinExec::new(&mut left_tbl_scan, &mut rht_tbl_scan);
+                    let mut proj_exec: ProjectionExec<NestedLoopJoinExec<MemoryTableScanExec, MemoryTableScanExec>> = ProjectionExec::new(&mut join_exec, stmt.targets);
 
                     loop {
-                        match join_exec.next() {
+                        match proj_exec.next() {
                             None => break,
                             Some(tuple) => tuple.print(),
                         };

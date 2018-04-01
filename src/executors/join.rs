@@ -4,6 +4,7 @@ use std::marker::PhantomData;
 use ScanExec;
 
 // struct
+use columns::column::Column;
 use tables::tuple::Tuple;
 
 #[derive(Debug)]
@@ -23,6 +24,27 @@ impl<'n, 't, T1, T2> NestedLoopJoinExec<'n, 't, T1, T2>
             outer_table: outer_table,
             _marker: PhantomData,
         }
+    }
+}
+
+impl<'n, 't, T1, T2> ScanExec for NestedLoopJoinExec<'n, 't, T1, T2>
+    where T1: ScanExec, T2: ScanExec {
+    fn get_columns(&self) -> Vec<Column> {
+        let mut inner_columns: Vec<Column> = self.inner_table.get_columns();
+        let mut outer_columns: Vec<Column> = self.outer_table.get_columns();
+        inner_columns.append(&mut outer_columns);
+        inner_columns
+    }
+
+    fn get_tuple(&mut self, handle: usize) -> Tuple {
+        Tuple::new(vec![])
+    }
+
+    fn set_next_handle(&mut self, next_handle: usize) {
+    }
+
+    fn next_handle(&mut self) -> Option<usize> {
+        Some(0)
     }
 }
 

@@ -10,13 +10,13 @@ use tables::field::Field;
 #[derive(Debug)]
 pub struct ProjectionExec<'p, 't: 'p, T: 't> {
     inputs: &'p mut T,
-    projectors: Vec<&'p str>,
+    projectors: Vec<String>,
     _marker: PhantomData<&'t T>,
 }
 
 impl<'p, 't, T> ProjectionExec<'p, 't, T>
     where T: ScanExec {
-    pub fn new(inputs: &'p mut T, projectors: Vec<&'p str>) -> ProjectionExec<'p, 't, T> {
+    pub fn new(inputs: &'p mut T, projectors: Vec<String>) -> ProjectionExec<'p, 't, T> {
         ProjectionExec {
             inputs: inputs,
             projectors: projectors,
