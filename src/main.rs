@@ -80,22 +80,10 @@ fn main() {
     client.handle_query("select shohin_id, shohin_name, kubun_id, price from shohin");
     client.handle_query("select kubun_id, kubun_name from kubun");
 
+    println!("joined table scan");
+    client.handle_query("select shohin_name, kubun_name, price from shohin join kubun on");
 
     /*
-    println!("joined table scan");
-    let mut m_kubun_tb_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut m_kubun, vec![Range::new(0, 10)]);
-
-    {
-        let mut join_exec: NestedLoopJoinExec<MemoryTableScanExec, MemoryTableScanExec> = NestedLoopJoinExec::new(&mut m_shohin_tb_scan, &mut m_kubun_tb_scan);
-        loop {
-            match join_exec.next() {
-                None => break,
-                Some(tuple) => tuple.print(),
-            }
-        }
-        println!("Scaned\n");
-    }
-
     println!("selection");
     {
         let mut selection: SelectionExec<MemoryTableScanExec> = SelectionExec::new(&mut m_shohin_tb_scan, vec![equal("shohin_name", Field::set_str("apple"))]);

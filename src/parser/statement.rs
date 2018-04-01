@@ -54,6 +54,26 @@ pub struct SelectStmt {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum DataSrc {
+    Table,
+    Join,
+    SubQuery,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Table {
+    src: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Join {
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SubQuery {
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Condition {
 }
 

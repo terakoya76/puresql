@@ -2,12 +2,14 @@ use context::Context;
 use meta::table_info::TableInfo;
 use meta::column_info::ColumnInfo;
 use columns::range::Range;
+use tables::memory_table::MemoryTable;
 use tables::field::Field;
 use allocators::allocator::Allocator;
 
 use parser::statement::*;
 use parser::parser::{Parser, ParseError};
 use executors::memory_table_scan::MemoryTableScanExec;
+use executors::join::NestedLoopJoinExec;
 
 #[derive(Debug)]
 pub struct Client {
@@ -94,14 +96,15 @@ pub fn exec_insert(ctx: &mut Context, stmt: InsertStmt) -> Result<(), ClientErro
 }
 
 pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientError> {
+    println!("{:?}", stmt);
     match ctx.db {
         None => Err(ClientError::BuildExecutorError),
         Some(ref mut db) => {
-            let table_name: String = stmt.sources[0].clone();
-            match db.load_table(&table_name) {
-                Ok(ref mut mem_tbl) => {
-                    match stmt.sources.len() {
-                        1 => {
+            match stmt.sources.len() {
+                1 => {
+                    let table_name: String = stmt.sources[0].clone();
+                    match db.load_table(&table_name) {
+                        Ok(ref mut mem_tbl) => {
                             let mut scan_exec: MemoryTableScanExec = MemoryTableScanExec::new(mem_tbl, vec![Range::new(0, 10)]);
                             loop {
                                 match scan_exec.next() {
@@ -114,6 +117,34 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                         },
                         _ => Err(ClientError::BuildExecutorError),
                     }
+                },
+                2 => {
+                    let mut db4left = db.clone();
+                    let left_tbl_name: String = stmt.sources[0].clone();
+                    let mut left_tbl: MemoryTable = match db4left.load_table(&left_tbl_name) {
+                        Ok(mem_tbl) => mem_tbl,
+                        _ => return Err(ClientError::BuildExecutorError),
+                    };
+                    let mut left_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut left_tbl, vec![Range::new(0, 10)]);
+
+                    let mut db4rht = db.clone();
+                    let rht_tbl_name: String = stmt.sources[1].clone();
+                    let mut rht_tbl: MemoryTable = match db4rht.load_table(&rht_tbl_name) {
+                        Ok(mem_tbl) => mem_tbl,
+                        _ => return Err(ClientError::BuildExecutorError),
+                    };
+                    let mut rht_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut rht_tbl, vec![Range::new(0, 10)]);
+
+                    let mut join_exec: NestedLoopJoinExec<MemoryTableScanExec, MemoryTableScanExec> = NestedLoopJoinExec::new(&mut left_tbl_scan, &mut rht_tbl_scan);
+
+                    loop {
+                        match join_exec.next() {
+                            None => break,
+                            Some(tuple) => tuple.print(),
+                        };
+                    }
+                    println!("Scaned\n");
+                    Ok(())
                 },
                 _ => Err(ClientError::BuildExecutorError),
             }

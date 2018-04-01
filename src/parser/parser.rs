@@ -405,25 +405,39 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         let mut sources: Vec<String> = Vec::new();
         loop {
             // TODO: impl sub query parse
-            let table_name = try!(self.validate_word(true));
+            let table_name: String = try!(self.validate_word(true));
+            sources.push(table_name);
+
             if self.check_next_token(&[Token::Comma]) {
                 try!(self.bump());
                 continue;
             }
+
             if self.check_next_keyword(&[Keyword::Where, Keyword::Limit, Keyword::Group, Keyword::Order]) {
                 break;
             }
-            sources.push(table_name);
-            try!(self.bump());
-            if !self.check_next_token(&[Token::Comma]) {
-                break;
+
+            if self.check_next_keyword(&[Keyword::Join]) {
+                try!(self.bump());
+                try!(self.validate_keyword(&[Keyword::Join]));
+                try!(self.bump());
+                if self.check_next_keyword(&[Keyword::On]) {
+                    let opst_table_name: String = try!(self.validate_word(true));
+                    sources.push(opst_table_name);
+                    try!(self.bump());
+                } else {
+                    return Err(ParseError::UndefinedStatementError);
+                }
             }
+
+            try!(self.bump());
+            break;
         }
 
         // WHERE xx and yy
         let mut condition: Option<Condition> = None;
         if self.validate_keyword(&[Keyword::Where]).is_ok() {
-            condition = Some(try!(self.parse_where()));
+            condition = Some(try!(self.parse_condition()));
         }
 
         // GROUP BY xx, yy
@@ -461,7 +475,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         })
     }
 
-    pub fn parse_where(&self) -> Result<Condition, ParseError> {
+    pub fn parse_condition(&self) -> Result<Condition, ParseError> {
         Err(ParseError::UndefinedStatementError)
     }
 
@@ -510,6 +524,7 @@ fn keyword_from_str(string: &str) -> Option<Keyword> {
         //"view" => Some(Keyword::View),
         "column" => Some(Keyword::Column),
         "from" => Some(Keyword::From),
+        "join" => Some(Keyword::Join),
         "where" => Some(Keyword::Where),
         "group" => Some(Keyword::Group),
         "order" => Some(Keyword::Order),
@@ -522,6 +537,7 @@ fn keyword_from_str(string: &str) -> Option<Keyword> {
         "and" => Some(Keyword::And),
         "or" => Some(Keyword::Or),
         "as" => Some(Keyword::As),
+        "on" => Some(Keyword::On),
         "by" => Some(Keyword::By),
         "asc" => Some(Keyword::Asc),
         "desc" => Some(Keyword::Desc),

@@ -16,7 +16,6 @@ impl Database {
         self.tables.insert(name, table_info);
     }
 
-    // TODO: impl MemoryTable::load and replace #new
     pub fn load_table(&mut self, name: &str) -> Result<MemoryTable, ()> {
         match self.tables.get_mut(name) {
             None => Err(()),
