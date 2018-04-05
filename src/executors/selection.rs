@@ -24,6 +24,24 @@ impl<'s, 't, T> SelectionExec<'s, 't, T>
     }
 }
 
+impl<'s, 't, T> ScanExec for SelectionExec<'s, 't, T>
+    where T: ScanExec {
+    fn get_columns(&self) -> Vec<Column> {
+        self.inputs.get_columns()
+    }
+
+    fn get_tuple(&mut self, handle: usize) -> Tuple {
+        self.inputs.get_tuple(handle)
+    }
+
+    fn set_next_handle(&mut self, next_handle: usize) {
+    }
+
+    fn next_handle(&mut self) -> Option<usize> {
+        None
+    }
+}
+
 impl<'s, 't, T> Iterator for SelectionExec<'s, 't, T>
     where T: ScanExec {
     type Item = Tuple;

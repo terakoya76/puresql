@@ -189,6 +189,11 @@ impl<'c> Lexer<'c> {
                 Token::Lit(Literal::String(l))
             },
 
+            '=' => {
+                self.bump();
+                Token::Equ
+            },
+
             '>' if next_char == '=' => {
                 self.double_bump();
                 Token::GE

@@ -1,8 +1,11 @@
 use context::Context;
-use meta::table_info::TableInfo;
+use database::{Database, DatabaseError};
+use meta::table_info::{TableInfo, TableInfoError};
 use meta::column_info::ColumnInfo;
+use columns::column::Column;
 use columns::range::Range;
 use tables::memory_table::MemoryTable;
+use tables::tuple::Tuple;
 use tables::field::Field;
 use allocators::allocator::Allocator;
 
@@ -10,6 +13,8 @@ use parser::statement::*;
 use parser::parser::{Parser, ParseError};
 use executors::memory_table_scan::MemoryTableScanExec;
 use executors::projection::ProjectionExec;
+use executors::selection::SelectionExec;
+use executors::selector::*;
 use executors::join::NestedLoopJoinExec;
 
 #[derive(Debug)]
@@ -82,7 +87,7 @@ pub fn exec_insert(ctx: &mut Context, stmt: InsertStmt) -> Result<(), ClientErro
     let mut fields: Vec<Field> = Vec::new();
     let literals = stmt.values;
     for lit in literals {
-        fields.push(Field::from_literal(lit));
+        fields.push(lit.into());
     }
 
     match ctx.db {
@@ -104,10 +109,36 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
             match stmt.sources.len() {
                 1 => {
                     let table_name: String = stmt.sources[0].clone();
-                    match db.load_table(&table_name) {
+                    match db.clone().load_table(&table_name) {
                         Ok(ref mut mem_tbl) => {
                             let mut scan_exec: MemoryTableScanExec = MemoryTableScanExec::new(mem_tbl, vec![Range::new(0, 10)]);
-                            let mut proj_exec: ProjectionExec<MemoryTableScanExec> = ProjectionExec::new(&mut scan_exec, stmt.targets);
+
+                            let mut conditions: Vec<Box<Fn(&Tuple, &Vec<Column>) -> bool>> = Vec::new();
+                            match stmt.condition {
+                                None => {},
+                                Some(condition) => {
+                                    let tbl_info: TableInfo = try!(db.table_info_from_str(&table_name));
+                                    let column_info: ColumnInfo = try!(tbl_info.column_info_from_str(&condition.column));
+                                    match condition.op {
+                                        Equ => {
+                                            let right_side = match condition.right_side {
+                                                Comparable::Lit(l) => l.into(),
+                                                Comparable::Word(s) => return Err(ClientError::BuildExecutorError),
+                                            };
+                                            conditions.push(equal(&condition.column, right_side));
+                                        },
+                                        NEqu => {},
+                                        GT => {},
+                                        LT => {},
+                                        GE => {},
+                                        LE => {},
+                                    }
+                                },
+                            }
+
+                            let mut selection_exec: SelectionExec<MemoryTableScanExec> = SelectionExec::new(&mut scan_exec, conditions);
+                            let mut proj_exec: ProjectionExec<SelectionExec<MemoryTableScanExec>> = ProjectionExec::new(&mut selection_exec, stmt.targets);
+
                             loop {
                                 match proj_exec.next() {
                                     None => break,
@@ -158,6 +189,8 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
 #[derive(Debug, PartialEq)]
 pub enum ClientError {
     ParseError(ParseError),
+    DatabaseError(DatabaseError),
+    TableInfoError(TableInfoError),
     BuildExecutorError,
     DatabaseNotFoundError,
 }
@@ -165,6 +198,18 @@ pub enum ClientError {
 impl From<ParseError> for ClientError {
     fn from(err: ParseError) -> ClientError {
         ClientError::ParseError(err)
+    }
+}
+
+impl From<DatabaseError> for ClientError {
+    fn from(err: DatabaseError) -> ClientError {
+        ClientError::DatabaseError(err)
+    }
+}
+
+impl From<TableInfoError> for ClientError {
+    fn from(err: TableInfoError) -> ClientError {
+        ClientError::TableInfoError(err)
     }
 }
 

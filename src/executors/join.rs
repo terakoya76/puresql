@@ -44,7 +44,7 @@ impl<'n, 't, T1, T2> ScanExec for NestedLoopJoinExec<'n, 't, T1, T2>
     }
 
     fn next_handle(&mut self) -> Option<usize> {
-        Some(0)
+        None
     }
 }
 

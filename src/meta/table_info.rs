@@ -16,6 +16,15 @@ impl TableInfo {
         self.name.to_string()
     }
 
+    pub fn column_info_from_str(&self, column_name: &str) -> Result<ColumnInfo, TableInfoError> {
+        for column in &self.columns {
+            if column.name == column_name.to_string() {
+                return Ok(column.clone());
+            }
+        }
+        Err(TableInfoError::ColumnNotFoundError)
+    }
+
     pub fn find_column_infos_by_names(&self, column_names: &Vec<&str>) -> Vec<ColumnInfo> {
         let mut columns: Vec<ColumnInfo> = Vec::new();
         for column_info in &self.columns {
@@ -27,5 +36,10 @@ impl TableInfo {
         }
         columns
     }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum TableInfoError {
+    ColumnNotFoundError,
 }
 

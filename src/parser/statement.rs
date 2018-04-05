@@ -75,6 +75,25 @@ pub struct SubQuery {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Condition {
+    pub column: String,
+    pub op: Operator,
+    pub right_side: Comparable,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Operator {
+    Equ,
+    NEqu,
+    GT,
+    LT,
+    GE,
+    LE,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Comparable {
+    Lit(Literal),
+    Word(String),
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -17,7 +17,7 @@ pub struct MemoryTable<'t> {
 }
 
 impl<'t> MemoryTable<'t> {
-    pub fn new(meta: &'t mut TableInfo) -> Result<MemoryTable<'t>, ()> {
+    pub fn new(meta: &'t mut TableInfo) -> Result<MemoryTable<'t>, MemoryTableError> {
         let mut columns: Vec<Column> = Vec::new();
         for column_info in &meta.columns {
             columns.push(column_info.to_column(&meta.name));
@@ -26,7 +26,7 @@ impl<'t> MemoryTable<'t> {
         let file_path: String = meta.get_bin_path();
         let btree: BTree = match BTree::new(&file_path) {
             Ok(btree) => btree,
-            _ => return Err(()),
+            _ => return Err(MemoryTableError::StorageFileNotFoundError),
         };
 
         Ok(MemoryTable {
@@ -72,5 +72,10 @@ impl<'t> MemoryTable<'t> {
             Some(node) => Some(node.0.clone()),
         }
     }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum MemoryTableError {
+    StorageFileNotFoundError,
 }
 

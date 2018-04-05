@@ -3,6 +3,7 @@ use std::ops::Add;
 use std::ops::Div;
 
 use parser::token::Literal;
+use data_type::DataType;
 
 pub const INIT:     usize = 0;
 pub const KIND_I64: usize = 1;
@@ -30,12 +31,12 @@ impl Field {
         }
     }
 
-    pub fn from_literal(lit: Literal) -> Field {
-        match lit {
-            Literal::Int(i) => Self::set_i64(i),
-            Literal::Float(f) => Self::set_f64(f),
-            Literal::String(s) => Self::set_str(&s),
-            _ => Self::set_init(),
+    // TODO: impl float, bool type
+    fn kind_from_dtype(dtype: DataType) -> usize {
+        match dtype {
+            DataType::Int => KIND_I64,
+            DataType::Bool => INIT,
+            DataType::Char(u8) => KIND_STR,
         }
     }
 
@@ -206,6 +207,18 @@ impl Div for Field {
             KIND_U64 => Self::set_u64(&self.get_u64() / &other.get_u64()),
             KIND_F64 => Self::set_f64(&self.get_f64() / &other.get_f64()),
             _ => self,
+        }
+    }
+}
+
+// TODO: impl bool type
+impl From<Literal> for Field {
+    fn from(lit: Literal) -> Field {
+        match lit {
+            Literal::Int(i) => Self::set_i64(i),
+            Literal::Float(f) => Self::set_f64(f),
+            Literal::String(s) => Self::set_str(&s),
+            _ => Self::set_init(),
         }
     }
 }

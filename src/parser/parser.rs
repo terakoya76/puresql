@@ -430,11 +430,11 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                 }
             }
 
-            try!(self.bump());
             break;
         }
 
         // WHERE xx and yy
+        try!(self.bump());
         let mut condition: Option<Condition> = None;
         if self.validate_keyword(&[Keyword::Where]).is_ok() {
             condition = Some(try!(self.parse_condition()));
@@ -475,8 +475,37 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         })
     }
 
-    pub fn parse_condition(&self) -> Result<Condition, ParseError> {
-        Err(ParseError::UndefinedStatementError)
+    pub fn parse_condition(&mut self) -> Result<Condition, ParseError> {
+        try!(self.bump());
+        let column: String = try!(self.validate_word(true));
+
+        try!(self.bump());
+        let op: Operator = match try!(self.validate_token(condition_tokens())) {
+            Token::Equ => Operator::Equ,
+            Token::NEqu => Operator::NEqu,
+            Token::GT => Operator::GT,
+            Token::LT => Operator::LT,
+            Token::GE => Operator::GE,
+            Token::LE => Operator::LE,
+            _ => {
+                match self.curr_token {
+                    None => return Err(ParseError::UnexepectedEoq),
+                    Some(ref ts) => return Err(ParseError::UnexpectedToken(ts.clone())),
+                }
+            },
+        };
+
+        try!(self.bump());
+        let right_side: Comparable = match self.validate_word(false) {
+            Ok(rht) => Comparable::Word(try!(self.validate_word(true))),
+            _ => Comparable::Lit(try!(self.validate_literal())),
+        };
+
+        Ok(Condition {
+            column: column,
+            op: op,
+            right_side: right_side,
+        })
     }
 
     pub fn parse_groupby(&self) -> Result<GroupBy, ParseError> {
@@ -490,6 +519,17 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
     pub fn parse_limit(&self) -> Result<Limit, ParseError> {
         Err(ParseError::UndefinedStatementError)
     }
+}
+
+fn condition_tokens() -> &'static [Token] {
+    &[
+        Token::Equ,
+        Token::GT,
+        Token::LT,
+        Token::GE,
+        Token::LE,
+        Token::NEqu,
+    ]
 }
 
 fn starting_keywords() -> &'static [Keyword] {

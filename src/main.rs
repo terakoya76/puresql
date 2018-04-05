@@ -84,19 +84,10 @@ fn main() {
     println!("joined table scan");
     client.handle_query("select shohin_name, kubun_name, price from shohin join kubun on");
 
-    /*
     println!("selection");
-    {
-        let mut selection: SelectionExec<MemoryTableScanExec> = SelectionExec::new(&mut m_shohin_tb_scan, vec![equal("shohin_name", Field::set_str("apple"))]);
-        loop {
-            match selection.next() {
-                None => break,
-                Some(tuple) => tuple.print(),
-            }
-        }
-        println!("Scaned\n");
-    }
+    client.handle_query("select shohin_name, kubun_name, price from shohin where shohin_name = 'apple'");
 
+    /*
     {
         let mut selection: SelectionExec<MemoryTableScanExec> = SelectionExec::new(&mut m_shohin_tb_scan, vec![le("shohin_id", Field::set_u64(3))]);
         loop {
