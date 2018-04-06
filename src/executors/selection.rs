@@ -36,10 +36,6 @@ impl<'s, 't, T> ScanExec for SelectionExec<'s, 't, T>
         self.inputs.get_tuple(handle)
     }
 
-    fn get_field(&mut self, handle: usize, column_name: &str) -> Field {
-        self.inputs.get_field(handle, column_name)
-    }
-
     fn set_next_handle(&mut self, next_handle: usize) {
     }
 

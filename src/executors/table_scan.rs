@@ -2,10 +2,8 @@
 use ScanExec;
 
 // struct
-use meta::column_info::ColumnInfo;
 use columns::column::Column;
 use columns::range::Range;
-use tables::field::Field;
 use tables::tuple::Tuple;
 use tables::table::Table;
 
@@ -39,15 +37,6 @@ impl<'ts, 't> ScanExec for TableScanExec<'ts, 't> {
 
     fn get_tuple(&mut self, handle: usize) -> Tuple {
         self.table.get_tuple(handle)
-    }
-
-    fn get_field(&mut self, handle: usize, column_name: &str) -> Field {
-        let column_info: ColumnInfo = match self.table.meta.column_info_from_str(column_name) {
-            Ok(column_info) => column_info,
-            _ => return Field::set_init(),
-        };
-        let offset: usize = column_info.offset;
-        self.get_tuple(handle).fields[offset].clone()
     }
 
     fn set_next_handle(&mut self, next_handle: usize) {

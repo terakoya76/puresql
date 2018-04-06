@@ -41,10 +41,6 @@ impl<'n, 't, T1, T2> ScanExec for NestedLoopJoinExec<'n, 't, T1, T2>
         Tuple::new(vec![])
     }
 
-    fn get_field(&mut self, handle: usize, column_name: &str) -> Field {
-        Field::set_init()
-    }
-
     fn set_next_handle(&mut self, next_handle: usize) {
     }
 
