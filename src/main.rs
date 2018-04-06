@@ -85,32 +85,11 @@ fn main() {
     client.handle_query("select shohin_name, kubun_name, price from shohin join kubun on");
 
     println!("selection");
-    client.handle_query("select shohin_name, kubun_name, price from shohin where shohin_name = 'apple'");
+    client.handle_query("select shohin_name, kubun_id, price from shohin where shohin_name = 'apple'");
+
+    client.handle_query("select shohin_name, kubun_id, price from shohin where price > kubun_id");
 
     /*
-    {
-        let mut selection: SelectionExec<MemoryTableScanExec> = SelectionExec::new(&mut m_shohin_tb_scan, vec![le("shohin_id", Field::set_u64(3))]);
-        loop {
-            match selection.next() {
-                None => break,
-                Some(tuple) => tuple.print(),
-            }
-        }
-        println!("Scaned\n");
-    }
-
-    println!("projection");
-    {
-        let mut projection: ProjectionExec<MemoryTableScanExec> = ProjectionExec::new(&mut m_shohin_tb_scan, vec!["shohin_name", "price"]);
-        loop {
-            match projection.next() {
-                None => break,
-                Some(tuple) => tuple.print(),
-            }
-        }
-        println!("Scaned\n");
-    }
-
     println!("aggregation\n");
     {
         let mut aggregation = AggregationExec::new(&mut m_shohin_tb_scan, vec![], vec![Count::new(), Sum::new("price"), Average::new("price")]);

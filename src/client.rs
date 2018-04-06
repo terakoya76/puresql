@@ -116,20 +116,72 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                                 None => {},
                                 Some(condition) => {
                                     let tbl_info: TableInfo = try!(db.table_info_from_str(&table_name));
-                                    let column_info: ColumnInfo = try!(tbl_info.column_info_from_str(&condition.column));
                                     match condition.op {
-                                        Equ => {
+                                        Operator::Equ => {
                                             let right_side = match condition.right_side {
                                                 Comparable::Lit(l) => Equal::new(&condition.column, None, Some(l.into())),
-                                                Comparable::Word(s) => return Err(ClientError::BuildExecutorError),
+                                                Comparable::Word(ref s) => {
+                                                    let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
+                                                    Equal::new(&condition.column, Some(right_column_info.offset), None)
+                                                },
                                             };
                                             conditions.push(right_side);
                                         },
-                                        NEqu => {},
-                                        GT => {},
-                                        LT => {},
-                                        GE => {},
-                                        LE => {},
+
+                                        Operator::NEqu => {
+                                            let right_side = match condition.right_side {
+                                                Comparable::Lit(l) => NotEqual::new(&condition.column, None, Some(l.into())),
+                                                Comparable::Word(ref s) => {
+                                                    let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
+                                                    NotEqual::new(&condition.column, Some(right_column_info.offset), None)
+                                                                                                                           },
+                                            };
+                                            conditions.push(right_side);
+                                        },
+
+                                        Operator::GT => {
+                                            let right_side = match condition.right_side {
+                                                Comparable::Lit(l) => GT::new(&condition.column, None, Some(l.into())),
+                                                Comparable::Word(ref s) => {
+                                                    let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
+                                                    GT::new(&condition.column, Some(right_column_info.offset), None)
+                                                                                                                           },
+                                            };
+                                            conditions.push(right_side);
+                                        },
+
+                                        Operator::LT => {
+                                            let right_side = match condition.right_side {
+                                                Comparable::Lit(l) => LT::new(&condition.column, None, Some(l.into())),
+                                                Comparable::Word(ref s) => {
+                                                    let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
+                                                    LT::new(&condition.column, Some(right_column_info.offset), None)
+                                                                                                                           },
+                                            };
+                                            conditions.push(right_side);
+                                        },
+
+                                        Operator::GE => {
+                                            let right_side = match condition.right_side {
+                                                Comparable::Lit(l) => GE::new(&condition.column, None, Some(l.into())),
+                                                Comparable::Word(ref s) => {
+                                                    let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
+                                                    GE::new(&condition.column, Some(right_column_info.offset), None)
+                                                                                                                           },
+                                            };
+                                            conditions.push(right_side);
+                                        },
+
+                                        Operator::LE => {
+                                            let right_side = match condition.right_side {
+                                                Comparable::Lit(l) => LE::new(&condition.column, None, Some(l.into())),
+                                                Comparable::Word(ref s) => {
+                                                    let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
+                                                    LE::new(&condition.column, Some(right_column_info.offset), None)
+                                                                                                                           },
+                                            };
+                                            conditions.push(right_side);
+                                        },
                                     }
                                 },
                             }
