@@ -386,7 +386,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         let mut targets: Vec<String> = Vec::new();
         while !self.validate_keyword(&[Keyword::From]).is_ok() {
             match self.validate_token(&[Token::Star]) {
-                Ok(t) => println!("{:?}", self.curr_token),
+                Ok(_t) => println!("{:?}", self.curr_token),
                 _ => {
                     let column_name: String = try!(self.validate_word(true));
                     targets.push(column_name);
@@ -395,7 +395,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
             }
 
             match self.validate_token(&[Token::Comma]) {
-                Ok(t) => try!(self.bump()),
+                Ok(_t) => try!(self.bump()),
                 _ => (),
             }
         }
@@ -497,7 +497,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
 
         try!(self.bump());
         let right_side: Comparable = match self.validate_word(false) {
-            Ok(rht) => Comparable::Word(try!(self.validate_word(true))),
+            Ok(_rht) => Comparable::Word(try!(self.validate_word(true))),
             _ => Comparable::Lit(try!(self.validate_literal())),
         };
 

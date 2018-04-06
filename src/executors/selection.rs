@@ -1,12 +1,8 @@
 use std::marker::PhantomData;
 
-// trait
 use ScanExec;
 use Selector;
-
-// struct
 use columns::column::Column;
-use tables::field::Field;
 use tables::tuple::Tuple;
 
 pub struct SelectionExec<'s, 't: 's, T: 't> {
@@ -36,7 +32,7 @@ impl<'s, 't, T> ScanExec for SelectionExec<'s, 't, T>
         self.inputs.get_tuple(handle)
     }
 
-    fn set_next_handle(&mut self, next_handle: usize) {
+    fn set_next_handle(&mut self, _next_handle: usize) {
     }
 
     fn next_handle(&mut self) -> Option<usize> {

@@ -1,7 +1,5 @@
 use bincode::{serialize, deserialize};
 
-use std::io::Read;
-
 use Field;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

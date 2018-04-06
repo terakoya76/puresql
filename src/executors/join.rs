@@ -1,11 +1,7 @@
 use std::marker::PhantomData;
 
-// trait
 use ScanExec;
-
-// struct
 use columns::column::Column;
-use tables::field::Field;
 use tables::tuple::Tuple;
 
 #[derive(Debug)]
@@ -37,11 +33,11 @@ impl<'n, 't, T1, T2> ScanExec for NestedLoopJoinExec<'n, 't, T1, T2>
         inner_columns
     }
 
-    fn get_tuple(&mut self, handle: usize) -> Tuple {
+    fn get_tuple(&mut self, _handle: usize) -> Tuple {
         Tuple::new(vec![])
     }
 
-    fn set_next_handle(&mut self, next_handle: usize) {
+    fn set_next_handle(&mut self, _next_handle: usize) {
     }
 
     fn next_handle(&mut self) -> Option<usize> {

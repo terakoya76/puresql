@@ -63,7 +63,7 @@ fn main() {
     let mut client: Client = Client::new(ctx);
 
     println!("Table on memory");
-    let mut alloc: Box<Allocator> = Allocator::new(1);
+    let alloc: Box<Allocator> = Allocator::new(1);
 
     client.handle_query("create table shohin ( shohin_id int, shohin_name char(10), kubun_id int, price int )");
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 1, 'apple', 1, 300 )");

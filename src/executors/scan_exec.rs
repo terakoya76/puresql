@@ -1,5 +1,4 @@
 use columns::column::Column;
-use tables::field::Field;
 use tables::tuple::Tuple;
 
 pub trait ScanExec : Iterator<Item=Tuple> {

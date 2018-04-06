@@ -1,11 +1,9 @@
 use context::Context;
-use database::{Database, DatabaseError};
+use database::DatabaseError;
 use meta::table_info::{TableInfo, TableInfoError};
 use meta::column_info::ColumnInfo;
-use columns::column::Column;
 use columns::range::Range;
 use tables::memory_table::MemoryTable;
-use tables::tuple::Tuple;
 use tables::field::Field;
 use allocators::allocator::Allocator;
 
