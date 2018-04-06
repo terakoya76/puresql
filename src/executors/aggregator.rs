@@ -21,11 +21,9 @@ pub struct Count {
 
 impl Count {
     pub fn new() -> Box<Count> {
-        Box::new(
-            Count {
-                result: Field::set_init(),
-            }
-        )
+        Box::new(Count {
+            result: Field::set_init(),
+        })
     }
 }
 
@@ -52,12 +50,10 @@ pub struct Sum {
 
 impl Sum {
     pub fn new(col_name: &str) -> Box<Sum> {
-        Box::new(
-            Sum {
-                result: Field::set_init(),
-                column_name: col_name.to_string(),
-            }
-        )
+        Box::new(Sum {
+            result: Field::set_init(),
+            column_name: col_name.to_string(),
+        })
     }
 }
 
@@ -91,13 +87,11 @@ pub struct Average {
 
 impl Average {
     pub fn new(col_name: &str) -> Box<Average> {
-        Box::new(
-            Average {
-                sum: Field::set_init(),
-                iterate_num: 0,
-                column_name: col_name.to_string(),
-            }
-        )
+        Box::new(Average {
+            sum: Field::set_init(),
+            iterate_num: 0,
+            column_name: col_name.to_string(),
+        })
     }
 }
 

@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 // trait
 use ScanExec;
+use Selector;
 
 // struct
 use columns::column::Column;
@@ -10,13 +11,13 @@ use tables::tuple::Tuple;
 
 pub struct SelectionExec<'s, 't: 's, T: 't> {
     inputs: &'s mut T,
-    selectors: Vec<Box<Fn(&Tuple, &Vec<Column>) -> bool>>,
+    selectors: Vec<Box<Selector>>,
     _marker: PhantomData<&'t T>,
 }
 
 impl<'s, 't, T> SelectionExec<'s, 't, T>
     where T: ScanExec {
-    pub fn new(inputs: &'s mut T, selectors: Vec<Box<Fn(&Tuple, &Vec<Column>) -> bool>>) -> SelectionExec<'s, 't, T> {
+    pub fn new(inputs: &'s mut T, selectors: Vec<Box<Selector>>) -> SelectionExec<'s, 't, T> {
         SelectionExec {
             inputs: inputs,
             selectors: selectors,
@@ -47,6 +48,7 @@ impl<'s, 't, T> ScanExec for SelectionExec<'s, 't, T>
     }
 }
 
+// TODO: impl OR conditions
 impl<'s, 't, T> Iterator for SelectionExec<'s, 't, T>
     where T: ScanExec {
     type Item = Tuple;
@@ -57,7 +59,7 @@ impl<'s, 't, T> Iterator for SelectionExec<'s, 't, T>
                 Some(tuple) => {
                     let mut passed: bool = true;
                     for ref selector in &self.selectors {
-                        if !(selector)(&tuple, &self.inputs.get_columns()) {
+                        if !selector.is_true(&tuple, &self.inputs.get_columns()) {
                           passed = false;
                           break;
                         }

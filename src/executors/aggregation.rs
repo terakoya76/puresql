@@ -3,9 +3,9 @@ use std::collections::HashMap;
 
 // trait
 use ScanExec;
+use Aggregator;
 
 // struct
-use Aggregator;
 use tables::tuple::Tuple;
 use tables::field::Field;
 

@@ -113,7 +113,7 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                         Ok(ref mut mem_tbl) => {
                             let mut scan_exec: MemoryTableScanExec = MemoryTableScanExec::new(mem_tbl, vec![Range::new(0, 10)]);
 
-                            let mut conditions: Vec<Box<Fn(&Tuple, &Vec<Column>) -> bool>> = Vec::new();
+                            let mut conditions: Vec<Box<Selector>> = Vec::new();
                             match stmt.condition {
                                 None => {},
                                 Some(condition) => {
@@ -122,10 +122,10 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                                     match condition.op {
                                         Equ => {
                                             let right_side = match condition.right_side {
-                                                Comparable::Lit(l) => l.into(),
+                                                Comparable::Lit(l) => Equal::new(&condition.column, None, Some(l.into())),
                                                 Comparable::Word(s) => return Err(ClientError::BuildExecutorError),
                                             };
-                                            conditions.push(equal(&condition.column, right_side));
+                                            conditions.push(right_side);
                                         },
                                         NEqu => {},
                                         GT => {},

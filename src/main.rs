@@ -41,7 +41,7 @@ pub use executors::table_scan::TableScanExec;
 pub use executors::memory_table_scan::MemoryTableScanExec;
 pub use executors::join::NestedLoopJoinExec;
 pub use executors::selection::SelectionExec;
-pub use executors::selector::{equal, lt, le, gt, ge};
+pub use executors::selector::{Selector, Equal, NotEqual, LT, LE, GT, GE};
 pub use executors::projection::ProjectionExec;
 pub use executors::aggregation::AggregationExec;
 pub use executors::aggregator::{Aggregator, Count, Sum, Average};
