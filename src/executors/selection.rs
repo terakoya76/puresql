@@ -5,6 +5,7 @@ use ScanExec;
 
 // struct
 use columns::column::Column;
+use tables::field::Field;
 use tables::tuple::Tuple;
 
 pub struct SelectionExec<'s, 't: 's, T: 't> {
@@ -32,6 +33,10 @@ impl<'s, 't, T> ScanExec for SelectionExec<'s, 't, T>
 
     fn get_tuple(&mut self, handle: usize) -> Tuple {
         self.inputs.get_tuple(handle)
+    }
+
+    fn get_field(&mut self, handle: usize, column_name: &str) -> Field {
+        self.inputs.get_field(handle, column_name)
     }
 
     fn set_next_handle(&mut self, next_handle: usize) {

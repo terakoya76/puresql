@@ -5,6 +5,7 @@ use ScanExec;
 
 // struct
 use columns::column::Column;
+use tables::field::Field;
 use tables::tuple::Tuple;
 
 #[derive(Debug)]
@@ -38,6 +39,10 @@ impl<'n, 't, T1, T2> ScanExec for NestedLoopJoinExec<'n, 't, T1, T2>
 
     fn get_tuple(&mut self, handle: usize) -> Tuple {
         Tuple::new(vec![])
+    }
+
+    fn get_field(&mut self, handle: usize, column_name: &str) -> Field {
+        Field::set_init()
     }
 
     fn set_next_handle(&mut self, next_handle: usize) {

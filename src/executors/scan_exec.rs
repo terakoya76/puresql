@@ -1,9 +1,11 @@
 use columns::column::Column;
+use tables::field::Field;
 use tables::tuple::Tuple;
 
 pub trait ScanExec : Iterator<Item=Tuple> {
     fn get_columns(&self) -> Vec<Column>;
     fn get_tuple(&mut self, handle: usize) -> Tuple;
+    fn get_field(&mut self, handle: usize, column_name: &str) -> Field;
     fn set_next_handle(&mut self, next_handle: usize);
     fn next_handle(&mut self) -> Option<usize>;
 }
