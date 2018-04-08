@@ -67,7 +67,7 @@ pub fn create_table_stmt(ctx: &mut Context, stmt: CreateTableStmt) -> Result<(),
     match ctx.db {
         None => return Err(ClientError::DatabaseNotFoundError),
         Some(ref mut db) => db.add_table(table_info.clone()),
-    }
+    };
 
     ctx.table_id_alloc.increment();
     Ok(())
@@ -91,8 +91,11 @@ pub fn exec_insert(ctx: &mut Context, stmt: InsertStmt) -> Result<(), ClientErro
     match ctx.db {
         None => Err(ClientError::BuildExecutorError),
         Some(ref mut db) => {
-            match db.load_table(&stmt.table_name) {
-                Ok(ref mut mem_tbl) => Ok(mem_tbl.insert(fields)),
+            match db.load_tables(&[stmt.table_name]) {
+                Ok(ref mut mem_tbls) => {
+                    mem_tbls[0].insert(fields);
+                    Ok(())
+                },
                 _ => Err(ClientError::BuildExecutorError),
             }
         },
@@ -106,117 +109,109 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
         Some(ref mut db) => {
             match stmt.sources.len() {
                 1 => {
-                    let table_name: String = stmt.sources[0].clone();
-                    match db.clone().load_table(&table_name) {
-                        Ok(ref mut mem_tbl) => {
-                            let mut scan_exec: MemoryTableScanExec = MemoryTableScanExec::new(mem_tbl, vec![Range::new(0, 10)]);
+                    let tbl_names: &[String] = stmt.sources.as_slice();
+                    let mut mem_tbls: Vec<MemoryTable> = try!(db.load_tables(tbl_names));
 
-                            let mut conditions: Vec<Box<Selector>> = Vec::new();
-                            match stmt.condition {
-                                None => {},
-                                Some(condition) => {
-                                    let tbl_info: TableInfo = try!(db.table_info_from_str(&table_name));
-                                    match condition.op {
-                                        Operator::Equ => {
-                                            let right_side = match condition.right_side {
-                                                Comparable::Lit(l) => Equal::new(&condition.column, None, Some(l.into())),
-                                                Comparable::Word(ref s) => {
-                                                    let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
-                                                    Equal::new(&condition.column, Some(right_column_info.offset), None)
-                                                },
-                                            };
-                                            conditions.push(right_side);
-                                        },
+                    let mut scan_exec: MemoryTableScanExec = MemoryTableScanExec::new(&mut mem_tbls[0], vec![Range::new(0, 10)]);
 
-                                        Operator::NEqu => {
-                                            let right_side = match condition.right_side {
-                                                Comparable::Lit(l) => NotEqual::new(&condition.column, None, Some(l.into())),
-                                                Comparable::Word(ref s) => {
-                                                    let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
-                                                    NotEqual::new(&condition.column, Some(right_column_info.offset), None)
-                                                                                                                           },
-                                            };
-                                            conditions.push(right_side);
+                    let mut conditions: Vec<Box<Selector>> = Vec::new();
+                    match stmt.condition {
+                        None => {},
+                        Some(condition) => {
+                            let tbl_info: TableInfo = try!(db.table_info_from_str(&tbl_names[0]));
+                            match condition.op {
+                                Operator::Equ => {
+                                    let right_side = match condition.right_side {
+                                        Comparable::Lit(l) => Equal::new(&condition.column, None, Some(l.into())),
+                                        Comparable::Word(ref s) => {
+                                            let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
+                                            Equal::new(&condition.column, Some(right_column_info.offset), None)
                                         },
+                                    };
+                                    conditions.push(right_side);
+                                },
 
-                                        Operator::GT => {
-                                            let right_side = match condition.right_side {
-                                                Comparable::Lit(l) => GT::new(&condition.column, None, Some(l.into())),
-                                                Comparable::Word(ref s) => {
-                                                    let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
-                                                    GT::new(&condition.column, Some(right_column_info.offset), None)
-                                                                                                                           },
-                                            };
-                                            conditions.push(right_side);
-                                        },
+                                Operator::NEqu => {
+                                    let right_side = match condition.right_side {
+                                        Comparable::Lit(l) => NotEqual::new(&condition.column, None, Some(l.into())),
+                                        Comparable::Word(ref s) => {
+                                            let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
+                                            NotEqual::new(&condition.column, Some(right_column_info.offset), None)
+                                                                                                                   },
+                                    };
+                                    conditions.push(right_side);
+                                },
 
-                                        Operator::LT => {
-                                            let right_side = match condition.right_side {
-                                                Comparable::Lit(l) => LT::new(&condition.column, None, Some(l.into())),
-                                                Comparable::Word(ref s) => {
-                                                    let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
-                                                    LT::new(&condition.column, Some(right_column_info.offset), None)
-                                                                                                                           },
-                                            };
-                                            conditions.push(right_side);
-                                        },
+                                Operator::GT => {
+                                    let right_side = match condition.right_side {
+                                        Comparable::Lit(l) => GT::new(&condition.column, None, Some(l.into())),
+                                        Comparable::Word(ref s) => {
+                                            let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
+                                            GT::new(&condition.column, Some(right_column_info.offset), None)
+                                                                                                                   },
+                                    };
+                                    conditions.push(right_side);
+                                },
 
-                                        Operator::GE => {
-                                            let right_side = match condition.right_side {
-                                                Comparable::Lit(l) => GE::new(&condition.column, None, Some(l.into())),
-                                                Comparable::Word(ref s) => {
-                                                    let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
-                                                    GE::new(&condition.column, Some(right_column_info.offset), None)
-                                                                                                                           },
-                                            };
-                                            conditions.push(right_side);
-                                        },
+                                Operator::LT => {
+                                    let right_side = match condition.right_side {
+                                        Comparable::Lit(l) => LT::new(&condition.column, None, Some(l.into())),
+                                        Comparable::Word(ref s) => {
+                                            let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
+                                            LT::new(&condition.column, Some(right_column_info.offset), None)
+                                                                                                                   },
+                                    };
+                                    conditions.push(right_side);
+                                },
 
-                                        Operator::LE => {
-                                            let right_side = match condition.right_side {
-                                                Comparable::Lit(l) => LE::new(&condition.column, None, Some(l.into())),
-                                                Comparable::Word(ref s) => {
-                                                    let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
-                                                    LE::new(&condition.column, Some(right_column_info.offset), None)
-                                                                                                                           },
-                                            };
-                                            conditions.push(right_side);
-                                        },
-                                    }
+                                Operator::GE => {
+                                    let right_side = match condition.right_side {
+                                        Comparable::Lit(l) => GE::new(&condition.column, None, Some(l.into())),
+                                        Comparable::Word(ref s) => {
+                                            let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
+                                            GE::new(&condition.column, Some(right_column_info.offset), None)
+                                                                                                                   },
+                                    };
+                                    conditions.push(right_side);
+                                },
+
+                                Operator::LE => {
+                                    let right_side = match condition.right_side {
+                                        Comparable::Lit(l) => LE::new(&condition.column, None, Some(l.into())),
+                                        Comparable::Word(ref s) => {
+                                            let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
+                                            LE::new(&condition.column, Some(right_column_info.offset), None)
+                                                                                                                   },
+                                    };
+                                    conditions.push(right_side);
                                 },
                             }
-
-                            let mut selection_exec: SelectionExec<MemoryTableScanExec> = SelectionExec::new(&mut scan_exec, conditions);
-                            let mut proj_exec: ProjectionExec<SelectionExec<MemoryTableScanExec>> = ProjectionExec::new(&mut selection_exec, stmt.targets);
-
-                            loop {
-                                match proj_exec.next() {
-                                    None => break,
-                                    Some(tuple) => tuple.print(),
-                                };
-                            }
-                            println!("Scaned\n");
-                            Ok(())
                         },
-                        _ => Err(ClientError::BuildExecutorError),
                     }
+
+                    let mut selection_exec: SelectionExec<MemoryTableScanExec> = SelectionExec::new(&mut scan_exec, conditions);
+                    let mut proj_exec: ProjectionExec<SelectionExec<MemoryTableScanExec>> = ProjectionExec::new(&mut selection_exec, stmt.targets);
+
+                    loop {
+                        match proj_exec.next() {
+                            None => break,
+                            Some(tuple) => tuple.print(),
+                        };
+                    }
+                    println!("Scaned\n");
+                    Ok(())
                 },
+
                 2 => {
                     let mut db4left = db.clone();
                     let left_tbl_name: String = stmt.sources[0].clone();
-                    let mut left_tbl: MemoryTable = match db4left.load_table(&left_tbl_name) {
-                        Ok(mem_tbl) => mem_tbl,
-                        _ => return Err(ClientError::BuildExecutorError),
-                    };
-                    let mut left_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut left_tbl, vec![Range::new(0, 10)]);
+                    let mut left_mem_tbl: MemoryTable = try!(db4left.load_table(left_tbl_name));
+                    let mut left_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut left_mem_tbl, vec![Range::new(0, 10)]);
 
                     let mut db4rht = db.clone();
                     let rht_tbl_name: String = stmt.sources[1].clone();
-                    let mut rht_tbl: MemoryTable = match db4rht.load_table(&rht_tbl_name) {
-                        Ok(mem_tbl) => mem_tbl,
-                        _ => return Err(ClientError::BuildExecutorError),
-                    };
-                    let mut rht_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut rht_tbl, vec![Range::new(0, 10)]);
+                    let mut rht_mem_tbl: MemoryTable = try!(db4rht.load_table(rht_tbl_name));
+                    let mut rht_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut rht_mem_tbl, vec![Range::new(0, 10)]);
 
                     let mut join_exec: NestedLoopJoinExec<MemoryTableScanExec, MemoryTableScanExec> = NestedLoopJoinExec::new(&mut left_tbl_scan, &mut rht_tbl_scan);
                     let mut proj_exec: ProjectionExec<NestedLoopJoinExec<MemoryTableScanExec, MemoryTableScanExec>> = ProjectionExec::new(&mut join_exec, stmt.targets);

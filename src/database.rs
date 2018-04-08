@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use storage::b_tree::BTree;
 use meta::table_info::TableInfo;
 use tables::memory_table::{MemoryTable, MemoryTableError};
 
@@ -12,8 +13,7 @@ pub struct Database {
 
 impl Database {
     pub fn add_table(&mut self, table_info: TableInfo) {
-        let name: String = table_info.name.clone();
-        self.tables.insert(name, table_info);
+        self.tables.insert(table_info.name.clone(), table_info);
     }
 
     pub fn table_info_from_str(&self, name: &str) -> Result<TableInfo, DatabaseError> {
@@ -23,11 +23,28 @@ impl Database {
         }
     }
 
-    pub fn load_table(&mut self, name: &str) -> Result<MemoryTable, DatabaseError> {
-        match self.tables.get_mut(name) {
+    pub fn load_table(&mut self, name: String) -> Result<MemoryTable, DatabaseError> {
+        match self.tables.get_mut(&name) {
             None => Err(DatabaseError::TableNotFoundError),
-            Some(tbl_info) => Ok(try!(MemoryTable::new(tbl_info))),
+            Some(tbl_info) => {
+                let mem_tbl: MemoryTable = try!(MemoryTable::new(tbl_info.clone()));
+                Ok(mem_tbl)
+            },
         }
+    }
+
+    pub fn load_tables(&mut self, names: &[String]) -> Result<Vec<MemoryTable>, DatabaseError> {
+        let mut tables: Vec<MemoryTable> = Vec::new();
+        for name in names {
+            let tbl_info: &mut TableInfo = match self.tables.get_mut(&name[..]) {
+                None => return Err(DatabaseError::TableNotFoundError),
+                Some(tbl_info) => tbl_info,
+            };
+
+            tables.push(try!(MemoryTable::new(tbl_info.clone())));
+        }
+
+        Ok(tables)
     }
 }
 

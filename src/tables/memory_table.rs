@@ -7,16 +7,16 @@ use Tuple;
 use meta::table_info::TableInfo;
 
 #[derive(Debug)]
-pub struct MemoryTable<'t> {
+pub struct MemoryTable {
     pub id: usize,
     pub name: String,
     pub columns: Vec<Column>,
+    pub meta: TableInfo,
     pub tree: BTree,
-    pub meta: &'t mut TableInfo,
 }
 
-impl<'t> MemoryTable<'t> {
-    pub fn new(meta: &'t mut TableInfo) -> Result<MemoryTable<'t>, MemoryTableError> {
+impl MemoryTable {
+    pub fn new(meta: TableInfo) -> Result<MemoryTable, MemoryTableError> {
         let mut columns: Vec<Column> = Vec::new();
         for column_info in &meta.columns {
             columns.push(column_info.to_column(&meta.name));

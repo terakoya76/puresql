@@ -66,6 +66,7 @@ fn main() {
     let alloc: Box<Allocator> = Allocator::new(1);
 
     client.handle_query("create table shohin ( shohin_id int, shohin_name char(10), kubun_id int, price int )");
+
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 1, 'apple', 1, 300 )");
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 2, 'orange', 1, 130)");
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 3, 'cabbage', 2, 200 )");
