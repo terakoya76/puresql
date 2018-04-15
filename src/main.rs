@@ -17,10 +17,6 @@ mod allocators;
 mod executors;
 mod parser;
 
-// trait
-pub use executors::scan_exec::ScanExec;
-
-// struct
 pub use client::Client;
 pub use database::Database;
 pub use context::Context;
@@ -37,6 +33,7 @@ pub use meta::table_info::TableInfo;
 pub use meta::column_info::ColumnInfo;
 pub use meta::index_info::IndexInfo;
 pub use allocators::allocator::Allocator;
+pub use executors::scan_iterator::ScanIterator;
 pub use executors::table_scan::TableScanExec;
 pub use executors::memory_table_scan::MemoryTableScanExec;
 pub use executors::join::NestedLoopJoinExec;

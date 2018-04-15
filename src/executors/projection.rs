@@ -1,9 +1,7 @@
 use std::marker::PhantomData;
 
-// trait
-use ScanExec;
+use ScanIterator;
 
-//struct
 use columns::column::Column;
 use tables::tuple::Tuple;
 use tables::field::Field;
@@ -16,7 +14,7 @@ pub struct ProjectionExec<'p, 't: 'p, T: 't> {
 }
 
 impl<'p, 't, T> ProjectionExec<'p, 't, T>
-    where T: ScanExec {
+    where T: ScanIterator {
     pub fn new(inputs: &'p mut T, projectors: Vec<String>) -> ProjectionExec<'p, 't, T> {
         ProjectionExec {
             inputs: inputs,
@@ -26,26 +24,15 @@ impl<'p, 't, T> ProjectionExec<'p, 't, T>
     }
 }
 
-impl<'p, 't, T> ScanExec for ProjectionExec<'p, 't, T>
-    where T: ScanExec {
+impl<'p, 't, T> ScanIterator for ProjectionExec<'p, 't, T>
+    where T: ScanIterator {
     fn get_columns(&self) -> Vec<Column> {
         self.inputs.get_columns()
-    }
-
-    fn get_tuple(&mut self, handle: usize) -> Tuple {
-        self.inputs.get_tuple(handle)
-    }
-
-    fn set_next_handle(&mut self, _next_handle: usize) {
-    }
-
-    fn next_handle(&mut self) -> Option<usize> {
-        None
     }
 }
 
 impl<'p, 't, T> Iterator for ProjectionExec<'p, 't, T>
-    where T: ScanExec {
+    where T: ScanIterator {
     type Item = Tuple;
     fn next(&mut self) -> Option<Tuple> {
         loop {

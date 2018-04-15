@@ -1,7 +1,4 @@
-// trait
-use ScanExec;
-
-// struct
+use ScanIterator;
 use columns::column::Column;
 use columns::range::Range;
 use tables::tuple::Tuple;
@@ -26,12 +23,6 @@ impl<'t> MemoryTableScanExec<'t> {
             seek_handle: 0,
             columns: columns,
         }
-    }
-}
-
-impl<'t> ScanExec for MemoryTableScanExec<'t> {
-    fn get_columns(&self) -> Vec<Column> {
-        self.columns.clone()
     }
 
     fn get_tuple(&mut self, handle: usize) -> Tuple {
@@ -66,6 +57,12 @@ impl<'t> ScanExec for MemoryTableScanExec<'t> {
                 Some(handle) => return Some(handle),
             }
         }
+    }
+}
+
+impl<'t> ScanIterator for MemoryTableScanExec<'t> {
+    fn get_columns(&self) -> Vec<Column> {
+        self.columns.clone()
     }
 }
 

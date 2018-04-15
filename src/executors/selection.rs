@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use ScanExec;
+use ScanIterator;
 use Selector;
 use columns::column::Column;
 use tables::tuple::Tuple;
@@ -12,7 +12,7 @@ pub struct SelectionExec<'s, 't: 's, T: 't> {
 }
 
 impl<'s, 't, T> SelectionExec<'s, 't, T>
-    where T: ScanExec {
+    where T: ScanIterator {
     pub fn new(inputs: &'s mut T, selectors: Vec<Box<Selector>>) -> SelectionExec<'s, 't, T> {
         SelectionExec {
             inputs: inputs,
@@ -22,27 +22,16 @@ impl<'s, 't, T> SelectionExec<'s, 't, T>
     }
 }
 
-impl<'s, 't, T> ScanExec for SelectionExec<'s, 't, T>
-    where T: ScanExec {
+impl<'s, 't, T> ScanIterator for SelectionExec<'s, 't, T>
+    where T: ScanIterator {
     fn get_columns(&self) -> Vec<Column> {
         self.inputs.get_columns()
-    }
-
-    fn get_tuple(&mut self, handle: usize) -> Tuple {
-        self.inputs.get_tuple(handle)
-    }
-
-    fn set_next_handle(&mut self, _next_handle: usize) {
-    }
-
-    fn next_handle(&mut self) -> Option<usize> {
-        None
     }
 }
 
 // TODO: impl OR conditions
 impl<'s, 't, T> Iterator for SelectionExec<'s, 't, T>
-    where T: ScanExec {
+    where T: ScanIterator {
     type Item = Tuple;
     fn next(&mut self) -> Option<Tuple> {
         loop {

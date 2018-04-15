@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use ScanExec;
+use ScanIterator;
 use columns::column::Column;
 use tables::tuple::Tuple;
 
@@ -17,8 +17,7 @@ pub struct NestedLoopJoinExec<'n> {
 }
 
 impl<'n> NestedLoopJoinExec<'n> {
-    pub fn new<T1: ScanExec, T2: ScanExec>(inner_table: &'n mut T1, outer_table: &'n mut T2) -> NestedLoopJoinExec<'n> {
-
+    pub fn new<T1: ScanIterator, T2: ScanIterator>(inner_table: &'n mut T1, outer_table: &'n mut T2) -> NestedLoopJoinExec<'n> {
         NestedLoopJoinExec {
             cursor: 0,
             //inner_table: inner_table,
@@ -32,22 +31,11 @@ impl<'n> NestedLoopJoinExec<'n> {
     }
 }
 
-impl<'n> ScanExec for NestedLoopJoinExec<'n> {
+impl<'n> ScanIterator for NestedLoopJoinExec<'n> {
     fn get_columns(&self) -> Vec<Column> {
         let mut inner_columns = self.inner_columns.clone();
         inner_columns.append(&mut self.outer_columns.clone());
         inner_columns
-    }
-
-    fn get_tuple(&mut self, _handle: usize) -> Tuple {
-        Tuple::new(vec![])
-    }
-
-    fn set_next_handle(&mut self, _next_handle: usize) {
-    }
-
-    fn next_handle(&mut self) -> Option<usize> {
-        None
     }
 }
 
@@ -58,7 +46,7 @@ impl<'n> Iterator for NestedLoopJoinExec<'n> {
     }
 }
 
-fn next_tuple<'n, T1: ScanExec + 'n, T2: ScanExec + 'n>(inner_table: &'n mut T1, outer_table: &'n mut T2) -> Box<FnMut() -> Option<Tuple> + 'n> {
+fn next_tuple<'n, T1: ScanIterator + 'n, T2: ScanIterator + 'n>(inner_table: &'n mut T1, outer_table: &'n mut T2) -> Box<FnMut() -> Option<Tuple> + 'n> {
     Box::new(move || {
         loop {
             match inner_table.next() {

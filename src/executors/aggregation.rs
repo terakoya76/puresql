@@ -1,11 +1,8 @@
 use std::marker::PhantomData;
 use std::collections::HashMap;
 
-// trait
-use ScanExec;
+use ScanIterator;
 use Aggregator;
-
-// struct
 use tables::tuple::Tuple;
 use tables::field::Field;
 
@@ -18,7 +15,7 @@ pub struct AggregationExec<'a, 't: 'a, T: 't> {
 }
 
 impl<'a, 't, T> AggregationExec<'a, 't, T>
-    where T: ScanExec {
+    where T: ScanIterator {
     pub fn new(inputs: &'a mut T, group_keys: Vec<&str>, aggregators: Vec<Box<Aggregator>>) -> AggregationExec<'a, 't, T> {
         AggregationExec {
             group_keys: group_keys.iter().map(|k| k.to_string()).collect(),
@@ -58,7 +55,7 @@ impl<'a, 't, T> AggregationExec<'a, 't, T>
 }
 
 impl<'a, 't, T> Iterator for AggregationExec<'a, 't, T>
-    where T: ScanExec {
+    where T: ScanIterator {
     type Item = Vec<Tuple>;
     fn next(&mut self) -> Option<Vec<Tuple>> {
         loop {
