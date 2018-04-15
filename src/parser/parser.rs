@@ -402,36 +402,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
 
         // FROM xx, yy
         try!(self.bump());
-        let mut sources: Vec<String> = Vec::new();
-        loop {
-            // TODO: impl sub query parse
-            let table_name: String = try!(self.validate_word(true));
-            sources.push(table_name);
-
-            if self.check_next_token(&[Token::Comma]) {
-                try!(self.bump());
-                continue;
-            }
-
-            if self.check_next_keyword(&[Keyword::Where, Keyword::Limit, Keyword::Group, Keyword::Order]) {
-                break;
-            }
-
-            if self.check_next_keyword(&[Keyword::Join]) {
-                try!(self.bump());
-                try!(self.validate_keyword(&[Keyword::Join]));
-                try!(self.bump());
-                if self.check_next_keyword(&[Keyword::On]) {
-                    let opst_table_name: String = try!(self.validate_word(true));
-                    sources.push(opst_table_name);
-                    try!(self.bump());
-                } else {
-                    return Err(ParseError::UndefinedStatementError);
-                }
-            }
-
-            break;
-        }
+        let sources: DataSrc = try!(self.parse_from());
 
         // WHERE xx and yy
         try!(self.bump());
@@ -467,12 +438,46 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
 
         Ok(SelectStmt {
             targets: targets,
-            sources: sources,
+            source: sources,
             condition: condition,
             group_by: group_by,
             order_by: order_by,
             limit: limit,
         })
+    }
+
+    pub fn parse_from(&mut self) -> Result<DataSrc, ParseError> {
+        let mut tables: Vec<String> = Vec::new();
+
+        loop {
+            // TODO: impl sub query parse
+            tables.push(try!(self.validate_word(true)));
+
+            if self.check_next_token(&[Token::Comma]) {
+                try!(self.bump());
+                continue;
+            }
+
+            if self.check_next_keyword(&[Keyword::Join]) {
+                try!(self.bump());
+                try!(self.validate_keyword(&[Keyword::Join]));
+                try!(self.bump());
+                if self.check_next_keyword(&[Keyword::On]) {
+                    tables.push(try!(self.validate_word(true)));
+                    try!(self.bump());
+                    let condition: Condition = try!(self.parse_condition());
+                    return Ok(DataSrc {
+                        tables: tables,
+                        condition: Some(condition),
+                    });
+                }
+            }
+
+            return Ok(DataSrc {
+                tables: tables,
+                condition: None,
+            });
+        }
     }
 
     pub fn parse_condition(&mut self) -> Result<Condition, ParseError> {

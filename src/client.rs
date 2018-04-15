@@ -107,9 +107,9 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
     match ctx.db {
         None => Err(ClientError::BuildExecutorError),
         Some(ref mut db) => {
-            match stmt.sources.len() {
+            match stmt.source.tables.len() {
                 1 => {
-                    let tbl_names: &[String] = stmt.sources.as_slice();
+                    let tbl_names: &[String] = stmt.source.tables.as_slice();
                     let mut mem_tbls: Vec<MemoryTable> = try!(db.load_tables(tbl_names));
 
                     let mut scan_exec: MemoryTableScanExec = MemoryTableScanExec::new(&mut mem_tbls[0], vec![Range::new(0, 10)]);
@@ -204,17 +204,17 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
 
                 2 => {
                     let mut db4left = db.clone();
-                    let left_tbl_name: String = stmt.sources[0].clone();
+                    let left_tbl_name: String = stmt.source.tables[0].clone();
                     let mut left_mem_tbl: MemoryTable = try!(db4left.load_table(left_tbl_name));
                     let mut left_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut left_mem_tbl, vec![Range::new(0, 10)]);
 
                     let mut db4rht = db.clone();
-                    let rht_tbl_name: String = stmt.sources[1].clone();
+                    let rht_tbl_name: String = stmt.source.tables[1].clone();
                     let mut rht_mem_tbl: MemoryTable = try!(db4rht.load_table(rht_tbl_name));
                     let mut rht_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut rht_mem_tbl, vec![Range::new(0, 10)]);
 
-                    let mut join_exec: NestedLoopJoinExec<MemoryTableScanExec, MemoryTableScanExec> = NestedLoopJoinExec::new(&mut left_tbl_scan, &mut rht_tbl_scan);
-                    let mut proj_exec: ProjectionExec<NestedLoopJoinExec<MemoryTableScanExec, MemoryTableScanExec>> = ProjectionExec::new(&mut join_exec, stmt.targets);
+                    let mut join_exec: NestedLoopJoinExec = NestedLoopJoinExec::new(&mut left_tbl_scan, &mut rht_tbl_scan);
+                    let mut proj_exec: ProjectionExec<NestedLoopJoinExec> = ProjectionExec::new(&mut join_exec, stmt.targets);
 
                     loop {
                         match proj_exec.next() {
@@ -225,9 +225,10 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                     println!("Scaned\n");
                     Ok(())
                 },
+
                 _ => Err(ClientError::BuildExecutorError),
             }
-        },
+        }
     }
 }
 

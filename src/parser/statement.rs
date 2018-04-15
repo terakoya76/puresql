@@ -46,7 +46,7 @@ pub enum UseStmt {
 #[derive(Debug, Clone, PartialEq)]
 pub struct SelectStmt {
     pub targets: Vec<String>,
-    pub sources: Vec<String>,
+    pub source: DataSrc,
     pub condition: Option<Condition>,
     pub group_by: Option<GroupBy>,
     pub order_by: Option<OrderBy>,
@@ -54,19 +54,9 @@ pub struct SelectStmt {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum DataSrc {
-    Table,
-    Join,
-    SubQuery,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Table {
-    src: Vec<String>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Join {
+pub struct DataSrc {
+    pub tables: Vec<String>,
+    pub condition: Option<Condition>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -4,13 +4,14 @@ use std::marker::PhantomData;
 use ScanExec;
 
 //struct
+use columns::column::Column;
 use tables::tuple::Tuple;
 use tables::field::Field;
 
 #[derive(Debug)]
 pub struct ProjectionExec<'p, 't: 'p, T: 't> {
-    inputs: &'p mut T,
-    projectors: Vec<String>,
+    pub inputs: &'p mut T,
+    pub projectors: Vec<String>,
     _marker: PhantomData<&'t T>,
 }
 
@@ -22,6 +23,24 @@ impl<'p, 't, T> ProjectionExec<'p, 't, T>
             projectors: projectors,
             _marker: PhantomData,
         }
+    }
+}
+
+impl<'p, 't, T> ScanExec for ProjectionExec<'p, 't, T>
+    where T: ScanExec {
+    fn get_columns(&self) -> Vec<Column> {
+        self.inputs.get_columns()
+    }
+
+    fn get_tuple(&mut self, handle: usize) -> Tuple {
+        self.inputs.get_tuple(handle)
+    }
+
+    fn set_next_handle(&mut self, _next_handle: usize) {
+    }
+
+    fn next_handle(&mut self) -> Option<usize> {
+        None
     }
 }
 
