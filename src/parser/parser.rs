@@ -465,6 +465,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                 if self.check_next_keyword(&[Keyword::On]) {
                     tables.push(try!(self.validate_word(true)));
                     try!(self.bump());
+
                     let condition: Condition = try!(self.parse_condition());
                     return Ok(DataSrc {
                         tables: tables,

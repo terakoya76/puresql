@@ -23,6 +23,18 @@ impl Database {
         }
     }
 
+    pub fn table_infos_from_str(&mut self, names: &[String]) -> Result<Vec<TableInfo>, DatabaseError> {
+        let mut tables: Vec<TableInfo> = Vec::new();
+        for name in names {
+            match self.tables.get_mut(&name[..]) {
+                None => return Err(DatabaseError::TableNotFoundError),
+                Some(tbl_info) => tables.push(tbl_info.clone()),
+            }
+        }
+
+        Ok(tables)
+    }
+
     pub fn load_table(&mut self, name: String) -> Result<MemoryTable, DatabaseError> {
         match self.tables.get_mut(&name) {
             None => Err(DatabaseError::TableNotFoundError),
@@ -59,4 +71,3 @@ impl From<MemoryTableError> for DatabaseError {
         DatabaseError::MemoryTableError(err)
     }
 }
-

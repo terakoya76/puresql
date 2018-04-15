@@ -1,4 +1,5 @@
 use ScanIterator;
+use meta::table_info::TableInfo;
 use columns::column::Column;
 use columns::range::Range;
 use tables::tuple::Tuple;
@@ -11,10 +12,11 @@ pub struct MemoryTableScanExec<'t> {
     pub cursor: usize,
     pub seek_handle: usize,
     pub columns: Vec<Column>,
+    pub meta: TableInfo,
 }
 
 impl<'t> MemoryTableScanExec<'t> {
-    pub fn new(table: &'t mut MemoryTable, ranges: Vec<Range>) -> MemoryTableScanExec<'t> {
+    pub fn new(table: &'t mut MemoryTable, meta: TableInfo, ranges: Vec<Range>) -> MemoryTableScanExec<'t> {
         let columns: Vec<Column> = table.columns.iter().map(|c| c.clone()).collect();
         MemoryTableScanExec {
             table: table,
@@ -22,6 +24,7 @@ impl<'t> MemoryTableScanExec<'t> {
             cursor: 0,
             seek_handle: 0,
             columns: columns,
+            meta: meta,
         }
     }
 
@@ -61,6 +64,10 @@ impl<'t> MemoryTableScanExec<'t> {
 }
 
 impl<'t> ScanIterator for MemoryTableScanExec<'t> {
+    fn get_meta(&self) -> TableInfo {
+        self.meta.clone()
+    }
+
     fn get_columns(&self) -> Vec<Column> {
         self.columns.clone()
     }

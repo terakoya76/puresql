@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use ScanIterator;
-
+use meta::table_info::TableInfo;
 use columns::column::Column;
 use tables::tuple::Tuple;
 use tables::field::Field;
@@ -26,6 +26,10 @@ impl<'p, 't, T> ProjectionExec<'p, 't, T>
 
 impl<'p, 't, T> ScanIterator for ProjectionExec<'p, 't, T>
     where T: ScanIterator {
+    fn get_meta(&self) -> TableInfo {
+        self.inputs.get_meta()
+    }
+
     fn get_columns(&self) -> Vec<Column> {
         self.inputs.get_columns()
     }
@@ -41,7 +45,7 @@ impl<'p, 't, T> Iterator for ProjectionExec<'p, 't, T>
                 Some(tuple) => {
                     let mut fields: Vec<Field> = Vec::new();
                     let designated_columns: Vec<String> = self.projectors.iter().map(|c| c.to_string()).collect();
-                    for column in &self.inputs.get_columns() {
+                    for column in &self.get_meta().columns {
                         if designated_columns.contains(&column.name) {
                             fields.push(tuple.fields[column.offset].clone());
                         }

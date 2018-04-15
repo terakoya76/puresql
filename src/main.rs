@@ -80,7 +80,7 @@ fn main() {
     client.handle_query("select shohin_name, price from shohin");
 
     println!("joined table scan");
-    client.handle_query("select shohin_name, kubun_name, price from shohin join kubun on");
+    client.handle_query("select shohin_name, kubun_name, price from shohin join kubun on kubun_id = kubun_id");
 
     println!("selection");
     client.handle_query("select shohin_name, kubun_id, price from shohin where shohin_name = 'apple'");

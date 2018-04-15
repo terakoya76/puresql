@@ -1,4 +1,5 @@
 use ScanIterator;
+use meta::table_info::TableInfo;
 use columns::column::Column;
 use columns::range::Range;
 use tables::tuple::Tuple;
@@ -7,22 +8,22 @@ use tables::table::Table;
 #[derive(Debug)]
 pub struct TableScanExec<'ts, 't: 'ts> {
     pub table: &'ts Table<'t>,
-    pub name: String,
     pub ranges: Vec<Range>,
     pub cursor: usize,
     pub seek_handle: usize,
     pub columns: Vec<Column>,
+    pub meta: TableInfo,
 }
 
 impl<'ts, 't> TableScanExec<'ts, 't> {
-    pub fn new(table: &'ts Table<'t>, name: &str, ranges: Vec<Range>) -> TableScanExec<'ts, 't> {
+    pub fn new(table: &'ts Table<'t>, meta: TableInfo, ranges: Vec<Range>) -> TableScanExec<'ts, 't> {
         TableScanExec {
             table: table,
-            name: name.to_string(),
             ranges: ranges,
             cursor: 0,
             seek_handle: 0,
             columns: table.columns.iter().map(|c| c.clone()).collect(),
+            meta: meta,
         }
     }
 
@@ -62,6 +63,10 @@ impl<'ts, 't> TableScanExec<'ts, 't> {
 }
 
 impl<'ts, 't> ScanIterator for TableScanExec<'ts, 't> {
+    fn get_meta(&self) -> TableInfo {
+        self.meta.clone()
+    }
+
     fn get_columns(&self) -> Vec<Column> {
         self.columns.clone()
     }

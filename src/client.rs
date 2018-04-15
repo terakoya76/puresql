@@ -110,9 +110,10 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
             match stmt.source.tables.len() {
                 1 => {
                     let tbl_names: &[String] = stmt.source.tables.as_slice();
-                    let mut mem_tbls: Vec<MemoryTable> = try!(db.load_tables(tbl_names));
+                    let mut mem_tbls: Vec<MemoryTable> = try!(db.clone().load_tables(tbl_names));
+                    let mut mem_tbl_infos: Vec<TableInfo> = try!(db.clone().table_infos_from_str(tbl_names));
 
-                    let mut scan_exec: MemoryTableScanExec = MemoryTableScanExec::new(&mut mem_tbls[0], vec![Range::new(0, 10)]);
+                    let mut scan_exec: MemoryTableScanExec = MemoryTableScanExec::new(&mut mem_tbls[0], mem_tbl_infos[0].clone(), vec![Range::new(0, 10)]);
 
                     let mut conditions: Vec<Box<Selector>> = Vec::new();
                     match stmt.condition {
@@ -205,16 +206,93 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                 2 => {
                     let mut db4left = db.clone();
                     let left_tbl_name: String = stmt.source.tables[0].clone();
+                    let left_tbl_info: TableInfo = try!(db4left.clone().table_info_from_str(&left_tbl_name));
                     let mut left_mem_tbl: MemoryTable = try!(db4left.load_table(left_tbl_name));
-                    let mut left_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut left_mem_tbl, vec![Range::new(0, 10)]);
+                    let mut left_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut left_mem_tbl, left_tbl_info.clone(), vec![Range::new(0, 10)]);
 
                     let mut db4rht = db.clone();
                     let rht_tbl_name: String = stmt.source.tables[1].clone();
-                    let mut rht_mem_tbl: MemoryTable = try!(db4rht.load_table(rht_tbl_name));
-                    let mut rht_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut rht_mem_tbl, vec![Range::new(0, 10)]);
+                    let rht_tbl_info: TableInfo = try!(db4rht.clone().table_info_from_str(&rht_tbl_name));
+                    let mut rht_mem_tbl: MemoryTable = try!(db4rht.clone().load_table(rht_tbl_name));
+                    let mut rht_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut rht_mem_tbl, rht_tbl_info.clone(), vec![Range::new(0, 10)]);
 
-                    let mut join_exec: NestedLoopJoinExec = NestedLoopJoinExec::new(&mut left_tbl_scan, &mut rht_tbl_scan);
-                    let mut proj_exec: ProjectionExec<NestedLoopJoinExec> = ProjectionExec::new(&mut join_exec, stmt.targets);
+
+                    let mut conditions: Vec<Box<Selector>> = Vec::new();
+                    match stmt.source.condition.clone() {
+                        None => {},
+                        Some(condition) => {
+                            match condition.op {
+                                Operator::Equ => {
+                                    let right_side = match condition.right_side {
+                                        Comparable::Lit(l) => Equal::new(&condition.column, None, Some(l.into())),
+                                        Comparable::Word(ref s) => {
+                                            let right_column_info: ColumnInfo = try!(rht_tbl_info.column_info_from_str(s));
+                                            Equal::new(&condition.column, Some(right_column_info.offset), None)
+                                        },
+                                    };
+                                    conditions.push(right_side);
+                                },
+
+                                Operator::NEqu => {
+                                    let right_side = match condition.right_side {
+                                        Comparable::Lit(l) => NotEqual::new(&condition.column, None, Some(l.into())),
+                                        Comparable::Word(ref s) => {
+                                            let right_column_info: ColumnInfo = try!(rht_tbl_info.column_info_from_str(s));
+                                            NotEqual::new(&condition.column, Some(right_column_info.offset), None)
+                                                                                                                   },
+                                    };
+                                    conditions.push(right_side);
+                                },
+
+                                Operator::GT => {
+                                    let right_side = match condition.right_side {
+                                        Comparable::Lit(l) => GT::new(&condition.column, None, Some(l.into())),
+                                        Comparable::Word(ref s) => {
+                                            let right_column_info: ColumnInfo = try!(rht_tbl_info.column_info_from_str(s));
+                                            GT::new(&condition.column, Some(right_column_info.offset), None)
+                                                                                                                   },
+                                    };
+                                    conditions.push(right_side);
+                                },
+
+                                Operator::LT => {
+                                    let right_side = match condition.right_side {
+                                        Comparable::Lit(l) => LT::new(&condition.column, None, Some(l.into())),
+                                        Comparable::Word(ref s) => {
+                                            let right_column_info: ColumnInfo = try!(rht_tbl_info.column_info_from_str(s));
+                                            LT::new(&condition.column, Some(right_column_info.offset), None)
+                                                                                                                   },
+                                    };
+                                    conditions.push(right_side);
+                                },
+
+                                Operator::GE => {
+                                    let right_side = match condition.right_side {
+                                        Comparable::Lit(l) => GE::new(&condition.column, None, Some(l.into())),
+                                        Comparable::Word(ref s) => {
+                                            let right_column_info: ColumnInfo = try!(rht_tbl_info.column_info_from_str(s));
+                                            GE::new(&condition.column, Some(right_column_info.offset), None)
+                                                                                                                   },
+                                    };
+                                    conditions.push(right_side);
+                                },
+
+                                Operator::LE => {
+                                    let right_side = match condition.right_side {
+                                        Comparable::Lit(l) => LE::new(&condition.column, None, Some(l.into())),
+                                        Comparable::Word(ref s) => {
+                                            let right_column_info: ColumnInfo = try!(rht_tbl_info.column_info_from_str(s));
+                                            LE::new(&condition.column, Some(right_column_info.offset), None)
+                                                                                                                   },
+                                    };
+                                    conditions.push(right_side);
+                                },
+                            }
+                        },
+                    }
+
+                    let mut join_exec = NestedLoopJoinExec::new(&mut left_tbl_scan, &mut rht_tbl_scan, stmt.source.condition.clone());
+                    let mut proj_exec = ProjectionExec::new(&mut join_exec, stmt.targets);
 
                     loop {
                         match proj_exec.next() {

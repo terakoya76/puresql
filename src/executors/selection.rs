@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use ScanIterator;
 use Selector;
+use meta::table_info::TableInfo;
 use columns::column::Column;
 use tables::tuple::Tuple;
 
@@ -24,6 +25,10 @@ impl<'s, 't, T> SelectionExec<'s, 't, T>
 
 impl<'s, 't, T> ScanIterator for SelectionExec<'s, 't, T>
     where T: ScanIterator {
+    fn get_meta(&self) -> TableInfo {
+        self.inputs.get_meta()
+    }
+
     fn get_columns(&self) -> Vec<Column> {
         self.inputs.get_columns()
     }
