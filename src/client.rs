@@ -292,7 +292,8 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                     }
 
                     let mut join_exec = NestedLoopJoinExec::new(&mut left_tbl_scan, &mut rht_tbl_scan, stmt.source.condition.clone());
-                    let mut proj_exec = ProjectionExec::new(&mut join_exec, stmt.targets);
+                    let mut selection_exec = SelectionExec::new(&mut join_exec, conditions);
+                    let mut proj_exec = ProjectionExec::new(&mut selection_exec, stmt.targets);
 
                     loop {
                         match proj_exec.next() {

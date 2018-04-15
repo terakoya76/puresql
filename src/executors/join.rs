@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use ScanIterator;
 use Selector;
 use meta::table_info::{TableInfo, TableInfoError};
@@ -14,15 +12,11 @@ use executors::selector::*;
 //#[derive(Debug)]
 pub struct NestedLoopJoinExec<'n> {
     pub cursor: usize,
-    //inner_table: &'n mut T1,
-    //outer_table: &'n mut T2,
     pub outer_columns: Vec<Column>,
     pub inner_columns: Vec<Column>,
     pub next_tuple: Box<FnMut() -> Option<Tuple> + 'n>,
     pub selectors: Vec<Box<Selector>>,
     pub meta: TableInfo,
-    //_marker1: PhantomData<&'n T1>,
-    //_marker2: PhantomData<&'t T2>,
 }
 
 impl<'n> NestedLoopJoinExec<'n> {
@@ -52,15 +46,11 @@ impl<'n> NestedLoopJoinExec<'n> {
 
         NestedLoopJoinExec {
             cursor: 0,
-            //inner_table: inner_table,
-            //outer_table: outer_table,
             outer_columns: outer_table.get_columns(),
             inner_columns: inner_table.get_columns(),
             next_tuple: next_tuple(outer_table, inner_table),
             selectors: selectors,
             meta: meta,
-            //_marker1: PhantomData,
-            //_marker2: PhantomData,
         }
     }
 }

@@ -87,6 +87,8 @@ fn main() {
 
     client.handle_query("select shohin_name, kubun_id, price from shohin where price > kubun_id");
 
+    client.handle_query("select shohin_name, kubun_name, price from shohin join kubun on kubun_id = kubun_id where shohin_name = 'apple'");
+
     /*
     println!("aggregation\n");
     {
