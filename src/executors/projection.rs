@@ -5,17 +5,18 @@ use meta::table_info::TableInfo;
 use columns::column::Column;
 use tables::tuple::Tuple;
 use tables::field::Field;
+use parser::statement::*;
 
 #[derive(Debug)]
 pub struct ProjectionExec<'p, 't: 'p, T: 't> {
     pub inputs: &'p mut T,
-    pub projectors: Vec<String>,
+    pub projectors: Vec<Target>,
     _marker: PhantomData<&'t T>,
 }
 
 impl<'p, 't, T> ProjectionExec<'p, 't, T>
     where T: ScanIterator {
-    pub fn new(inputs: &'p mut T, projectors: Vec<String>) -> ProjectionExec<'p, 't, T> {
+    pub fn new(inputs: &'p mut T, projectors: Vec<Target>) -> ProjectionExec<'p, 't, T> {
         ProjectionExec {
             inputs: inputs,
             projectors: projectors,
@@ -44,10 +45,18 @@ impl<'p, 't, T> Iterator for ProjectionExec<'p, 't, T>
                 None => return None,
                 Some(tuple) => {
                     let mut fields: Vec<Field> = Vec::new();
-                    let designated_columns: Vec<String> = self.projectors.iter().map(|c| c.to_string()).collect();
-                    for column in &self.get_meta().columns {
-                        if designated_columns.contains(&column.name) {
-                            fields.push(tuple.fields[column.offset].clone());
+                    for column in &self.inputs.get_columns() {
+                        for target in &self.projectors {
+                            let t: Target = target.clone();
+                            if t.table_name.is_some() {
+                                if t.table_name.unwrap() != column.table_name {
+                                    continue;
+                                }
+                            }
+
+                            if t.name == column.name {
+                                fields.push(tuple.fields[column.offset].clone());
+                            }
                         }
                     }
                     return Some(Tuple::new(fields));

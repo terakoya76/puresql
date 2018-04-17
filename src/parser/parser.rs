@@ -383,13 +383,23 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
     pub fn parse_select_stmt(&mut self) -> Result<SelectStmt, ParseError> {
         try!(self.bump());
         // SELECT xx, yy
-        let mut targets: Vec<String> = Vec::new();
+        let mut targets: Vec<Target> = Vec::new();
         while !self.validate_keyword(&[Keyword::From]).is_ok() {
+            let mut table_name: Option<String> = None;
+            if self.check_next_token(&[Token::Dot]) {
+                table_name = Some(try!(self.validate_word(false)));
+                try!(self.bump());
+                try!(self.bump());
+            }
+
             match self.validate_token(&[Token::Star]) {
                 Ok(_t) => println!("{:?}", self.curr_token),
                 _ => {
-                    let column_name: String = try!(self.validate_word(true));
-                    targets.push(column_name);
+                    let column_name: String = try!(self.validate_word(false));
+                    targets.push(Target {
+                        table_name: table_name,
+                        name: column_name,
+                    });
                     try!(self.bump());
                 },
             }
@@ -483,7 +493,18 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
 
     pub fn parse_condition(&mut self) -> Result<Condition, ParseError> {
         try!(self.bump());
-        let column: String = try!(self.validate_word(true));
+        let mut table_name: Option<String> = None;
+        if self.check_next_token(&[Token::Dot]) {
+            table_name = Some(try!(self.validate_word(false)));
+            try!(self.bump());
+            try!(self.bump());
+        };
+
+        let column_name: String = try!(self.validate_word(true));
+        let left_side: Target = Target {
+            table_name: table_name,
+            name: column_name,
+        };
 
         try!(self.bump());
         let op: Operator = match try!(self.validate_token(condition_tokens())) {
@@ -508,9 +529,9 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         };
 
         Ok(Condition {
-            column: column,
+            left: left_side,
             op: op,
-            right_side: right_side,
+            right: right_side,
         })
     }
 

@@ -61,8 +61,16 @@ impl<'n> ScanIterator for NestedLoopJoinExec<'n> {
     }
 
     fn get_columns(&self) -> Vec<Column> {
+        let outer_length: usize = self.outer_columns.len();
         let mut outer_columns = self.outer_columns.clone();
-        outer_columns.append(&mut self.inner_columns.clone());
+        let mut inner_columns: Vec<Column> = self.inner_columns.clone().into_iter().map(|c| Column {
+            table_name: c.table_name,
+            name: c.name,
+            dtype: c.dtype,
+            offset: c.offset + outer_length,
+        }).collect();
+
+        outer_columns.append(&mut inner_columns);
         outer_columns
     }
 }
@@ -119,66 +127,66 @@ fn filterize(meta: TableInfo, condition: Option<Condition>) -> Result<Vec<Box<Se
         Some(condition) => {
             match condition.op {
                 Operator::Equ => {
-                    let filter = match condition.right_side {
-                        Comparable::Lit(l) => Equal::new(&condition.column, None, Some(l.into())),
+                    let filter = match condition.right {
+                        Comparable::Lit(l) => Equal::new(condition.left, None, Some(l.into())),
                         Comparable::Word(ref s) => {
                             let right_column_info: ColumnInfo = try!(meta.column_info_from_str(s));
-                            Equal::new(&condition.column, Some(right_column_info.offset), None)
+                            Equal::new(condition.left, Some(right_column_info.offset), None)
                         },
                     };
                     filters.push(filter);
                 },
 
                 Operator::NEqu => {
-                    let filter = match condition.right_side {
-                        Comparable::Lit(l) => NotEqual::new(&condition.column, None, Some(l.into())),
+                    let filter = match condition.right {
+                        Comparable::Lit(l) => NotEqual::new(condition.left, None, Some(l.into())),
                         Comparable::Word(ref s) => {
                             let right_column_info: ColumnInfo = try!(meta.column_info_from_str(s));
-                            NotEqual::new(&condition.column, Some(right_column_info.offset), None)
+                            NotEqual::new(condition.left, Some(right_column_info.offset), None)
                         },
                     };
                     filters.push(filter);
                 },
 
                 Operator::GT => {
-                    let filter = match condition.right_side {
-                        Comparable::Lit(l) => GT::new(&condition.column, None, Some(l.into())),
+                    let filter = match condition.right {
+                        Comparable::Lit(l) => GT::new(condition.left, None, Some(l.into())),
                         Comparable::Word(ref s) => {
                             let right_column_info: ColumnInfo = try!(meta.column_info_from_str(s));
-                            GT::new(&condition.column, Some(right_column_info.offset), None)
+                            GT::new(condition.left, Some(right_column_info.offset), None)
                         },
                     };
                     filters.push(filter);
                 },
 
                 Operator::LT => {
-                    let filter = match condition.right_side {
-                        Comparable::Lit(l) => LT::new(&condition.column, None, Some(l.into())),
+                    let filter = match condition.right {
+                        Comparable::Lit(l) => LT::new(condition.left, None, Some(l.into())),
                         Comparable::Word(ref s) => {
                             let right_column_info: ColumnInfo = try!(meta.column_info_from_str(s));
-                            LT::new(&condition.column, Some(right_column_info.offset), None)
+                            LT::new(condition.left, Some(right_column_info.offset), None)
                         },
                     };
                     filters.push(filter);
                 },
 
                 Operator::GE => {
-                    let filter = match condition.right_side {
-                        Comparable::Lit(l) => GE::new(&condition.column, None, Some(l.into())),
+                    let filter = match condition.right {
+                        Comparable::Lit(l) => GE::new(condition.left, None, Some(l.into())),
                         Comparable::Word(ref s) => {
                             let right_column_info: ColumnInfo = try!(meta.column_info_from_str(s));
-                            GE::new(&condition.column, Some(right_column_info.offset), None)
+                            GE::new(condition.left, Some(right_column_info.offset), None)
                         },
                     };
                     filters.push(filter);
                 },
 
                 Operator::LE => {
-                    let filter = match condition.right_side {
-                        Comparable::Lit(l) => LE::new(&condition.column, None, Some(l.into())),
+                    let filter = match condition.right {
+                        Comparable::Lit(l) => LE::new(condition.left, None, Some(l.into())),
                         Comparable::Word(ref s) => {
                             let right_column_info: ColumnInfo = try!(meta.column_info_from_str(s));
-                            LE::new(&condition.column, Some(right_column_info.offset), None)
+                            LE::new(condition.left, Some(right_column_info.offset), None)
                         },
                     };
                     filters.push(filter);

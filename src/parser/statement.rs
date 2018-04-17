@@ -45,12 +45,18 @@ pub enum UseStmt {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct SelectStmt {
-    pub targets: Vec<String>,
+    pub targets: Vec<Target>,
     pub source: DataSrc,
     pub condition: Option<Condition>,
     pub group_by: Option<GroupBy>,
     pub order_by: Option<OrderBy>,
     pub limit: Option<Limit>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Target {
+    pub table_name: Option<String>,
+    pub name: String,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -65,9 +71,9 @@ pub struct SubQuery {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Condition {
-    pub column: String,
+    pub left: Target,
     pub op: Operator,
-    pub right_side: Comparable,
+    pub right: Comparable,
 }
 
 #[derive(Debug, Clone, PartialEq)]

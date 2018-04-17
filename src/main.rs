@@ -76,18 +76,19 @@ fn main() {
 
     println!("table scan");
     client.handle_query("select shohin_id, shohin_name, kubun_id, price from shohin");
-    client.handle_query("select kubun_id, kubun_name from kubun");
-    client.handle_query("select shohin_name, price from shohin");
+    client.handle_query("select kubun.kubun_id, kubun.kubun_name from kubun");
+    client.handle_query("select shohin_name, kubun.kubun_id, price from shohin");
 
     println!("joined table scan");
-    client.handle_query("select shohin_name, kubun_name, price from shohin join kubun on kubun_id = kubun_id");
+    client.handle_query("select shohin.shohin_name, kubun.kubun_name, shohin.price from shohin join kubun on shohin.kubun_id = kubun.kubun_id");
+    client.handle_query("select shohin.shohin_name, kubun.kubun_name, shohin.price from shohin join kubun on kubun_id = kubun_id");
 
     println!("selection");
     client.handle_query("select shohin_name, kubun_id, price from shohin where shohin_name = 'apple'");
 
     client.handle_query("select shohin_name, kubun_id, price from shohin where price > kubun_id");
 
-    client.handle_query("select shohin_name, kubun_name, price from shohin join kubun on kubun_id = kubun_id where shohin_name = 'apple'");
+    client.handle_query("select shohin_name, kubun_name, price from shohin join kubun on kubun_id = kubun_id where shohin.shohin_name = 'apple'");
 
     /*
     println!("aggregation\n");

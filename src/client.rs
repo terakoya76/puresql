@@ -122,66 +122,66 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                             let tbl_info: TableInfo = try!(db.table_info_from_str(&tbl_names[0]));
                             match condition.op {
                                 Operator::Equ => {
-                                    let right_side = match condition.right_side {
-                                        Comparable::Lit(l) => Equal::new(&condition.column, None, Some(l.into())),
+                                    let right_side = match condition.right {
+                                        Comparable::Lit(l) => Equal::new(condition.left, None, Some(l.into())),
                                         Comparable::Word(ref s) => {
                                             let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
-                                            Equal::new(&condition.column, Some(right_column_info.offset), None)
+                                            Equal::new(condition.left, Some(right_column_info.offset), None)
                                         },
                                     };
                                     conditions.push(right_side);
                                 },
 
                                 Operator::NEqu => {
-                                    let right_side = match condition.right_side {
-                                        Comparable::Lit(l) => NotEqual::new(&condition.column, None, Some(l.into())),
+                                    let right_side = match condition.right {
+                                        Comparable::Lit(l) => NotEqual::new(condition.left, None, Some(l.into())),
                                         Comparable::Word(ref s) => {
                                             let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
-                                            NotEqual::new(&condition.column, Some(right_column_info.offset), None)
+                                            NotEqual::new(condition.left, Some(right_column_info.offset), None)
                                                                                                                    },
                                     };
                                     conditions.push(right_side);
                                 },
 
                                 Operator::GT => {
-                                    let right_side = match condition.right_side {
-                                        Comparable::Lit(l) => GT::new(&condition.column, None, Some(l.into())),
+                                    let right_side = match condition.right {
+                                        Comparable::Lit(l) => GT::new(condition.left, None, Some(l.into())),
                                         Comparable::Word(ref s) => {
                                             let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
-                                            GT::new(&condition.column, Some(right_column_info.offset), None)
+                                            GT::new(condition.left, Some(right_column_info.offset), None)
                                                                                                                    },
                                     };
                                     conditions.push(right_side);
                                 },
 
                                 Operator::LT => {
-                                    let right_side = match condition.right_side {
-                                        Comparable::Lit(l) => LT::new(&condition.column, None, Some(l.into())),
+                                    let right_side = match condition.right {
+                                        Comparable::Lit(l) => LT::new(condition.left, None, Some(l.into())),
                                         Comparable::Word(ref s) => {
                                             let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
-                                            LT::new(&condition.column, Some(right_column_info.offset), None)
+                                            LT::new(condition.left, Some(right_column_info.offset), None)
                                                                                                                    },
                                     };
                                     conditions.push(right_side);
                                 },
 
                                 Operator::GE => {
-                                    let right_side = match condition.right_side {
-                                        Comparable::Lit(l) => GE::new(&condition.column, None, Some(l.into())),
+                                    let right_side = match condition.right {
+                                        Comparable::Lit(l) => GE::new(condition.left, None, Some(l.into())),
                                         Comparable::Word(ref s) => {
                                             let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
-                                            GE::new(&condition.column, Some(right_column_info.offset), None)
+                                            GE::new(condition.left, Some(right_column_info.offset), None)
                                                                                                                    },
                                     };
                                     conditions.push(right_side);
                                 },
 
                                 Operator::LE => {
-                                    let right_side = match condition.right_side {
-                                        Comparable::Lit(l) => LE::new(&condition.column, None, Some(l.into())),
+                                    let right_side = match condition.right {
+                                        Comparable::Lit(l) => LE::new(condition.left, None, Some(l.into())),
                                         Comparable::Word(ref s) => {
                                             let right_column_info: ColumnInfo = try!(tbl_info.column_info_from_str(s));
-                                            LE::new(&condition.column, Some(right_column_info.offset), None)
+                                            LE::new(condition.left, Some(right_column_info.offset), None)
                                                                                                                    },
                                     };
                                     conditions.push(right_side);
@@ -218,71 +218,71 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
 
 
                     let mut conditions: Vec<Box<Selector>> = Vec::new();
-                    match stmt.source.condition.clone() {
+                    match stmt.condition.clone() {
                         None => {},
                         Some(condition) => {
                             match condition.op {
                                 Operator::Equ => {
-                                    let right_side = match condition.right_side {
-                                        Comparable::Lit(l) => Equal::new(&condition.column, None, Some(l.into())),
+                                    let right_side = match condition.right {
+                                        Comparable::Lit(l) => Equal::new(condition.left, None, Some(l.into())),
                                         Comparable::Word(ref s) => {
                                             let right_column_info: ColumnInfo = try!(rht_tbl_info.column_info_from_str(s));
-                                            Equal::new(&condition.column, Some(right_column_info.offset), None)
+                                            Equal::new(condition.left, Some(right_column_info.offset), None)
                                         },
                                     };
                                     conditions.push(right_side);
                                 },
 
                                 Operator::NEqu => {
-                                    let right_side = match condition.right_side {
-                                        Comparable::Lit(l) => NotEqual::new(&condition.column, None, Some(l.into())),
+                                    let right_side = match condition.right {
+                                        Comparable::Lit(l) => NotEqual::new(condition.left, None, Some(l.into())),
                                         Comparable::Word(ref s) => {
                                             let right_column_info: ColumnInfo = try!(rht_tbl_info.column_info_from_str(s));
-                                            NotEqual::new(&condition.column, Some(right_column_info.offset), None)
+                                            NotEqual::new(condition.left, Some(right_column_info.offset), None)
                                                                                                                    },
                                     };
                                     conditions.push(right_side);
                                 },
 
                                 Operator::GT => {
-                                    let right_side = match condition.right_side {
-                                        Comparable::Lit(l) => GT::new(&condition.column, None, Some(l.into())),
+                                    let right_side = match condition.right {
+                                        Comparable::Lit(l) => GT::new(condition.left, None, Some(l.into())),
                                         Comparable::Word(ref s) => {
                                             let right_column_info: ColumnInfo = try!(rht_tbl_info.column_info_from_str(s));
-                                            GT::new(&condition.column, Some(right_column_info.offset), None)
+                                            GT::new(condition.left, Some(right_column_info.offset), None)
                                                                                                                    },
                                     };
                                     conditions.push(right_side);
                                 },
 
                                 Operator::LT => {
-                                    let right_side = match condition.right_side {
-                                        Comparable::Lit(l) => LT::new(&condition.column, None, Some(l.into())),
+                                    let right_side = match condition.right {
+                                        Comparable::Lit(l) => LT::new(condition.left, None, Some(l.into())),
                                         Comparable::Word(ref s) => {
                                             let right_column_info: ColumnInfo = try!(rht_tbl_info.column_info_from_str(s));
-                                            LT::new(&condition.column, Some(right_column_info.offset), None)
+                                            LT::new(condition.left, Some(right_column_info.offset), None)
                                                                                                                    },
                                     };
                                     conditions.push(right_side);
                                 },
 
                                 Operator::GE => {
-                                    let right_side = match condition.right_side {
-                                        Comparable::Lit(l) => GE::new(&condition.column, None, Some(l.into())),
+                                    let right_side = match condition.right {
+                                        Comparable::Lit(l) => GE::new(condition.left, None, Some(l.into())),
                                         Comparable::Word(ref s) => {
                                             let right_column_info: ColumnInfo = try!(rht_tbl_info.column_info_from_str(s));
-                                            GE::new(&condition.column, Some(right_column_info.offset), None)
+                                            GE::new(condition.left, Some(right_column_info.offset), None)
                                                                                                                    },
                                     };
                                     conditions.push(right_side);
                                 },
 
                                 Operator::LE => {
-                                    let right_side = match condition.right_side {
-                                        Comparable::Lit(l) => LE::new(&condition.column, None, Some(l.into())),
+                                    let right_side = match condition.right {
+                                        Comparable::Lit(l) => LE::new(condition.left, None, Some(l.into())),
                                         Comparable::Word(ref s) => {
                                             let right_column_info: ColumnInfo = try!(rht_tbl_info.column_info_from_str(s));
-                                            LE::new(&condition.column, Some(right_column_info.offset), None)
+                                            LE::new(condition.left, Some(right_column_info.offset), None)
                                                                                                                    },
                                     };
                                     conditions.push(right_side);
