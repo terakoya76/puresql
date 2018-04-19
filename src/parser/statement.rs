@@ -47,7 +47,7 @@ pub enum UseStmt {
 pub struct SelectStmt {
     pub targets: Vec<Target>,
     pub source: DataSrc,
-    pub condition: Option<Condition>,
+    pub condition: Option<Conditions>,
     pub group_by: Option<GroupBy>,
     pub order_by: Option<OrderBy>,
     pub limit: Option<Limit>,
@@ -62,11 +62,18 @@ pub struct Target {
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataSrc {
     pub tables: Vec<String>,
-    pub condition: Option<Condition>,
+    pub condition: Option<Conditions>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct SubQuery {
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Conditions {
+    Leaf(Condition),
+    And(Box<Conditions>, Box<Conditions>),
+    Or(Box<Conditions>, Box<Conditions>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -89,7 +96,7 @@ pub enum Operator {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Comparable {
     Lit(Literal),
-    Word(String),
+    Target(Target),
 }
 
 #[derive(Debug, Clone, PartialEq)]

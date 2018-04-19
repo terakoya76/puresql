@@ -416,9 +416,9 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
 
         // WHERE xx and yy
         try!(self.bump());
-        let mut condition: Option<Condition> = None;
+        let mut conditions: Option<Conditions> = None;
         if self.validate_keyword(&[Keyword::Where]).is_ok() {
-            condition = Some(try!(self.parse_condition()));
+            conditions = Some(try!(self.parse_conditions()));
         }
 
         // GROUP BY xx, yy
@@ -449,7 +449,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         Ok(SelectStmt {
             targets: targets,
             source: sources,
-            condition: condition,
+            condition: conditions,
             group_by: group_by,
             order_by: order_by,
             limit: limit,
@@ -476,7 +476,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                     tables.push(try!(self.validate_word(true)));
                     try!(self.bump());
 
-                    let condition: Condition = try!(self.parse_condition());
+                    let condition: Conditions = try!(self.parse_conditions());
                     return Ok(DataSrc {
                         tables: tables,
                         condition: Some(condition),
@@ -491,19 +491,70 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         }
     }
 
+    pub fn parse_conditions(&mut self) -> Result<Conditions, ParseError> {
+        let mut cond;
+        if self.check_next_token(&[Token::OpPar]) {
+            try!(self.bump());
+            cond = try!(self.parse_conditions());
+            try!(self.validate_token(&[Token::ClPar]));
+            if self.check_next_keyword(&[Keyword::And, Keyword::Or]) {
+                try!(self.bump());
+                match try!(self.validate_keyword(&[Keyword::And, Keyword::Or])) {
+                    Keyword::And => {
+                        cond = Conditions::And(
+                            Box::new(cond), Box::new(try!(self.parse_conditions()))
+                        );
+                    },
+                    Keyword::Or => {
+                        cond = Conditions::Or(
+                            Box::new(cond), Box::new(try!(self.parse_conditions()))
+                        );
+                    },
+                    _ => {},
+                };
+            };
+        } else {
+            cond = Conditions::Leaf(try!(self.parse_condition()));
+            try!(self.bump());
+            while self.validate_keyword(&[Keyword::And, Keyword::Or]).is_ok() {
+                match try!(self.validate_keyword(&[Keyword::And, Keyword::Or])) {
+                    Keyword::And => {
+                        if self.check_next_token(&[Token::OpPar]) {
+                            cond = Conditions::And(
+                                Box::new(cond), Box::new(try!(self.parse_conditions()))
+                            );
+                        } else {
+                            cond = Conditions::And(
+                                Box::new(cond), Box::new(Conditions::Leaf(try!(self.parse_condition())))
+                            );
+                            try!(self.bump());
+                        };
+                    },
+                    Keyword::Or => {
+                        cond = Conditions::Or(
+                            Box::new(cond), Box::new(try!(self.parse_conditions()))
+                        );
+                    },
+                    _ => return Err(ParseError::UndefinedStatementError),
+                };
+            };
+        }
+        Ok(cond)
+    }
+
     pub fn parse_condition(&mut self) -> Result<Condition, ParseError> {
         try!(self.bump());
-        let mut table_name: Option<String> = None;
+        let mut left_table_name: Option<String> = None;
         if self.check_next_token(&[Token::Dot]) {
-            table_name = Some(try!(self.validate_word(false)));
+            left_table_name = Some(try!(self.validate_word(false)));
             try!(self.bump());
             try!(self.bump());
         };
 
-        let column_name: String = try!(self.validate_word(true));
+        let left_column_name: String = try!(self.validate_word(true));
         let left_side: Target = Target {
-            table_name: table_name,
-            name: column_name,
+            table_name: left_table_name,
+            name: left_column_name,
         };
 
         try!(self.bump());
@@ -524,7 +575,20 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
 
         try!(self.bump());
         let right_side: Comparable = match self.validate_word(false) {
-            Ok(_rht) => Comparable::Word(try!(self.validate_word(true))),
+            Ok(_right) => {
+                let mut right_table_name: Option<String> = None;
+                if self.check_next_token(&[Token::Dot]) {
+                    left_table_name = Some(try!(self.validate_word(false)));
+                    try!(self.bump());
+                    try!(self.bump());
+                };
+
+                let right_column_name: String = try!(self.validate_word(true));
+                Comparable::Target(Target {
+                    table_name: right_table_name,
+                    name: right_column_name,
+                })
+            },
             _ => Comparable::Lit(try!(self.validate_literal())),
         };
 

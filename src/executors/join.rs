@@ -20,7 +20,7 @@ pub struct NestedLoopJoinExec<'n> {
 }
 
 impl<'n> NestedLoopJoinExec<'n> {
-    pub fn new<T1: ScanIterator, T2: ScanIterator>(outer_table: &'n mut T1, inner_table: &'n mut T2, condition: Option<Condition>) -> NestedLoopJoinExec<'n> {
+    pub fn new<T1: ScanIterator, T2: ScanIterator>(outer_table: &'n mut T1, inner_table: &'n mut T2, condition: Option<Conditions>) -> NestedLoopJoinExec<'n> {
         let outer_column_length: usize = outer_table.get_meta().columns.len();
         let mut column_infos: Vec<ColumnInfo> = outer_table.get_meta().columns;
         for (i, column) in inner_table.get_meta().columns.iter().enumerate() {
@@ -39,9 +39,9 @@ impl<'n> NestedLoopJoinExec<'n> {
             next_record_id: Allocator::new(1),
         };
 
-        let selectors: Vec<Box<Selector>> = match filterize(meta.clone(), condition) {
-            Ok(f) => f,
-            Err(_e) => Vec::new(),
+        let selectors: Vec<Box<Selector>> = match condition {
+            None => Vec::new(),
+            Some(c) => execute_where(c, false),
         };
 
         NestedLoopJoinExec {
@@ -120,80 +120,108 @@ fn next_tuple<'n, T1: ScanIterator + 'n, T2: ScanIterator + 'n>(outer_table: &'n
     })
 }
 
-fn filterize(meta: TableInfo, condition: Option<Condition>) -> Result<Vec<Box<Selector>>, JoinExecError> {
-    let mut filters: Vec<Box<Selector>> = Vec::new();
+fn execute_where(condition: Conditions, is_or: bool) -> Vec<Box<Selector>> {
     match condition {
-        None => Ok(filters),
-        Some(condition) => {
+        Conditions::And(c1, c2) => {
+            let mut selectors1: Vec<Box<Selector>> = execute_where(*c1, false);
+            let mut selectors2: Vec<Box<Selector>> = execute_where(*c2, false);
+            selectors1.append(&mut selectors2);
+            selectors1
+        },
+
+        Conditions::Or(c1, c2) => {
+            let mut selectors1: Vec<Box<Selector>> = execute_where(*c1, true);
+            let mut selectors2: Vec<Box<Selector>> = execute_where(*c2, true);
+            selectors1.append(&mut selectors2);
+            selectors1
+        },
+
+        Conditions::Leaf(condition) => {
             match condition.op {
                 Operator::Equ => {
-                    let filter = match condition.right {
-                        Comparable::Lit(l) => Equal::new(condition.left, None, Some(l.into())),
-                        Comparable::Word(ref s) => {
-                            let right_column_info: ColumnInfo = try!(meta.column_info_from_str(s));
-                            Equal::new(condition.left, Some(right_column_info.offset), None)
-                        },
-                    };
-                    filters.push(filter);
+                    if is_or {
+                        match condition.right {
+                            Comparable::Lit(l) => vec![Equal::new(condition.left, None, Some(l.into()))],
+                            Comparable::Target(t) => vec![Equal::new(condition.left, Some(t), None)],
+                        }
+                    } else {
+                        match condition.right {
+                            Comparable::Lit(l) => vec![NotEqual::new(condition.left, None, Some(l.into()))],
+                            Comparable::Target(t) => vec![NotEqual::new(condition.left, Some(t), None)],
+                        }
+                    }
                 },
 
                 Operator::NEqu => {
-                    let filter = match condition.right {
-                        Comparable::Lit(l) => NotEqual::new(condition.left, None, Some(l.into())),
-                        Comparable::Word(ref s) => {
-                            let right_column_info: ColumnInfo = try!(meta.column_info_from_str(s));
-                            NotEqual::new(condition.left, Some(right_column_info.offset), None)
-                        },
-                    };
-                    filters.push(filter);
+                    if is_or {
+                        match condition.right {
+                            Comparable::Lit(l) => vec![NotEqual::new(condition.left, None, Some(l.into()))],
+                            Comparable::Target(t) => vec![NotEqual::new(condition.left, Some(t), None)],
+                        }
+                    } else {
+                        match condition.right {
+                            Comparable::Lit(l) => vec![Equal::new(condition.left, None, Some(l.into()))],
+                            Comparable::Target(t) => vec![Equal::new(condition.left, Some(t), None)],
+                        }
+                    }
                 },
 
                 Operator::GT => {
-                    let filter = match condition.right {
-                        Comparable::Lit(l) => GT::new(condition.left, None, Some(l.into())),
-                        Comparable::Word(ref s) => {
-                            let right_column_info: ColumnInfo = try!(meta.column_info_from_str(s));
-                            GT::new(condition.left, Some(right_column_info.offset), None)
-                        },
-                    };
-                    filters.push(filter);
+                    if is_or {
+                        match condition.right {
+                            Comparable::Lit(l) => vec![GT::new(condition.left, None, Some(l.into()))],
+                            Comparable::Target(t) => vec![GT::new(condition.left, Some(t), None)],
+                        }
+                    } else {
+                        match condition.right {
+                            Comparable::Lit(l) => vec![LE::new(condition.left, None, Some(l.into()))],
+                            Comparable::Target(t) => vec![LE::new(condition.left, Some(t), None)],
+                        }
+                    }
                 },
 
                 Operator::LT => {
-                    let filter = match condition.right {
-                        Comparable::Lit(l) => LT::new(condition.left, None, Some(l.into())),
-                        Comparable::Word(ref s) => {
-                            let right_column_info: ColumnInfo = try!(meta.column_info_from_str(s));
-                            LT::new(condition.left, Some(right_column_info.offset), None)
-                        },
-                    };
-                    filters.push(filter);
+                    if is_or {
+                        match condition.right {
+                            Comparable::Lit(l) => vec![LT::new(condition.left, None, Some(l.into()))],
+                            Comparable::Target(t) => vec![LT::new(condition.left, Some(t), None)],
+                        }
+                    } else {
+                        match condition.right {
+                            Comparable::Lit(l) => vec![GE::new(condition.left, None, Some(l.into()))],
+                            Comparable::Target(t) => vec![GE::new(condition.left, Some(t), None)],
+                        } 
+                    }
                 },
 
                 Operator::GE => {
-                    let filter = match condition.right {
-                        Comparable::Lit(l) => GE::new(condition.left, None, Some(l.into())),
-                        Comparable::Word(ref s) => {
-                            let right_column_info: ColumnInfo = try!(meta.column_info_from_str(s));
-                            GE::new(condition.left, Some(right_column_info.offset), None)
-                        },
-                    };
-                    filters.push(filter);
+                    if is_or {
+                        match condition.right {
+                            Comparable::Lit(l) => vec![GE::new(condition.left, None, Some(l.into()))],
+                            Comparable::Target(t) => vec![GE::new(condition.left, Some(t), None)],
+                        }
+                    } else {
+                        match condition.right {
+                            Comparable::Lit(l) => vec![LT::new(condition.left, None, Some(l.into()))],
+                            Comparable::Target(t) => vec![LT::new(condition.left, Some(t), None)],
+                        }
+                    }
                 },
 
                 Operator::LE => {
-                    let filter = match condition.right {
-                        Comparable::Lit(l) => LE::new(condition.left, None, Some(l.into())),
-                        Comparable::Word(ref s) => {
-                            let right_column_info: ColumnInfo = try!(meta.column_info_from_str(s));
-                            LE::new(condition.left, Some(right_column_info.offset), None)
-                        },
-                    };
-                    filters.push(filter);
+                    if is_or {
+                        match condition.right {
+                            Comparable::Lit(l) => vec![LE::new(condition.left, None, Some(l.into()))],
+                            Comparable::Target(t) => vec![LE::new(condition.left, Some(t), None)],
+                        }
+                    } else {
+                        match condition.right {
+                            Comparable::Lit(l) => vec![GT::new(condition.left, None, Some(l.into()))],
+                            Comparable::Target(t) => vec![GT::new(condition.left, Some(t), None)],
+                        }   
+                    }
                 },
             }
-
-            Ok(filters)
         },
     }
 }

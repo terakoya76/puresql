@@ -62,14 +62,15 @@ fn main() {
     println!("Table on memory");
     let alloc: Box<Allocator> = Allocator::new(1);
 
+    println!("shohin table setup");
     client.handle_query("create table shohin ( shohin_id int, shohin_name char(10), kubun_id int, price int )");
-
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 1, 'apple', 1, 300 )");
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 2, 'orange', 1, 130)");
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 3, 'cabbage', 2, 200 )");
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 4, 'sea weed', 5, 250)");
     client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 5, 'mushroom', 3, 100 )");
 
+    println!("kubun table setup");
     client.handle_query("create table kubun ( kubun_id int, kubun_name char(10) )");
     client.handle_query("insert into kubun ( kubun_id, kubun_name) values ( 1, 'fruit' )");
     client.handle_query("insert into kubun ( kubun_id, kubun_name) values ( 2, 'vegetable' )");
@@ -85,12 +86,10 @@ fn main() {
 
     println!("selection");
     client.handle_query("select shohin_name, kubun_id, price from shohin where shohin_name = 'apple'");
-
     client.handle_query("select shohin_name, kubun_id, price from shohin where price > kubun_id");
+    client.handle_query("select shohin_name, kubun_name, price from shohin join kubun on shohin.kubun_id = kubun.kubun_id where shohin.shohin_name = 'apple'");
 
-    client.handle_query("select shohin_name, kubun_name, price from shohin join kubun on kubun_id = kubun_id where shohin.shohin_name = 'apple'");
-
-    /*
+/*
     println!("aggregation\n");
     {
         let mut aggregation = AggregationExec::new(&mut m_shohin_tb_scan, vec![], vec![Count::new(), Sum::new("price"), Average::new("price")]);
