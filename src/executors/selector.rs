@@ -4,7 +4,9 @@ use tables::field::Field;
 use parser::statement::*;
 
 pub trait Selector {
+    fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError>;
     fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool;
+    fn is_false(&self, tuple: &Tuple, columns: &[Column]) -> bool;
     fn box_clone(&self) -> Box<Selector>;
 }
 
@@ -34,31 +36,37 @@ impl Equal {
 }
 
 impl Selector for Equal {
-    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+    fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
         match self.right_column_offset {
             None => {},
             Some(offset) => {
                 let ref right_side: Field = tuple.fields[offset];
-                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
-                match left_side_opt {
-                    None => return false,
-                    Some(ref left_side) => return left_side == right_side,
-                }
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                return Ok(left_side == right_side);
             },
         }
 
         match self.scholar {
-            None => {},
+            None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
-                match left_side_opt {
-                    None => return false,
-                    Some(ref left_side) => return left_side == right_side,
-                }
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                Ok(left_side == right_side)
             },
         }
+    }
 
-        false
+    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+        match self.evaluate(tuple, columns) {
+            Ok(b) => b,
+            _ => false
+        }
+    }
+
+    fn is_false(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+        match self.evaluate(tuple, columns) {
+            Ok(b) => b,
+            _ => true
+        }
     }
 
     fn box_clone(&self) -> Box<Selector> {
@@ -86,31 +94,37 @@ impl NotEqual {
 }
 
 impl Selector for NotEqual {
-    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+    fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
         match self.right_column_offset {
             None => {},
             Some(offset) => {
                 let ref right_side: Field = tuple.fields[offset];
-                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
-                match left_side_opt {
-                    None => return false,
-                    Some(ref left_side) => return left_side != right_side,
-                }
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                return Ok(left_side != right_side);
             },
         }
 
         match self.scholar {
-            None => {},
+            None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
-                match left_side_opt {
-                    None => return false,
-                    Some(ref left_side) => return left_side != right_side,
-                }
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                Ok(left_side != right_side)
             },
         }
+    }
 
-        false
+    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+        match self.evaluate(tuple, columns) {
+            Ok(b) => b,
+            _ => false
+        }
+    }
+
+    fn is_false(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+        match self.evaluate(tuple, columns) {
+            Ok(b) => b,
+            _ => true
+        }
     }
 
     fn box_clone(&self) -> Box<Selector> {
@@ -138,31 +152,37 @@ impl LT {
 }
 
 impl Selector for LT {
-    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+    fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
         match self.right_column_offset {
             None => {},
             Some(offset) => {
                 let ref right_side: Field = tuple.fields[offset];
-                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
-                match left_side_opt {
-                    None => return false,
-                    Some(ref left_side) => return left_side < right_side,
-                }
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                return Ok(left_side < right_side);
             },
         }
 
         match self.scholar {
-            None => {},
+            None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
-                match left_side_opt {
-                    None => return false,
-                    Some(ref left_side) => return left_side < right_side,
-                }
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                Ok(left_side < right_side)
             },
         }
+    }
 
-        false
+    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+        match self.evaluate(tuple, columns) {
+            Ok(b) => b,
+            _ => false
+        }
+    }
+
+    fn is_false(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+        match self.evaluate(tuple, columns) {
+            Ok(b) => b,
+            _ => true
+        }
     }
 
     fn box_clone(&self) -> Box<Selector> {
@@ -190,31 +210,37 @@ impl LE {
 }
 
 impl Selector for LE {
-    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+    fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
         match self.right_column_offset {
             None => {},
             Some(offset) => {
                 let ref right_side: Field = tuple.fields[offset];
-                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
-                match left_side_opt {
-                    None => return false,
-                    Some(ref left_side) => return left_side <= right_side,
-                }
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                return Ok(left_side <= right_side);
             },
         }
 
         match self.scholar {
-            None => {},
+            None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
-                match left_side_opt {
-                    None => return false,
-                    Some(ref left_side) => return left_side <= right_side,
-                }
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                Ok(left_side <= right_side)
             },
         }
+    }
 
-        false
+    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+        match self.evaluate(tuple, columns) {
+            Ok(b) => b,
+            _ => false
+        }
+    }
+
+    fn is_false(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+        match self.evaluate(tuple, columns) {
+            Ok(b) => b,
+            _ => true
+        }
     }
 
     fn box_clone(&self) -> Box<Selector> {
@@ -242,31 +268,37 @@ impl GT {
 }
 
 impl Selector for GT {
-    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+    fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
         match self.right_column_offset {
             None => {},
             Some(offset) => {
                 let ref right_side: Field = tuple.fields[offset];
-                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
-                match left_side_opt {
-                    None => return false,
-                    Some(ref left_side) => return left_side > right_side,
-                }
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                return Ok(left_side > right_side);
             },
         }
 
         match self.scholar {
-            None => {},
+            None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
-                match left_side_opt {
-                    None => return false,
-                    Some(ref left_side) => return left_side > right_side,
-                }
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                Ok(left_side > right_side)
             },
         }
+    }
 
-        false
+    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+        match self.evaluate(tuple, columns) {
+            Ok(b) => b,
+            _ => false
+        }
+    }
+
+    fn is_false(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+        match self.evaluate(tuple, columns) {
+            Ok(b) => b,
+            _ => true
+        }
     }
 
     fn box_clone(&self) -> Box<Selector> {
@@ -294,31 +326,37 @@ impl GE {
 }
 
 impl Selector for GE {
-    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+    fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
         match self.right_column_offset {
             None => {},
             Some(offset) => {
                 let ref right_side: Field = tuple.fields[offset];
-                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
-                match left_side_opt {
-                    None => return false,
-                    Some(ref left_side) => return left_side >= right_side,
-                }
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                return Ok(left_side >= right_side);
             },
         }
 
         match self.scholar {
-            None => {},
+            None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
-                match left_side_opt {
-                    None => return false,
-                    Some(ref left_side) => return left_side >= right_side,
-                }
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                Ok(left_side >= right_side)
             },
         }
+    }
 
-        false
+    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+        match self.evaluate(tuple, columns) {
+            Ok(b) => b,
+            _ => false
+        }
+    }
+
+    fn is_false(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+        match self.evaluate(tuple, columns) {
+            Ok(b) => b,
+            _ => true
+        }
     }
 
     fn box_clone(&self) -> Box<Selector> {
@@ -326,22 +364,27 @@ impl Selector for GE {
     }
 }
 
-fn find_field(tuple: &Tuple, columns: &[Column], left_table: Option<String>, left_column: String) -> Option<Field> {
+fn find_field(tuple: &Tuple, columns: &[Column], left_table: Option<String>, left_column: String) -> Result<Field, SelectorError> {
     for column in columns {
         if left_column != column.name {
             continue;
         }
 
         match left_table {
-            None => return Some(tuple.fields[column.offset]),
+            None => return Ok(tuple.fields[column.offset]),
             Some(ref table_name) => {
                 if table_name == &column.table_name {
-                    return Some(tuple.fields[column.offset]);
+                    return Ok(tuple.fields[column.offset]);
                 }
             },
         }
     }
 
-    None
+    Err(SelectorError::ColumnNotFoundError)
 }
 
+#[derive(Debug, PartialEq)]
+pub enum SelectorError {
+    ColumnNotFoundError,
+    UnexpectedRightHandError,
+}
