@@ -39,19 +39,10 @@ impl Selector for Equal {
             None => {},
             Some(offset) => {
                 let ref right_side: Field = tuple.fields[offset];
-                for column in columns {
-                    if self.left_column != column.name {
-                        continue;
-                    }
-
-                    match self.left_table {
-                        None => return &tuple.fields[column.offset] == right_side,
-                        Some(ref table_name) => {
-                            if table_name == &column.table_name {
-                                return &tuple.fields[column.offset] == right_side;
-                            }
-                        },
-                    }
+                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
+                match left_side_opt {
+                    None => return false,
+                    Some(ref left_side) => return left_side == right_side,
                 }
             },
         }
@@ -59,19 +50,10 @@ impl Selector for Equal {
         match self.scholar {
             None => {},
             Some(ref right_side) => {
-                for column in columns {
-                    if self.left_column != column.name {
-                        continue;
-                    }
-
-                    match self.left_table {
-                        None => return &tuple.fields[column.offset] == right_side,
-                        Some(ref table_name) => {
-                            if table_name == &column.table_name {
-                                return &tuple.fields[column.offset] == right_side;
-                            }
-                        },
-                    }
+                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
+                match left_side_opt {
+                    None => return false,
+                    Some(ref left_side) => return left_side == right_side,
                 }
             },
         }
@@ -109,19 +91,10 @@ impl Selector for NotEqual {
             None => {},
             Some(offset) => {
                 let ref right_side: Field = tuple.fields[offset];
-                for column in columns {
-                    if self.left_column != column.name {
-                        continue;
-                    }
-
-                    match self.left_table {
-                        None => return &tuple.fields[column.offset] == right_side,
-                        Some(ref table_name) => {
-                            if table_name == &column.table_name {
-                                return &tuple.fields[column.offset] == right_side;
-                            }
-                        },
-                    }
+                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
+                match left_side_opt {
+                    None => return false,
+                    Some(ref left_side) => return left_side != right_side,
                 }
             },
         }
@@ -129,19 +102,10 @@ impl Selector for NotEqual {
         match self.scholar {
             None => {},
             Some(ref right_side) => {
-                for column in columns {
-                    if self.left_column != column.name {
-                        continue;
-                    }
-
-                    match self.left_table {
-                        None => return &tuple.fields[column.offset] == right_side,
-                        Some(ref table_name) => {
-                            if table_name == &column.table_name {
-                                return &tuple.fields[column.offset] == right_side;
-                            }
-                        },
-                    }
+                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
+                match left_side_opt {
+                    None => return false,
+                    Some(ref left_side) => return left_side != right_side,
                 }
             },
         }
@@ -179,19 +143,10 @@ impl Selector for LT {
             None => {},
             Some(offset) => {
                 let ref right_side: Field = tuple.fields[offset];
-                for column in columns {
-                    if self.left_column != column.name {
-                        continue;
-                    }
-
-                    match self.left_table {
-                        None => return &tuple.fields[column.offset] == right_side,
-                        Some(ref table_name) => {
-                            if table_name == &column.table_name {
-                                return &tuple.fields[column.offset] == right_side;
-                            }
-                        },
-                    }
+                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
+                match left_side_opt {
+                    None => return false,
+                    Some(ref left_side) => return left_side < right_side,
                 }
             },
         }
@@ -199,19 +154,10 @@ impl Selector for LT {
         match self.scholar {
             None => {},
             Some(ref right_side) => {
-                for column in columns {
-                    if self.left_column != column.name {
-                        continue;
-                    }
-
-                    match self.left_table {
-                        None => return &tuple.fields[column.offset] < right_side,
-                        Some(ref table_name) => {
-                            if table_name == &column.table_name {
-                                return &tuple.fields[column.offset] < right_side;
-                            }
-                        },
-                    }
+                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
+                match left_side_opt {
+                    None => return false,
+                    Some(ref left_side) => return left_side < right_side,
                 }
             },
         }
@@ -249,19 +195,10 @@ impl Selector for LE {
             None => {},
             Some(offset) => {
                 let ref right_side: Field = tuple.fields[offset];
-                for column in columns {
-                    if self.left_column != column.name {
-                        continue;
-                    }
-
-                    match self.left_table {
-                        None => return &tuple.fields[column.offset] <= right_side,
-                        Some(ref table_name) => {
-                            if table_name == &column.table_name {
-                                return &tuple.fields[column.offset] <= right_side;
-                            }
-                        },
-                    }
+                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
+                match left_side_opt {
+                    None => return false,
+                    Some(ref left_side) => return left_side <= right_side,
                 }
             },
         }
@@ -269,19 +206,10 @@ impl Selector for LE {
         match self.scholar {
             None => {},
             Some(ref right_side) => {
-                for column in columns {
-                    if self.left_column != column.name {
-                        continue;
-                    }
-
-                    match self.left_table {
-                        None => return &tuple.fields[column.offset] <= right_side,
-                        Some(ref table_name) => {
-                            if table_name == &column.table_name {
-                                return &tuple.fields[column.offset] <= right_side;
-                            }
-                        },
-                    }
+                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
+                match left_side_opt {
+                    None => return false,
+                    Some(ref left_side) => return left_side <= right_side,
                 }
             },
         }
@@ -319,19 +247,10 @@ impl Selector for GT {
             None => {},
             Some(offset) => {
                 let ref right_side: Field = tuple.fields[offset];
-                for column in columns {
-                    if self.left_column != column.name {
-                        continue;
-                    }
-
-                    match self.left_table {
-                        None => return &tuple.fields[column.offset] > right_side,
-                        Some(ref table_name) => {
-                            if table_name == &column.table_name {
-                                return &tuple.fields[column.offset] > right_side;
-                            }
-                        },
-                    }
+                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
+                match left_side_opt {
+                    None => return false,
+                    Some(ref left_side) => return left_side > right_side,
                 }
             },
         }
@@ -339,19 +258,10 @@ impl Selector for GT {
         match self.scholar {
             None => {},
             Some(ref right_side) => {
-                for column in columns {
-                    if self.left_column != column.name {
-                        continue;
-                    }
-
-                    match self.left_table {
-                        None => return &tuple.fields[column.offset] > right_side,
-                        Some(ref table_name) => {
-                            if table_name == &column.table_name {
-                                return &tuple.fields[column.offset] > right_side;
-                            }
-                        },
-                    }
+                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
+                match left_side_opt {
+                    None => return false,
+                    Some(ref left_side) => return left_side > right_side,
                 }
             },
         }
@@ -389,19 +299,10 @@ impl Selector for GE {
             None => {},
             Some(offset) => {
                 let ref right_side: Field = tuple.fields[offset];
-                for column in columns {
-                    if self.left_column != column.name {
-                        continue;
-                    }
-
-                    match self.left_table {
-                        None => return &tuple.fields[column.offset] >= right_side,
-                        Some(ref table_name) => {
-                            if table_name == &column.table_name {
-                                return &tuple.fields[column.offset] >= right_side;
-                            }
-                        },
-                    }
+                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
+                match left_side_opt {
+                    None => return false,
+                    Some(ref left_side) => return left_side >= right_side,
                 }
             },
         }
@@ -409,19 +310,10 @@ impl Selector for GE {
         match self.scholar {
             None => {},
             Some(ref right_side) => {
-                for column in columns {
-                    if self.left_column != column.name {
-                        continue;
-                    }
-
-                    match self.left_table {
-                        None => return &tuple.fields[column.offset] >= right_side,
-                        Some(ref table_name) => {
-                            if table_name == &column.table_name {
-                                return &tuple.fields[column.offset] >= right_side;
-                            }
-                        },
-                    }
+                let left_side_opt: Option<Field> = find_field(tuple, columns, self.left_table, self.left_column);
+                match left_side_opt {
+                    None => return false,
+                    Some(ref left_side) => return left_side >= right_side,
                 }
             },
         }
@@ -432,5 +324,24 @@ impl Selector for GE {
     fn box_clone(&self) -> Box<Selector> {
         Box::new(self.clone())
     }
+}
+
+fn find_field(tuple: &Tuple, columns: &[Column], left_table: Option<String>, left_column: String) -> Option<Field> {
+    for column in columns {
+        if left_column != column.name {
+            continue;
+        }
+
+        match left_table {
+            None => return Some(tuple.fields[column.offset]),
+            Some(ref table_name) => {
+                if table_name == &column.table_name {
+                    return Some(tuple.fields[column.offset]);
+                }
+            },
+        }
+    }
+
+    None
 }
 
