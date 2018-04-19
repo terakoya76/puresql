@@ -31,8 +31,8 @@ impl BTree {
                                                 .write(true)
                                                 .create(true)
                                                 .open(&file_path));
-        btree_dump.seek(SeekFrom::Start(0));
-        btree_dump.read_to_end(&mut buf);
+        let _ = btree_dump.seek(SeekFrom::Start(0));
+        let _ = btree_dump.read_to_end(&mut buf);
         let btree: BTreeMap<usize, RecordAddress> = match deserialize(&buf) {
             Ok(btree) => btree,
             Err(e) => {
@@ -78,8 +78,8 @@ impl BTree {
             None => Vec::new(),
             Some(r_addr) => {
                 let mut buf: Vec<u8> = vec![0; r_addr.size as usize];
-                self.datus.seek(SeekFrom::Start(r_addr.addr));
-                self.datus.read_exact(&mut buf);
+                let _ = self.datus.seek(SeekFrom::Start(r_addr.addr));
+                let _ = self.datus.read_exact(&mut buf);
                 buf
             },
         }
@@ -102,14 +102,17 @@ impl Drop for BTree {
             },
         };
 
-        file.seek(SeekFrom::Start(0));
+        let _ = file.seek(SeekFrom::Start(0));
         match serialize(&self.tree) {
-            Ok(btree) => file.write_all(&btree),
+            Ok(btree) => {
+                let _ = file.write_all(&btree);
+                ()
+            },
             Err(e) => {
                 println!("{:?}", e);
-                return ();
+                ()
             },
-        };
+        }
     }
 }
 
@@ -118,10 +121,3 @@ pub struct RecordAddress {
     pub addr: u64,
     pub size: u64,
 }
-
-#[derive(Debug)]
-pub enum BinaryError {
-    EncodeError,
-    DecodeError,
-}
-

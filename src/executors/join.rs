@@ -229,7 +229,6 @@ fn execute_where(condition: Conditions, is_or: bool) -> Vec<Box<Selector>> {
 #[derive(Debug, PartialEq)]
 pub enum JoinExecError {
     TableInfoError(TableInfoError),
-    TableNotFoundError,
 }
 
 impl From<TableInfoError> for JoinExecError {

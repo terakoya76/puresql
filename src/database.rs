@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use storage::b_tree::BTree;
 use meta::table_info::TableInfo;
 use tables::memory_table::{MemoryTable, MemoryTableError};
 

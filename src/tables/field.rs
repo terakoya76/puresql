@@ -3,7 +3,6 @@ use std::ops::Add;
 use std::ops::Div;
 
 use parser::token::Literal;
-use data_type::DataType;
 
 pub const INIT:     usize = 0;
 pub const KIND_I64: usize = 1;
@@ -28,15 +27,6 @@ impl Field {
             u: None,
             f: None,
             s: None,
-        }
-    }
-
-    // TODO: impl float, bool type
-    fn kind_from_dtype(dtype: DataType) -> usize {
-        match dtype {
-            DataType::Int => KIND_I64,
-            DataType::Bool => INIT,
-            DataType::Char(u8) => KIND_STR,
         }
     }
 

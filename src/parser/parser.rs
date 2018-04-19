@@ -578,7 +578,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
             Ok(_right) => {
                 let mut right_table_name: Option<String> = None;
                 if self.check_next_token(&[Token::Dot]) {
-                    left_table_name = Some(try!(self.validate_word(false)));
+                    right_table_name = Some(try!(self.validate_word(false)));
                     try!(self.bump());
                     try!(self.bump());
                 };
