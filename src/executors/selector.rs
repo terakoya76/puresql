@@ -41,7 +41,7 @@ impl Selector for Equal {
             None => {},
             Some(ref right_hand) => {
                 let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
                 return Ok(left_side == right_side);
             },
         }
@@ -49,7 +49,7 @@ impl Selector for Equal {
         match self.scholar {
             None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
                 Ok(left_side == right_side)
             },
         }
@@ -99,7 +99,7 @@ impl Selector for NotEqual {
             None => {},
             Some(ref right_hand) => {
                 let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
                 return Ok(left_side != right_side);
             },
         }
@@ -107,7 +107,7 @@ impl Selector for NotEqual {
         match self.scholar {
             None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
                 Ok(left_side != right_side)
             },
         }
@@ -157,7 +157,7 @@ impl Selector for LT {
             None => {},
             Some(ref right_hand) => {
                 let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
                 return Ok(left_side < right_side);
             },
         }
@@ -165,7 +165,7 @@ impl Selector for LT {
         match self.scholar {
             None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
                 Ok(left_side < right_side)
             },
         }
@@ -215,7 +215,7 @@ impl Selector for LE {
             None => {},
             Some(ref right_hand) => {
                 let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
                 return Ok(left_side <= right_side);
             },
         }
@@ -223,7 +223,7 @@ impl Selector for LE {
         match self.scholar {
             None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
                 Ok(left_side <= right_side)
             },
         }
@@ -273,7 +273,7 @@ impl Selector for GT {
             None => {},
             Some(ref right_hand) => {
                 let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
                 return Ok(left_side > right_side);
             },
         }
@@ -281,7 +281,7 @@ impl Selector for GT {
         match self.scholar {
             None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
                 Ok(left_side > right_side)
             },
         }
@@ -331,7 +331,7 @@ impl Selector for GE {
             None => {},
             Some(ref right_hand) => {
                 let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
                 return Ok(left_side >= right_side);
             },
         }
@@ -339,7 +339,7 @@ impl Selector for GE {
         match self.scholar {
             None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table, self.left_column));
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
                 Ok(left_side >= right_side)
             },
         }
@@ -371,10 +371,10 @@ fn find_field(tuple: &Tuple, columns: &[Column], table_name: Option<String>, col
         }
 
         match table_name {
-            None => return Ok(tuple.fields[column.offset]),
+            None => return Ok(tuple.fields[column.offset].clone()),
             Some(ref tbl_name) => {
                 if tbl_name == &column.table_name {
-                    return Ok(tuple.fields[column.offset]);
+                    return Ok(tuple.fields[column.offset].clone());
                 }
             },
         }
