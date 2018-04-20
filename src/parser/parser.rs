@@ -477,6 +477,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                     try!(self.bump());
 
                     let condition: Conditions = try!(self.parse_conditions());
+                    println!("{:?}", self.curr_token);
                     return Ok(DataSrc {
                         tables: tables,
                         condition: Some(condition),
@@ -515,7 +516,6 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
             };
         } else {
             cond = Conditions::Leaf(try!(self.parse_condition()));
-            try!(self.bump());
             while self.validate_keyword(&[Keyword::And, Keyword::Or]).is_ok() {
                 match try!(self.validate_keyword(&[Keyword::And, Keyword::Or])) {
                     Keyword::And => {
