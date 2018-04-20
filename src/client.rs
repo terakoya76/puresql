@@ -119,7 +119,7 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                     match stmt.condition {
                         None => {},
                         Some(condition) => {
-                            conditions = execute_where(condition, false);
+                            conditions = build_selectors(condition, false);
                         },
                     }
 
@@ -154,7 +154,7 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                     match stmt.condition.clone() {
                         None => {},
                         Some(condition) => {
-                            conditions = execute_where(condition, false);
+                            conditions = build_selectors(condition, false);
                         },
                     }
 
@@ -175,112 +175,6 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                 _ => Err(ClientError::BuildExecutorError),
             }
         }
-    }
-}
-
-pub fn execute_where(condition: Conditions, is_or: bool) -> Vec<Box<Selector>> {
-    match condition {
-        Conditions::And(c1, c2) => {
-            let mut selectors1: Vec<Box<Selector>> = execute_where(*c1, false);
-            let mut selectors2: Vec<Box<Selector>> = execute_where(*c2, false);
-            selectors1.append(&mut selectors2);
-            selectors1
-        },
-
-        Conditions::Or(c1, c2) => {
-            let mut selectors1: Vec<Box<Selector>> = execute_where(*c1, true);
-            let mut selectors2: Vec<Box<Selector>> = execute_where(*c2, true);
-            selectors1.append(&mut selectors2);
-            selectors1
-        },
-
-        Conditions::Leaf(condition) => {
-            match condition.op {
-                Operator::Equ => {
-                    if is_or {
-                        match condition.right {
-                            Comparable::Lit(l) => vec![NotEqual::new(condition.left, None, Some(l.into()))],
-                            Comparable::Target(t) => vec![NotEqual::new(condition.left, Some(t), None)],
-                        }
-                    } else {
-                        match condition.right {
-                            Comparable::Lit(l) => vec![Equal::new(condition.left, None, Some(l.into()))],
-                            Comparable::Target(t) => vec![Equal::new(condition.left, Some(t), None)],
-                        }
-                    }
-                },
-
-                Operator::NEqu => {
-                    if is_or {
-                        match condition.right {
-                            Comparable::Lit(l) => vec![Equal::new(condition.left, None, Some(l.into()))],
-                            Comparable::Target(t) => vec![Equal::new(condition.left, Some(t), None)],
-                        }
-                    } else {
-                        match condition.right {
-                            Comparable::Lit(l) => vec![NotEqual::new(condition.left, None, Some(l.into()))],
-                            Comparable::Target(t) => vec![NotEqual::new(condition.left, Some(t), None)],
-                        }
-                    }
-                },
-
-                Operator::GT => {
-                    if is_or {
-                        match condition.right {
-                            Comparable::Lit(l) => vec![LE::new(condition.left, None, Some(l.into()))],
-                            Comparable::Target(t) => vec![LE::new(condition.left, Some(t), None)],
-                        }
-                    } else {
-                        match condition.right {
-                            Comparable::Lit(l) => vec![GT::new(condition.left, None, Some(l.into()))],
-                            Comparable::Target(t) => vec![GT::new(condition.left, Some(t), None)],
-                        }
-                    }
-                },
-
-                Operator::LT => {
-                    if is_or {
-                        match condition.right {
-                            Comparable::Lit(l) => vec![GE::new(condition.left, None, Some(l.into()))],
-                            Comparable::Target(t) => vec![GE::new(condition.left, Some(t), None)],
-                        }
-                    } else {
-                        match condition.right {
-                            Comparable::Lit(l) => vec![LT::new(condition.left, None, Some(l.into()))],
-                            Comparable::Target(t) => vec![LT::new(condition.left, Some(t), None)],
-                        }
-                    }
-                },
-
-                Operator::GE => {
-                    if is_or {
-                        match condition.right {
-                            Comparable::Lit(l) => vec![LT::new(condition.left, None, Some(l.into()))],
-                            Comparable::Target(t) => vec![LT::new(condition.left, Some(t), None)],
-                        }
-                    } else {
-                        match condition.right {
-                            Comparable::Lit(l) => vec![GE::new(condition.left, None, Some(l.into()))],
-                            Comparable::Target(t) => vec![GE::new(condition.left, Some(t), None)],
-                        }
-                    }
-                },
-
-                Operator::LE => {
-                    if is_or {
-                        match condition.right {
-                            Comparable::Lit(l) => vec![GT::new(condition.left, None, Some(l.into()))],
-                            Comparable::Target(t) => vec![GT::new(condition.left, Some(t), None)],
-                        }
-                    } else {
-                        match condition.right {
-                            Comparable::Lit(l) => vec![LE::new(condition.left, None, Some(l.into()))],
-                            Comparable::Target(t) => vec![LE::new(condition.left, Some(t), None)],
-                        }
-                    }
-                },
-            }
-        },
     }
 }
 
