@@ -8,11 +8,13 @@ pub struct Database {
     pub id: usize,
     pub name: String,
     pub tables: HashMap<String, TableInfo>,
+    pub real_tables: HashMap<String, MemoryTable>,
 }
 
 impl Database {
     pub fn add_table(&mut self, table_info: TableInfo) {
-        self.tables.insert(table_info.name.clone(), table_info);
+        self.tables.insert(table_info.name.clone(), table_info.clone());
+        self.real_tables.insert(table_info.name.clone(), MemoryTable::new(table_info.clone()));
     }
 
     pub fn table_info_from_str(&self, name: &str) -> Result<TableInfo, DatabaseError> {
@@ -22,40 +24,11 @@ impl Database {
         }
     }
 
-    pub fn table_infos_from_str(&mut self, names: &[String]) -> Result<Vec<TableInfo>, DatabaseError> {
-        let mut tables: Vec<TableInfo> = Vec::new();
-        for name in names {
-            match self.tables.get_mut(&name[..]) {
-                None => return Err(DatabaseError::TableNotFoundError),
-                Some(tbl_info) => tables.push(tbl_info.clone()),
-            }
-        }
-
-        Ok(tables)
-    }
-
-    pub fn load_table(&mut self, name: String) -> Result<MemoryTable, DatabaseError> {
-        match self.tables.get_mut(&name) {
+    pub fn load_table(&mut self, name: String) -> Result<&mut MemoryTable, DatabaseError> {
+        match self.real_tables.get_mut(&name) {
             None => Err(DatabaseError::TableNotFoundError),
-            Some(tbl_info) => {
-                let mem_tbl: MemoryTable = try!(MemoryTable::new(tbl_info.clone()));
-                Ok(mem_tbl)
-            },
+            Some(mem_tbl) => Ok(mem_tbl),
         }
-    }
-
-    pub fn load_tables(&mut self, names: &[String]) -> Result<Vec<MemoryTable>, DatabaseError> {
-        let mut tables: Vec<MemoryTable> = Vec::new();
-        for name in names {
-            let tbl_info: &mut TableInfo = match self.tables.get_mut(&name[..]) {
-                None => return Err(DatabaseError::TableNotFoundError),
-                Some(tbl_info) => tbl_info,
-            };
-
-            tables.push(try!(MemoryTable::new(tbl_info.clone())));
-        }
-
-        Ok(tables)
     }
 }
 

@@ -91,9 +91,9 @@ pub fn exec_insert(ctx: &mut Context, stmt: InsertStmt) -> Result<(), ClientErro
     match ctx.db {
         None => Err(ClientError::BuildExecutorError),
         Some(ref mut db) => {
-            match db.load_tables(&[stmt.table_name]) {
-                Ok(ref mut mem_tbls) => {
-                    mem_tbls[0].insert(fields);
+            match db.load_table(stmt.table_name) {
+                Ok(ref mut mem_tbl) => {
+                    mem_tbl.insert(fields);
                     Ok(())
                 },
                 _ => Err(ClientError::BuildExecutorError),
@@ -109,11 +109,11 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
         Some(ref mut db) => {
             match stmt.source.tables.len() {
                 1 => {
-                    let tbl_names: &[String] = stmt.source.tables.as_slice();
-                    let mut mem_tbls: Vec<MemoryTable> = try!(db.clone().load_tables(tbl_names));
-                    let mut mem_tbl_infos: Vec<TableInfo> = try!(db.clone().table_infos_from_str(tbl_names));
+                    let tbl_name: String = stmt.source.tables[0].clone();
+                    let mut mem_tbl: &mut MemoryTable = try!(db.load_table(tbl_name));
+                    let mem_tbl_info: TableInfo = mem_tbl.meta.clone();
 
-                    let mut scan_exec: MemoryTableScanExec = MemoryTableScanExec::new(&mut mem_tbls[0], mem_tbl_infos[0].clone(), vec![Range::new(0, 10)]);
+                    let mut scan_exec: MemoryTableScanExec = MemoryTableScanExec::new(mem_tbl, mem_tbl_info, vec![Range::new(0, 10)]);
 
                     let mut conditions: Vec<Box<Selector>> = Vec::new();
                     match stmt.condition {
@@ -139,15 +139,15 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                 2 => {
                     let mut db4left = db.clone();
                     let left_tbl_name: String = stmt.source.tables[0].clone();
-                    let left_tbl_info: TableInfo = try!(db4left.clone().table_info_from_str(&left_tbl_name));
-                    let mut left_mem_tbl: MemoryTable = try!(db4left.load_table(left_tbl_name));
-                    let mut left_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut left_mem_tbl, left_tbl_info.clone(), vec![Range::new(0, 10)]);
+                    let mut left_mem_tbl: &mut MemoryTable = try!(db4left.load_table(left_tbl_name));
+                    let left_tbl_info: TableInfo = left_mem_tbl.meta.clone();
+                    let mut left_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(left_mem_tbl, left_tbl_info.clone(), vec![Range::new(0, 10)]);
 
                     let mut db4rht = db.clone();
                     let rht_tbl_name: String = stmt.source.tables[1].clone();
-                    let rht_tbl_info: TableInfo = try!(db4rht.clone().table_info_from_str(&rht_tbl_name));
-                    let mut rht_mem_tbl: MemoryTable = try!(db4rht.clone().load_table(rht_tbl_name));
-                    let mut rht_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(&mut rht_mem_tbl, rht_tbl_info.clone(), vec![Range::new(0, 10)]);
+                    let mut rht_mem_tbl: &mut MemoryTable = try!(db4rht.load_table(rht_tbl_name));
+                    let rht_tbl_info: TableInfo = rht_mem_tbl.meta.clone();
+                    let mut rht_tbl_scan: MemoryTableScanExec = MemoryTableScanExec::new(rht_mem_tbl, rht_tbl_info.clone(), vec![Range::new(0, 10)]);
 
 
                     let mut conditions: Vec<Box<Selector>> = Vec::new();

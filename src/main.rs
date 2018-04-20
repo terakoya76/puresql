@@ -1,14 +1,8 @@
-extern crate bincode;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
-
 use std::collections::HashMap;
 
 mod client;
 mod database;
 mod context;
-mod storage;
 mod columns;
 mod tables;
 mod data_type;
@@ -20,7 +14,6 @@ mod parser;
 pub use client::Client;
 pub use database::Database;
 pub use context::Context;
-pub use storage::b_tree::BTree;
 pub use columns::column::Column;
 pub use columns::range::Range;
 pub use tables::field::Field;
@@ -50,6 +43,7 @@ fn main() {
         id: 1,
         name: "test".to_string(),
         tables: HashMap::new(),
+        real_tables: HashMap::new(),
     };
 
     let ctx: Context = Context {
