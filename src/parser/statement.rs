@@ -45,7 +45,7 @@ pub enum UseStmt {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct SelectStmt {
-    pub targets: Vec<Target>,
+    pub targets: Vec<Projectable>,
     pub source: DataSrc,
     pub condition: Option<Conditions>,
     pub group_by: Option<GroupBy>,
@@ -80,7 +80,7 @@ pub enum Conditions {
 pub struct Condition {
     pub left: Target,
     pub op: Operator,
-    pub right: Comparable,
+    pub right: Projectable,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -94,7 +94,7 @@ pub enum Operator {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Comparable {
+pub enum Projectable {
     Lit(Literal),
     Target(Target),
 }

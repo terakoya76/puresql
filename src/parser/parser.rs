@@ -383,26 +383,31 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
     pub fn parse_select_stmt(&mut self) -> Result<SelectStmt, ParseError> {
         try!(self.bump());
         // SELECT xx, yy
-        let mut targets: Vec<Target> = Vec::new();
+        let mut targets: Vec<Projectable> = Vec::new();
         while !self.validate_keyword(&[Keyword::From]).is_ok() {
-            let mut table_name: Option<String> = None;
-            if self.check_next_token(&[Token::Dot]) {
-                table_name = Some(try!(self.validate_word(false)));
-                try!(self.bump());
-                try!(self.bump());
-            }
-
             match self.validate_token(&[Token::Star]) {
                 Ok(_t) => println!("{:?}", self.curr_token),
                 _ => {
-                    let column_name: String = try!(self.validate_word(false));
-                    targets.push(Target {
-                        table_name: table_name,
-                        name: column_name,
-                    });
+                    match self.validate_word(false) {
+                        Ok(_right) => {
+                            let mut table_name: Option<String> = None;
+                            if self.check_next_token(&[Token::Dot]) {
+                                table_name = Some(try!(self.validate_word(false)));
+                                try!(self.bump());
+                                try!(self.bump());
+                            };
+
+                            let column_name: String = try!(self.validate_word(true));
+                            targets.push(Projectable::Target(Target {
+                                table_name: table_name,
+                                name: column_name,
+                            }));
+                        },
+                        _ => targets.push(Projectable::Lit(try!(self.validate_literal()))),
+                    };
                     try!(self.bump());
                 },
-            }
+            };
 
             match self.validate_token(&[Token::Comma]) {
                 Ok(_t) => try!(self.bump()),
@@ -477,7 +482,6 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                     try!(self.bump());
 
                     let condition: Conditions = try!(self.parse_conditions());
-                    println!("{:?}", self.curr_token);
                     return Ok(DataSrc {
                         tables: tables,
                         condition: Some(condition),
@@ -574,7 +578,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         };
 
         try!(self.bump());
-        let right_side: Comparable = match self.validate_word(false) {
+        let right_side: Projectable = match self.validate_word(false) {
             Ok(_right) => {
                 let mut right_table_name: Option<String> = None;
                 if self.check_next_token(&[Token::Dot]) {
@@ -584,12 +588,12 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                 };
 
                 let right_column_name: String = try!(self.validate_word(true));
-                Comparable::Target(Target {
+                Projectable::Target(Target {
                     table_name: right_table_name,
                     name: right_column_name,
                 })
             },
-            _ => Comparable::Lit(try!(self.validate_literal())),
+            _ => Projectable::Lit(try!(self.validate_literal())),
         };
 
         Ok(Condition {

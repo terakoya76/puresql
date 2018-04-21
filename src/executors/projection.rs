@@ -10,13 +10,13 @@ use parser::statement::*;
 #[derive(Debug)]
 pub struct ProjectionExec<'p, 't: 'p, T: 't> {
     pub inputs: &'p mut T,
-    pub projectors: Vec<Target>,
+    pub projectors: Vec<Projectable>,
     _marker: PhantomData<&'t T>,
 }
 
 impl<'p, 't, T> ProjectionExec<'p, 't, T>
     where T: ScanIterator {
-    pub fn new(inputs: &'p mut T, projectors: Vec<Target>) -> ProjectionExec<'p, 't, T> {
+    pub fn new(inputs: &'p mut T, projectors: Vec<Projectable>) -> ProjectionExec<'p, 't, T> {
         ProjectionExec {
             inputs: inputs,
             projectors: projectors,
@@ -45,18 +45,23 @@ impl<'p, 't, T> Iterator for ProjectionExec<'p, 't, T>
                 None => return None,
                 Some(tuple) => {
                     let mut fields: Vec<Field> = Vec::new();
-                    for column in &self.inputs.get_columns() {
-                        for target in &self.projectors {
-                            let t: Target = target.clone();
-                            if t.table_name.is_some() {
-                                if t.table_name.unwrap() != column.table_name {
-                                    continue;
-                                }
-                            }
+                    for target in &self.projectors {
+                        match target {
+                            &Projectable::Target(ref t) => {
+                                for column in &self.inputs.get_columns() {
+                                    let t: Target = t.clone();
+                                    if t.table_name.is_some() {
+                                        if t.table_name.unwrap() != column.table_name {
+                                            continue;
+                                        }
+                                    }
 
-                            if t.name == column.name {
-                                fields.push(tuple.fields[column.offset].clone());
-                            }
+                                    if t.name == column.name {
+                                        fields.push(tuple.fields[column.offset].clone());
+                                    }
+                                }
+                            },
+                            &Projectable::Lit(ref l) => fields.push(l.clone().into()),
                         }
                     }
                     return Some(Tuple::new(fields));
