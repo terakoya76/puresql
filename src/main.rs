@@ -71,7 +71,7 @@ fn main() {
     let _ = client.handle_query("select shohin_id, shohin_name, kubun_id, price from shohin");
     let _ = client.handle_query("select kubun.kubun_id, kubun.kubun_name from kubun");
     let _ = client.handle_query("select shohin_name, kubun.kubun_id, price from shohin");
-    let _ = client.handle_query("select 1 from shohin");
+    let _ = client.handle_query("select shohin_name, 1 from shohin");
     let _ = client.handle_query("select * from shohin");
 
     println!("joined table scan");
