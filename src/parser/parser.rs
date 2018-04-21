@@ -386,8 +386,10 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         let mut targets: Vec<Projectable> = Vec::new();
         while !self.validate_keyword(&[Keyword::From]).is_ok() {
             match self.validate_token(&[Token::Star]) {
-                Ok(_t) => println!("{:?}", self.curr_token),
-                _ => {
+                Ok(_t) => {
+                    targets.push(Projectable::All);
+                },
+                Err(_e) => {
                     match self.validate_word(false) {
                         Ok(_right) => {
                             let mut table_name: Option<String> = None;
@@ -405,13 +407,13 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                         },
                         _ => targets.push(Projectable::Lit(try!(self.validate_literal()))),
                     };
-                    try!(self.bump());
                 },
             };
+            try!(self.bump());
 
             match self.validate_token(&[Token::Comma]) {
                 Ok(_t) => try!(self.bump()),
-                _ => (),
+                Err(_e) => (),
             }
         }
 

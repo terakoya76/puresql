@@ -119,7 +119,7 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                     match stmt.condition {
                         None => {},
                         Some(condition) => {
-                            conditions = build_selectors(condition, false);
+                            conditions = try!(build_selectors(condition, false));
                         },
                     }
 
@@ -154,7 +154,7 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                     match stmt.condition.clone() {
                         None => {},
                         Some(condition) => {
-                            conditions = build_selectors(condition, false);
+                            conditions = try!(build_selectors(condition, false));
                         },
                     }
 
@@ -183,6 +183,7 @@ pub enum ClientError {
     ParseError(ParseError),
     DatabaseError(DatabaseError),
     TableInfoError(TableInfoError),
+    SelectorError(SelectorError),
     BuildExecutorError,
     DatabaseNotFoundError,
 }
@@ -202,6 +203,12 @@ impl From<DatabaseError> for ClientError {
 impl From<TableInfoError> for ClientError {
     fn from(err: TableInfoError) -> ClientError {
         ClientError::TableInfoError(err)
+    }
+}
+
+impl From<SelectorError> for ClientError {
+    fn from(err: SelectorError) -> ClientError {
+        ClientError::SelectorError(err)
     }
 }
 

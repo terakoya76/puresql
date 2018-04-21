@@ -41,7 +41,10 @@ impl<'n> NestedLoopJoinExec<'n> {
 
         let selectors: Vec<Box<Selector>> = match condition {
             None => Vec::new(),
-            Some(c) => build_selectors(c, false),
+            Some(c) => match build_selectors(c, false) {
+                Ok(s) => s,
+                Err(_) => Vec::new(),
+            },
         };
 
         NestedLoopJoinExec {
@@ -123,10 +126,17 @@ fn next_tuple<'n, T1: ScanIterator + 'n, T2: ScanIterator + 'n>(outer_table: &'n
 #[derive(Debug, PartialEq)]
 pub enum JoinExecError {
     TableInfoError(TableInfoError),
+    SelectorError(SelectorError),
 }
 
 impl From<TableInfoError> for JoinExecError {
     fn from(err: TableInfoError) -> JoinExecError {
         JoinExecError::TableInfoError(err)
+    }
+}
+
+impl From<SelectorError> for JoinExecError {
+    fn from(err: SelectorError) -> JoinExecError {
+        JoinExecError::SelectorError(err)
     }
 }

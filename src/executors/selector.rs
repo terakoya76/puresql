@@ -339,20 +339,20 @@ fn find_field(tuple: &Tuple, columns: &[Column], table_name: Option<String>, col
     Err(SelectorError::ColumnNotFoundError)
 }
 
-pub fn build_selectors(condition: Conditions, is_or: bool) -> Vec<Box<Selector>> {
+pub fn build_selectors(condition: Conditions, is_or: bool) -> Result<Vec<Box<Selector>>, SelectorError> {
     match condition {
         Conditions::And(c1, c2) => {
-            let mut selectors1: Vec<Box<Selector>> = build_selectors(*c1, false);
-            let mut selectors2: Vec<Box<Selector>> = build_selectors(*c2, false);
+            let mut selectors1: Vec<Box<Selector>> = try!(build_selectors(*c1, false));
+            let mut selectors2: Vec<Box<Selector>> = try!(build_selectors(*c2, false));
             selectors1.append(&mut selectors2);
-            selectors1
+            Ok(selectors1)
         },
 
         Conditions::Or(c1, c2) => {
-            let mut selectors1: Vec<Box<Selector>> = build_selectors(*c1, true);
-            let mut selectors2: Vec<Box<Selector>> = build_selectors(*c2, true);
+            let mut selectors1: Vec<Box<Selector>> = try!(build_selectors(*c1, true));
+            let mut selectors2: Vec<Box<Selector>> = try!(build_selectors(*c2, true));
             selectors1.append(&mut selectors2);
-            selectors1
+            Ok(selectors1)
         },
 
         Conditions::Leaf(condition) => {
@@ -360,13 +360,15 @@ pub fn build_selectors(condition: Conditions, is_or: bool) -> Vec<Box<Selector>>
                 Operator::Equ => {
                     if is_or {
                         match condition.right {
-                            Projectable::Lit(l) => vec![NotEqual::new(condition.left, None, Some(l.into()))],
-                            Projectable::Target(t) => vec![NotEqual::new(condition.left, Some(t), None)],
+                            Projectable::Lit(l) => Ok(vec![NotEqual::new(condition.left, None, Some(l.into()))]),
+                            Projectable::Target(t) => Ok(vec![NotEqual::new(condition.left, Some(t), None)]),
+                            Projectable::All => Err(SelectorError::UnexpectedRightHandError),
                         }
                     } else {
                         match condition.right {
-                            Projectable::Lit(l) => vec![Equal::new(condition.left, None, Some(l.into()))],
-                            Projectable::Target(t) => vec![Equal::new(condition.left, Some(t), None)],
+                            Projectable::Lit(l) => Ok(vec![Equal::new(condition.left, None, Some(l.into()))]),
+                            Projectable::Target(t) => Ok(vec![Equal::new(condition.left, Some(t), None)]),
+                            Projectable::All => Err(SelectorError::UnexpectedRightHandError),
                         }
                     }
                 },
@@ -374,13 +376,15 @@ pub fn build_selectors(condition: Conditions, is_or: bool) -> Vec<Box<Selector>>
                 Operator::NEqu => {
                     if is_or {
                         match condition.right {
-                            Projectable::Lit(l) => vec![Equal::new(condition.left, None, Some(l.into()))],
-                            Projectable::Target(t) => vec![Equal::new(condition.left, Some(t), None)],
+                            Projectable::Lit(l) => Ok(vec![Equal::new(condition.left, None, Some(l.into()))]),
+                            Projectable::Target(t) => Ok(vec![Equal::new(condition.left, Some(t), None)]),
+                            Projectable::All => Err(SelectorError::UnexpectedRightHandError),
                         }
                     } else {
                         match condition.right {
-                            Projectable::Lit(l) => vec![NotEqual::new(condition.left, None, Some(l.into()))],
-                            Projectable::Target(t) => vec![NotEqual::new(condition.left, Some(t), None)],
+                            Projectable::Lit(l) => Ok(vec![NotEqual::new(condition.left, None, Some(l.into()))]),
+                            Projectable::Target(t) => Ok(vec![NotEqual::new(condition.left, Some(t), None)]),
+                            Projectable::All => Err(SelectorError::UnexpectedRightHandError),
                         }
                     }
                 },
@@ -388,13 +392,15 @@ pub fn build_selectors(condition: Conditions, is_or: bool) -> Vec<Box<Selector>>
                 Operator::GT => {
                     if is_or {
                         match condition.right {
-                            Projectable::Lit(l) => vec![LE::new(condition.left, None, Some(l.into()))],
-                            Projectable::Target(t) => vec![LE::new(condition.left, Some(t), None)],
+                            Projectable::Lit(l) => Ok(vec![LE::new(condition.left, None, Some(l.into()))]),
+                            Projectable::Target(t) => Ok(vec![LE::new(condition.left, Some(t), None)]),
+                            Projectable::All => Err(SelectorError::UnexpectedRightHandError),
                         }
                     } else {
                         match condition.right {
-                            Projectable::Lit(l) => vec![GT::new(condition.left, None, Some(l.into()))],
-                            Projectable::Target(t) => vec![GT::new(condition.left, Some(t), None)],
+                            Projectable::Lit(l) => Ok(vec![GT::new(condition.left, None, Some(l.into()))]),
+                            Projectable::Target(t) => Ok(vec![GT::new(condition.left, Some(t), None)]),
+                            Projectable::All => Err(SelectorError::UnexpectedRightHandError),
                         }
                     }
                 },
@@ -402,13 +408,15 @@ pub fn build_selectors(condition: Conditions, is_or: bool) -> Vec<Box<Selector>>
                 Operator::LT => {
                     if is_or {
                         match condition.right {
-                            Projectable::Lit(l) => vec![GE::new(condition.left, None, Some(l.into()))],
-                            Projectable::Target(t) => vec![GE::new(condition.left, Some(t), None)],
+                            Projectable::Lit(l) => Ok(vec![GE::new(condition.left, None, Some(l.into()))]),
+                            Projectable::Target(t) => Ok(vec![GE::new(condition.left, Some(t), None)]),
+                            Projectable::All => Err(SelectorError::UnexpectedRightHandError),
                         }
                     } else {
                         match condition.right {
-                            Projectable::Lit(l) => vec![LT::new(condition.left, None, Some(l.into()))],
-                            Projectable::Target(t) => vec![LT::new(condition.left, Some(t), None)],
+                            Projectable::Lit(l) => Ok(vec![LT::new(condition.left, None, Some(l.into()))]),
+                            Projectable::Target(t) => Ok(vec![LT::new(condition.left, Some(t), None)]),
+                            Projectable::All => Err(SelectorError::UnexpectedRightHandError),
                         }
                     }
                 },
@@ -416,13 +424,15 @@ pub fn build_selectors(condition: Conditions, is_or: bool) -> Vec<Box<Selector>>
                 Operator::GE => {
                     if is_or {
                         match condition.right {
-                            Projectable::Lit(l) => vec![LT::new(condition.left, None, Some(l.into()))],
-                            Projectable::Target(t) => vec![LT::new(condition.left, Some(t), None)],
+                            Projectable::Lit(l) => Ok(vec![LT::new(condition.left, None, Some(l.into()))]),
+                            Projectable::Target(t) => Ok(vec![LT::new(condition.left, Some(t), None)]),
+                            Projectable::All => Err(SelectorError::UnexpectedRightHandError),
                         }
                     } else {
                         match condition.right {
-                            Projectable::Lit(l) => vec![GE::new(condition.left, None, Some(l.into()))],
-                            Projectable::Target(t) => vec![GE::new(condition.left, Some(t), None)],
+                            Projectable::Lit(l) => Ok(vec![GE::new(condition.left, None, Some(l.into()))]),
+                            Projectable::Target(t) => Ok(vec![GE::new(condition.left, Some(t), None)]),
+                            Projectable::All => Err(SelectorError::UnexpectedRightHandError),
                         }
                     }
                 },
@@ -430,13 +440,15 @@ pub fn build_selectors(condition: Conditions, is_or: bool) -> Vec<Box<Selector>>
                 Operator::LE => {
                     if is_or {
                         match condition.right {
-                            Projectable::Lit(l) => vec![GT::new(condition.left, None, Some(l.into()))],
-                            Projectable::Target(t) => vec![GT::new(condition.left, Some(t), None)],
+                            Projectable::Lit(l) => Ok(vec![GT::new(condition.left, None, Some(l.into()))]),
+                            Projectable::Target(t) => Ok(vec![GT::new(condition.left, Some(t), None)]),
+                            Projectable::All => Err(SelectorError::UnexpectedRightHandError),
                         }
                     } else {
                         match condition.right {
-                            Projectable::Lit(l) => vec![LE::new(condition.left, None, Some(l.into()))],
-                            Projectable::Target(t) => vec![LE::new(condition.left, Some(t), None)],
+                            Projectable::Lit(l) => Ok(vec![LE::new(condition.left, None, Some(l.into()))]),
+                            Projectable::Target(t) => Ok(vec![LE::new(condition.left, Some(t), None)]),
+                            Projectable::All => Err(SelectorError::UnexpectedRightHandError),
                         }
                     }
                 },

@@ -54,6 +54,13 @@ pub struct SelectStmt {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum Projectable {
+    Lit(Literal),
+    Target(Target),
+    All,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Target {
     pub table_name: Option<String>,
     pub name: String,
@@ -91,12 +98,6 @@ pub enum Operator {
     LT,
     GE,
     LE,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Projectable {
-    Lit(Literal),
-    Target(Target),
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -62,6 +62,11 @@ impl<'p, 't, T> Iterator for ProjectionExec<'p, 't, T>
                                 }
                             },
                             &Projectable::Lit(ref l) => fields.push(l.clone().into()),
+                            &Projectable::All => {
+                                for column in &self.inputs.get_columns() {
+                                    fields.push(tuple.fields[column.offset].clone());
+                                }
+                            },
                         }
                     }
                     return Some(Tuple::new(fields));
