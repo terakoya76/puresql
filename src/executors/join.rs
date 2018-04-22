@@ -20,7 +20,7 @@ pub struct NestedLoopJoinExec<'n> {
 }
 
 impl<'n> NestedLoopJoinExec<'n> {
-    pub fn new<T1: ScanIterator, T2: ScanIterator>(outer_table: &'n mut T1, inner_table: &'n mut T2, condition: Option<Conditions>) -> NestedLoopJoinExec<'n> {
+    pub fn new<T1: ScanIterator + 'n, T2: ScanIterator + 'n>(outer_table: T1, inner_table: T2, condition: Option<Conditions>) -> NestedLoopJoinExec<'n> {
         let outer_column_length: usize = outer_table.get_meta().columns.len();
         let mut column_infos: Vec<ColumnInfo> = outer_table.get_meta().columns;
         for (i, column) in inner_table.get_meta().columns.iter().enumerate() {
@@ -102,7 +102,7 @@ impl<'n> Iterator for NestedLoopJoinExec<'n> {
     }
 }
 
-fn next_tuple<'n, T1: ScanIterator + 'n, T2: ScanIterator + 'n>(outer_table: &'n mut T1, inner_table: &'n mut T2) -> Box<FnMut() -> Option<Tuple> + 'n> {
+fn next_tuple<'n, T1: ScanIterator + 'n, T2: ScanIterator + 'n>(mut outer_table: T1, mut inner_table: T2) -> Box<FnMut() -> Option<Tuple> + 'n> {
     Box::new(move || {
         loop {
             match outer_table.next() {

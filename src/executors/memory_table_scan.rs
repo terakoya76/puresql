@@ -6,8 +6,8 @@ use tables::tuple::Tuple;
 use tables::memory_table::MemoryTable;
 
 #[derive(Debug)]
-pub struct MemoryTableScanExec<'t> {
-    pub table: &'t mut MemoryTable,
+pub struct MemoryTableScanExec {
+    pub table: MemoryTable,
     pub ranges: Vec<Range>,
     pub cursor: usize,
     pub seek_handle: usize,
@@ -15,8 +15,8 @@ pub struct MemoryTableScanExec<'t> {
     pub meta: TableInfo,
 }
 
-impl<'t> MemoryTableScanExec<'t> {
-    pub fn new(table: &'t mut MemoryTable, meta: TableInfo, ranges: Vec<Range>) -> MemoryTableScanExec<'t> {
+impl MemoryTableScanExec {
+    pub fn new(table: MemoryTable, meta: TableInfo, ranges: Vec<Range>) -> MemoryTableScanExec {
         let columns: Vec<Column> = table.columns.iter().map(|c| c.clone()).collect();
         MemoryTableScanExec {
             table: table,
@@ -63,7 +63,7 @@ impl<'t> MemoryTableScanExec<'t> {
     }
 }
 
-impl<'t> ScanIterator for MemoryTableScanExec<'t> {
+impl ScanIterator for MemoryTableScanExec {
     fn get_meta(&self) -> TableInfo {
         self.meta.clone()
     }
@@ -73,7 +73,7 @@ impl<'t> ScanIterator for MemoryTableScanExec<'t> {
     }
 }
 
-impl<'t> Iterator for MemoryTableScanExec<'t> {
+impl Iterator for MemoryTableScanExec {
     type Item = Tuple;
     fn next(&mut self) -> Option<Tuple> {
         match self.next_handle() {

@@ -46,7 +46,7 @@ pub enum UseStmt {
 #[derive(Debug, Clone, PartialEq)]
 pub struct SelectStmt {
     pub targets: Vec<Projectable>,
-    pub source: DataSrc,
+    pub source: DataSource,
     pub condition: Option<Conditions>,
     pub group_by: Option<GroupBy>,
     pub order_by: Option<OrderBy>,
@@ -67,9 +67,19 @@ pub struct Target {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct DataSrc {
-    pub tables: Vec<String>,
-    pub condition: Option<Conditions>,
+pub enum DataSource {
+    Leaf(Source),
+    Join(Box<DataSource>, Box<DataSource>, Option<Conditions>),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Source {
+    Table(Table),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Table {
+    pub name: String
 }
 
 #[derive(Debug, Clone, PartialEq)]

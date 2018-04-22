@@ -419,7 +419,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
 
         // FROM xx, yy
         try!(self.bump());
-        let sources: DataSrc = try!(self.parse_from());
+        let sources: DataSource = try!(self.parse_from());
 
         // WHERE xx and yy
         try!(self.bump());
@@ -463,39 +463,35 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         })
     }
 
-    pub fn parse_from(&mut self) -> Result<DataSrc, ParseError> {
-        let mut tables: Vec<String> = Vec::new();
-
-        loop {
-            // TODO: impl sub query parse
-            tables.push(try!(self.validate_word(true)));
-
-            if self.check_next_token(&[Token::Comma]) {
+    pub fn parse_from(&mut self) -> Result<DataSource, ParseError> {
+        let source: DataSource = DataSource::Leaf(try!(self.parse_data_source()));
+        
+        while self.validate_keyword(&[Keyword::Join]).is_ok() || self.validate_token(&[Token::Comma]).is_ok() {
+            if self.validate_keyword(&[Keyword::Join]).is_ok() {
                 try!(self.bump());
-                continue;
+
+                return Ok(DataSource::Join(
+                    Box::new(source),
+                    Box::new(try!(self.parse_from())),
+                    Some(try!(self.parse_conditions())),
+                ));
+            } else {
+                try!(self.bump());
+                return Ok(DataSource::Join(
+                    Box::new(source),
+                    Box::new(try!(self.parse_from())),
+                    None,
+                ));
             }
+        };
 
-            if self.check_next_keyword(&[Keyword::Join]) {
-                try!(self.bump());
-                try!(self.validate_keyword(&[Keyword::Join]));
-                try!(self.bump());
-                if self.check_next_keyword(&[Keyword::On]) {
-                    tables.push(try!(self.validate_word(true)));
-                    try!(self.bump());
+        Ok(source)
+    }
 
-                    let condition: Conditions = try!(self.parse_conditions());
-                    return Ok(DataSrc {
-                        tables: tables,
-                        condition: Some(condition),
-                    });
-                }
-            }
-
-            return Ok(DataSrc {
-                tables: tables,
-                condition: None,
-            });
-        }
+    pub fn parse_data_source(&mut self) -> Result<Source, ParseError> {
+        let table = Source::Table(Table { name: try!(self.validate_word(true)) });
+        try!(self.bump());
+        Ok(table)
     }
 
     pub fn parse_conditions(&mut self) -> Result<Conditions, ParseError> {
