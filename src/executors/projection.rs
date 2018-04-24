@@ -65,6 +65,7 @@ impl<'p, 't, T> Iterator for ProjectionExec<'p, 't, T>
                             &Projectable::All => {
                                 fields = tuple.fields.clone();
                             },
+                            &Projectable::Aggregate(ref _a) => (),
                         }
                     }
                     return Some(Tuple::new(fields));
@@ -73,4 +74,3 @@ impl<'p, 't, T> Iterator for ProjectionExec<'p, 't, T>
         }
     }
 }
-

@@ -66,7 +66,7 @@ impl Aggregator for Sum {
                 return;
             }
         }
-        self.result = self.result.clone();
+        //self.result = self.result.clone();
     }
 
     fn fetch_result(&self) -> Field {
@@ -117,3 +117,74 @@ impl Aggregator for Average {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct Max {
+    pub result: Field,
+    pub column_name: String,
+}
+
+impl Max {
+    pub fn new(col_name: &str) -> Box<Max> {
+        Box::new(Max {
+            result: Field::set_init(),
+            column_name: col_name.to_string(),
+        })
+    }
+}
+
+impl Aggregator for Max {
+    fn update(&mut self, tuple: &Tuple, columns: &Vec<Column>) {
+        for column in columns {
+            if column.name == self.column_name {
+                let value: Field = tuple.fields[column.offset].clone();
+                if self.result < value {
+                    self.result = value;
+                }
+            }
+        }
+    }
+
+    fn fetch_result(&self) -> Field {
+        self.result.clone()
+    }
+
+    fn box_clone(&self) -> Box<Aggregator> {
+        Box::new(self.clone())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Min {
+    pub result: Field,
+    pub column_name: String,
+}
+
+impl Min {
+    pub fn new(col_name: &str) -> Box<Min> {
+        Box::new(Min {
+            result: Field::set_init(),
+            column_name: col_name.to_string(),
+        })
+    }
+}
+
+impl Aggregator for Min {
+    fn update(&mut self, tuple: &Tuple, columns: &Vec<Column>) {
+        for column in columns {
+            if column.name == self.column_name {
+                let value: Field = tuple.fields[column.offset].clone();
+                if self.result > value {
+                    self.result = value;
+                }
+            }
+        }
+    }
+
+    fn fetch_result(&self) -> Field {
+        self.result.clone()
+    }
+
+    fn box_clone(&self) -> Box<Aggregator> {
+        Box::new(self.clone())
+    }
+}

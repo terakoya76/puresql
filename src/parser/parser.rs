@@ -21,7 +21,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
             curr_token: None,
             next_token: None,
         };
-        parser.double_bump();
+        let _ = parser.double_bump();
         parser
     }
 
@@ -32,9 +32,10 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         Ok(())
     }
 
-    pub fn double_bump(&mut self) {
+    pub fn double_bump(&mut self) -> Result<(), ParseError> {
         let _ = self.bump();
         let _ = self.bump();
+        Ok(())
     }
 
     pub fn build_ast(&mut self, stmt: Statement) -> Result<Statement, ParseError> {
@@ -381,41 +382,9 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
 
     // TODO: impl alias
     pub fn parse_select_stmt(&mut self) -> Result<SelectStmt, ParseError> {
-        try!(self.bump());
         // SELECT xx, yy
-        let mut targets: Vec<Projectable> = Vec::new();
-        while !self.validate_keyword(&[Keyword::From]).is_ok() {
-            match self.validate_token(&[Token::Star]) {
-                Ok(_t) => {
-                    targets.push(Projectable::All);
-                },
-                Err(_e) => {
-                    match self.validate_word(false) {
-                        Ok(_right) => {
-                            let mut table_name: Option<String> = None;
-                            if self.check_next_token(&[Token::Dot]) {
-                                table_name = Some(try!(self.validate_word(false)));
-                                try!(self.bump());
-                                try!(self.bump());
-                            };
-
-                            let column_name: String = try!(self.validate_word(true));
-                            targets.push(Projectable::Target(Target {
-                                table_name: table_name,
-                                name: column_name,
-                            }));
-                        },
-                        _ => targets.push(Projectable::Lit(try!(self.validate_literal()))),
-                    };
-                },
-            };
-            try!(self.bump());
-
-            match self.validate_token(&[Token::Comma]) {
-                Ok(_t) => try!(self.bump()),
-                Err(_e) => (),
-            }
-        }
+        try!(self.bump());
+        let targets: Vec<Projectable> = try!(self.parse_target());
 
         // FROM xx, yy
         try!(self.bump());
@@ -461,6 +430,178 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
             order_by: order_by,
             limit: limit,
         })
+    }
+
+    pub fn parse_target(&mut self) -> Result<Vec<Projectable>, ParseError> {
+        let mut targets: Vec<Projectable> = Vec::new();
+        while !self.validate_keyword(&[Keyword::From]).is_ok() {
+            match self.validate_token(&[Token::Comma]) {
+                Ok(_t) => try!(self.bump()),
+                Err(_e) => (),
+            };
+
+            match self.validate_token(&[Token::Star]) {
+                Ok(_t) => {
+                    targets.push(Projectable::All);
+                    try!(self.bump());
+                    continue;
+                },
+                Err(_e) => (),
+            };
+                
+            match self.validate_keyword(&[
+                Keyword::Count,
+                Keyword::Sum,
+                Keyword::Avg,
+                Keyword::Max,
+                Keyword::Min,
+            ]) {
+                Ok(_k) => {
+                    match self.parse_aggregate() {
+                        Ok(agg) => {
+                            targets.push(Projectable::Aggregate(agg));
+                            continue;
+                        },
+                        Err(_e) => (),
+                    }
+                },
+                Err(_e) => (),
+            };
+
+            match self.validate_literal() {
+                Ok(l) => {
+                    targets.push(Projectable::Lit(l));
+                    try!(self.bump());
+                    continue;
+                },
+                Err(_e) => (),
+            };
+
+            match self.validate_word(false) {
+                Ok(_w) => {
+                    let mut table_name: Option<String> = None;
+                    if self.check_next_token(&[Token::Dot]) {
+                        table_name = Some(try!(self.validate_word(false)));
+                        try!(self.double_bump());
+                    };
+
+                    let column_name: String = try!(self.validate_word(true));
+                    targets.push(Projectable::Target(Target {
+                        table_name: table_name,
+                        name: column_name,
+                    }));
+                },
+                Err(_e) => ()
+            };
+            try!(self.bump());
+        }
+        Ok(targets)
+    }
+
+    pub fn parse_aggregate(&mut self) -> Result<Aggregate, ParseError> {
+        match try!(self.validate_keyword(&[
+            Keyword::Count,
+            Keyword::Sum,
+            Keyword::Avg,
+            Keyword::Max,
+            Keyword::Min,
+        ])) {
+            Keyword::Count => {
+                
+                try!(self.bump());
+
+                try!(self.validate_token(&[Token::OpPar]));
+                try!(self.bump());
+
+                let target: Aggregatable = try!(self.parse_aggregatable());
+
+                try!(self.validate_token(&[Token::ClPar]));
+                try!(self.bump());
+
+                Ok(Aggregate::Count(target))
+            },
+
+            Keyword::Sum => {
+                try!(self.bump());
+
+                try!(self.validate_token(&[Token::OpPar]));
+                try!(self.bump());
+
+                let target: Aggregatable = try!(self.parse_aggregatable());
+
+                try!(self.validate_token(&[Token::ClPar]));
+                try!(self.bump());
+
+                Ok(Aggregate::Sum(target))
+            },
+
+            Keyword::Avg => {
+                try!(self.bump());
+
+                try!(self.validate_token(&[Token::OpPar]));
+                try!(self.bump());
+
+                let target: Aggregatable = try!(self.parse_aggregatable());
+
+                try!(self.validate_token(&[Token::ClPar]));
+                try!(self.bump());
+
+                Ok(Aggregate::Average(target))
+            },
+
+            Keyword::Max => {
+                try!(self.bump());
+
+                try!(self.validate_token(&[Token::OpPar]));
+                try!(self.bump());
+
+                let target: Aggregatable = try!(self.parse_aggregatable());
+
+                try!(self.validate_token(&[Token::ClPar]));
+                try!(self.bump());
+
+                Ok(Aggregate::Max(target))
+            },
+
+            Keyword::Min => {
+                try!(self.bump());
+
+                try!(self.validate_token(&[Token::OpPar]));
+                try!(self.bump());
+
+                let target: Aggregatable = try!(self.parse_aggregatable());
+
+                try!(self.validate_token(&[Token::ClPar]));
+                try!(self.bump());
+
+                Ok(Aggregate::Min(target))
+            },
+            _ => return Err(ParseError::SystemError),
+        }
+    }
+
+    pub fn parse_aggregatable(&mut self) -> Result<Aggregatable, ParseError> {
+        match self.validate_token(&[Token::Star]) {
+            Ok(_t) => {
+                try!(self.bump());
+                Ok(Aggregatable::All)
+            },
+            Err(_e) => {
+                let mut table_name: Option<String> = None;
+                if self.check_next_token(&[Token::Dot]) {
+                    table_name = Some(try!(self.validate_word(false)));
+                    try!(self.double_bump());
+                };
+
+                let column_name: String = try!(self.validate_word(true));
+                try!(self.bump());
+
+                Ok(Aggregatable::Target(Target {
+                    table_name: table_name,
+                    name: column_name,
+                }))
+            },
+        }
     }
 
     pub fn parse_from(&mut self) -> Result<DataSource, ParseError> {
@@ -549,8 +690,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         let mut left_table_name: Option<String> = None;
         if self.check_next_token(&[Token::Dot]) {
             left_table_name = Some(try!(self.validate_word(false)));
-            try!(self.bump());
-            try!(self.bump());
+            try!(self.double_bump());
         };
 
         let left_column_name: String = try!(self.validate_word(true));
@@ -576,22 +716,21 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         };
 
         try!(self.bump());
-        let right_side: Projectable = match self.validate_word(false) {
+        let right_side: Comparable = match self.validate_word(false) {
             Ok(_right) => {
                 let mut right_table_name: Option<String> = None;
                 if self.check_next_token(&[Token::Dot]) {
                     right_table_name = Some(try!(self.validate_word(false)));
-                    try!(self.bump());
-                    try!(self.bump());
+                    try!(self.double_bump());
                 };
 
                 let right_column_name: String = try!(self.validate_word(true));
-                Projectable::Target(Target {
+                Comparable::Target(Target {
                     table_name: right_table_name,
                     name: right_column_name,
                 })
             },
-            _ => Projectable::Lit(try!(self.validate_literal())),
+            _ => Comparable::Lit(try!(self.validate_literal())),
         };
 
         Ok(Condition {
@@ -656,6 +795,11 @@ fn keyword_from_str(string: &str) -> Option<Keyword> {
         //"database" => Some(Keyword::Database),
         //"view" => Some(Keyword::View),
         "column" => Some(Keyword::Column),
+        "count" => Some(Keyword::Count),
+        "sum" => Some(Keyword::Sum),
+        "max" => Some(Keyword::Max),
+        "min" => Some(Keyword::Min),
+        "avg" => Some(Keyword::Avg),
         "from" => Some(Keyword::From),
         "join" => Some(Keyword::Join),
         "where" => Some(Keyword::Where),
@@ -686,6 +830,7 @@ fn keyword_from_str(string: &str) -> Option<Keyword> {
 #[derive(Debug, PartialEq)]
 pub enum ParseError {
     LexError(LexError),
+    SystemError,
     ReservedKeyword(TokenPos),
     InvalidEoq,
     UndefinedStatementError,

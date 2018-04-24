@@ -57,6 +57,7 @@ pub struct SelectStmt {
 pub enum Projectable {
     Lit(Literal),
     Target(Target),
+    Aggregate(Aggregate),
     All,
 }
 
@@ -65,6 +66,22 @@ pub struct Target {
     pub table_name: Option<String>,
     pub name: String,
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Aggregate {
+    Count(Aggregatable),
+    Sum(Aggregatable),
+    Average(Aggregatable),
+    Max(Aggregatable),
+    Min(Aggregatable),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Aggregatable {
+    Target(Target),
+    All,
+}
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum DataSource {
@@ -97,7 +114,13 @@ pub enum Conditions {
 pub struct Condition {
     pub left: Target,
     pub op: Operator,
-    pub right: Projectable,
+    pub right: Comparable,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Comparable {
+    Lit(Literal),
+    Target(Target),
 }
 
 #[derive(Debug, Clone, PartialEq)]

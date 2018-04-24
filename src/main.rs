@@ -34,9 +34,10 @@ pub use executors::selection::SelectionExec;
 pub use executors::selector::{Selector, Equal, NotEqual, LT, LE, GT, GE, build_selectors};
 pub use executors::projection::ProjectionExec;
 pub use executors::aggregation::AggregationExec;
-pub use executors::aggregator::{Aggregator, Count, Sum, Average};
+pub use executors::aggregator::{Aggregator, Count, Sum, Average, Max, Min};
 pub use parser::statement::*;
 pub use parser::parser::Parser;
+
 
 fn main() {
     let db: Database = Database {
@@ -67,7 +68,7 @@ fn main() {
     let _ = client.handle_query("insert into kubun ( kubun_id, kubun_name) values ( 1, 'fruit' )");
     let _ = client.handle_query("insert into kubun ( kubun_id, kubun_name) values ( 2, 'vegetable' )");
 
-    println!("table scan");
+    println!("standard table scan");
     let _ = client.handle_query("select shohin_id, shohin_name, kubun_id, price from shohin");
     let _ = client.handle_query("select kubun.kubun_id, kubun.kubun_name from kubun");
     let _ = client.handle_query("select shohin_name, kubun.kubun_id, price from shohin");
@@ -76,30 +77,18 @@ fn main() {
 
     println!("joined table scan");
     let _ = client.handle_query("select shohin.shohin_name, kubun.kubun_name, shohin.price from shohin join kubun on shohin.kubun_id = kubun.kubun_id");
+    let _ = client.handle_query("select shohin.shohin_name, kubun.kubun_name, shohin.price from shohin, kubun where shohin.kubun_id = kubun.kubun_id");
     let _ = client.handle_query("select shohin.shohin_name, kubun.kubun_name, shohin.price from shohin join kubun on kubun_id = kubun_id");
 
     println!("selection");
-    let _ = client.handle_query("select shohin_name, kubun_id, price from shohin where shohin_name = 'apple'");
+    let _ = client.handle_query("select shohin_name, kubun_id, price from shohin where shohin.shohin_name = 'apple'");
     let _ = client.handle_query("select shohin_name, kubun_id, price from shohin where price > kubun_id");
     let _ = client.handle_query("select shohin_name, kubun_name, price from shohin join kubun on shohin.kubun_id = kubun.kubun_id where shohin.shohin_name = 'apple'");
 
-/*
     println!("aggregation\n");
-    {
-        let mut aggregation = AggregationExec::new(&mut m_shohin_tb_scan, vec![], vec![Count::new(), Sum::new("price"), Average::new("price")]);
-        loop {
-            match aggregation.next() {
-                None => break,
-                Some(tuples) => {
-                    for tuple in tuples {
-                        tuple.print();
-                    }
-                },
-            }
-        }
-        println!("Scaned\n");
-    }
+    let _ = client.handle_query("select count(*) from shohin");
 
+    /*
     println!("group by aggregation\n");
     {
         let mut grouped = AggregationExec::new(&mut m_shohin_tb_scan, vec!["price"], vec![Count::new(), Sum::new("price"), Average::new("price")]);
