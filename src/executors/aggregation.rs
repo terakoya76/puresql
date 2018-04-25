@@ -48,7 +48,7 @@ impl<'a, 't, T> AggregationExec<'a, 't, T>
         {
             let aggrs = self.grouped_aggregators.get_mut(&keys).unwrap();
             for mut aggr in aggrs {
-                aggr.update(&tuple, &self.inputs.get_columns());
+                let _ = aggr.update(&tuple, &self.inputs.get_columns());
             }
         }
     }

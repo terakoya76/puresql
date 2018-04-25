@@ -87,6 +87,7 @@ fn main() {
 
     println!("aggregation\n");
     let _ = client.handle_query("select count(*) from shohin");
+    let _ = client.handle_query("select avg(shohin.price) from shohin");
 
     /*
     println!("group by aggregation\n");

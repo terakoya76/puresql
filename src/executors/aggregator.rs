@@ -203,7 +203,7 @@ fn find_field(tuple: &Tuple, columns: &[Column], table_name: Option<String>, col
 
 pub fn build_aggregator(aggregate: Aggregate) -> Result<Box<Aggregator>, AggregatorError> {
     match aggregate {
-        Aggregate::Count(aggr) => Ok(Count::new()),
+        Aggregate::Count(_aggr) => Ok(Count::new()),
 
         Aggregate::Sum(aggr) => {
             match aggr {
