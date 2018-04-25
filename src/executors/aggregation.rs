@@ -56,8 +56,8 @@ impl<'a, 't, T> AggregationExec<'a, 't, T>
 
 impl<'a, 't, T> Iterator for AggregationExec<'a, 't, T>
     where T: ScanIterator {
-    type Item = Vec<Tuple>;
-    fn next(&mut self) -> Option<Vec<Tuple>> {
+    type Item = Tuple;
+    fn next(&mut self) -> Option<Tuple> {
         loop {
             match self.inputs.next() {
                 None => return None,
@@ -65,18 +65,15 @@ impl<'a, 't, T> Iterator for AggregationExec<'a, 't, T>
                     let mut map_keys: Vec<String> = self.get_keys(&tuple);
                     &mut self.upsert(map_keys, tuple);
 
-                    let mut tuples: Vec<Tuple> = Vec::new();
+                    let mut fields: Vec<Field> = Vec::new();
                     for aggrs in self.grouped_aggregators.values() {
-                        let mut fields: Vec<Field> = Vec::new();
                         for aggr in aggrs {
                             fields.push(aggr.fetch_result());
                         }
-                        tuples.push(Tuple::new(fields));
                     }
-                    return Some(tuples);
+                    return Some(Tuple::new(fields));
                 },
             }
         }
     }
 }
-

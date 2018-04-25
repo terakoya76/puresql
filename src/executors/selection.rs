@@ -34,7 +34,6 @@ impl<'s, 't, T> ScanIterator for SelectionExec<'s, 't, T>
     }
 }
 
-// TODO: impl OR conditions
 impl<'s, 't, T> Iterator for SelectionExec<'s, 't, T>
     where T: ScanIterator {
     type Item = Tuple;

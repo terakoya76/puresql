@@ -14,6 +14,8 @@ use executors::projection::ProjectionExec;
 use executors::selection::SelectionExec;
 use executors::selector::*;
 use executors::join::NestedLoopJoinExec;
+use executors::aggregation::AggregationExec;
+use executors::aggregator::*;
 
 #[derive(Debug)]
 pub struct Client {
@@ -132,13 +134,31 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                 DataSource::Leaf(_s) => {
                     let mut scan_exec: MemoryTableScanExec = try!(exec_scan(db.clone(), stmt.source));
                     let mut selection_exec = SelectionExec::new(&mut scan_exec, conditions);
-                    let mut proj_exec = ProjectionExec::new(&mut selection_exec, stmt.targets);
+                    
+                    let mut aggregators: Vec<Box<Aggregator>> = Vec::new();
+                    for target in stmt.targets.clone() {
+                        match target {
+                            Projectable::Aggregate(expr) => aggregators.push(try!(build_aggregator(expr))),
+                            _ => (),
+                        }
+                    }
 
-                    loop {
-                        match proj_exec.next() {
-                            None => break,
-                            Some(tuple) => tuple.print(),
-                        };
+                    if aggregators.len() > 0 {
+                        let mut aggr_exec = AggregationExec::new(&mut selection_exec, vec![], aggregators);
+                        loop {
+                            match aggr_exec.next() {
+                                None => break,
+                                Some(tuple) => tuple.print(),
+                            };
+                        }
+                    } else {
+                        let mut proj_exec = ProjectionExec::new(&mut selection_exec, stmt.targets);
+                        loop {
+                            match proj_exec.next() {
+                                None => break,
+                                Some(tuple) => tuple.print(),
+                            };
+                        }
                     }
                     println!("Scaned\n");
                 },
@@ -206,6 +226,7 @@ pub enum ClientError {
     DatabaseError(DatabaseError),
     TableInfoError(TableInfoError),
     SelectorError(SelectorError),
+    AggregatorError(AggregatorError),
     BuildExecutorError,
     DatabaseNotFoundError,
 }
@@ -234,3 +255,8 @@ impl From<SelectorError> for ClientError {
     }
 }
 
+impl From<AggregatorError> for ClientError {
+    fn from(err: AggregatorError) -> ClientError {
+        ClientError::AggregatorError(err)
+    }
+}

@@ -54,7 +54,7 @@ fn main() {
 
     let mut client: Client = Client::new(ctx);
 
-    println!("Table on memory");
+    println!("Table on memory\n");
     println!("shohin table setup");
     let _ = client.handle_query("create table shohin ( shohin_id int, shohin_name char(10), kubun_id int, price int )");
     let _ = client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 1, 'apple', 1, 300 )");
@@ -63,24 +63,24 @@ fn main() {
     let _ = client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 4, 'sea weed', 5, 250)");
     let _ = client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 5, 'mushroom', 3, 100 )");
 
-    println!("kubun table setup");
+    println!("kubun table setup\n");
     let _ = client.handle_query("create table kubun ( kubun_id int, kubun_name char(10) )");
     let _ = client.handle_query("insert into kubun ( kubun_id, kubun_name) values ( 1, 'fruit' )");
     let _ = client.handle_query("insert into kubun ( kubun_id, kubun_name) values ( 2, 'vegetable' )");
 
-    println!("standard table scan");
+    println!("standard table scan\n");
     let _ = client.handle_query("select shohin_id, shohin_name, kubun_id, price from shohin");
     let _ = client.handle_query("select kubun.kubun_id, kubun.kubun_name from kubun");
     let _ = client.handle_query("select shohin_name, kubun.kubun_id, price from shohin");
     let _ = client.handle_query("select shohin_name, 1 from shohin");
     let _ = client.handle_query("select * from shohin");
 
-    println!("joined table scan");
+    println!("joined table scan\n");
     let _ = client.handle_query("select shohin.shohin_name, kubun.kubun_name, shohin.price from shohin join kubun on shohin.kubun_id = kubun.kubun_id");
     let _ = client.handle_query("select shohin.shohin_name, kubun.kubun_name, shohin.price from shohin, kubun where shohin.kubun_id = kubun.kubun_id");
     let _ = client.handle_query("select shohin.shohin_name, kubun.kubun_name, shohin.price from shohin join kubun on kubun_id = kubun_id");
 
-    println!("selection");
+    println!("selection\n");
     let _ = client.handle_query("select shohin_name, kubun_id, price from shohin where shohin.shohin_name = 'apple'");
     let _ = client.handle_query("select shohin_name, kubun_id, price from shohin where price > kubun_id");
     let _ = client.handle_query("select shohin_name, kubun_name, price from shohin join kubun on shohin.kubun_id = kubun.kubun_id where shohin.shohin_name = 'apple'");
