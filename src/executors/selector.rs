@@ -1,3 +1,6 @@
+use std::fmt;
+use std::any::Any;
+
 use columns::column::Column;
 use tables::tuple::Tuple;
 use tables::field::Field;
@@ -7,6 +10,14 @@ pub trait Selector {
     fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError>;
     fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool;
     fn box_clone(&self) -> Box<Selector>;
+    fn as_any(&self) -> &Any;
+    fn compare(&self, &Selector) -> bool;
+}
+
+impl fmt::Debug for Box<Selector> {
+    fn fmt(&self, _f: &mut fmt::Formatter) -> fmt::Result {
+        Ok(())
+    }
 }
 
 impl Clone for Box<Selector> {
@@ -15,7 +26,14 @@ impl Clone for Box<Selector> {
     }
 }
 
-#[derive(Debug, Clone)]
+impl PartialEq for Box<Selector> {
+    fn eq(&self, other: &Box<Selector>) -> bool {
+        let tmp = other.clone();
+        self.compare(&*tmp)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Equal {
     pub left_table: Option<String>,
     pub left_column: String,
@@ -64,9 +82,19 @@ impl Selector for Equal {
     fn box_clone(&self) -> Box<Selector> {
         Box::new(self.clone())
     }
+
+    fn as_any(&self) -> &Any {
+        self
+    }
+
+    fn compare(&self, other: &Selector) -> bool {
+        other.as_any()
+             .downcast_ref::<Equal>()
+             .map_or(false, |a| self == a)
+    }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct NotEqual {
     pub left_table: Option<String>,
     pub left_column: String,
@@ -115,9 +143,19 @@ impl Selector for NotEqual {
     fn box_clone(&self) -> Box<Selector> {
         Box::new(self.clone())
     }
+
+    fn as_any(&self) -> &Any {
+        self
+    }
+
+    fn compare(&self, other: &Selector) -> bool {
+        other.as_any()
+             .downcast_ref::<NotEqual>()
+             .map_or(false, |a| self == a)
+    }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct LT {
     pub left_table: Option<String>,
     pub left_column: String,
@@ -166,9 +204,19 @@ impl Selector for LT {
     fn box_clone(&self) -> Box<Selector> {
         Box::new(self.clone())
     }
+
+    fn as_any(&self) -> &Any {
+        self
+    }
+
+    fn compare(&self, other: &Selector) -> bool {
+        other.as_any()
+             .downcast_ref::<LT>()
+             .map_or(false, |a| self == a)
+    }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct LE {
     pub left_table: Option<String>,
     pub left_column: String,
@@ -217,9 +265,19 @@ impl Selector for LE {
     fn box_clone(&self) -> Box<Selector> {
         Box::new(self.clone())
     }
+
+    fn as_any(&self) -> &Any {
+        self
+    }
+
+    fn compare(&self, other: &Selector) -> bool {
+        other.as_any()
+             .downcast_ref::<LE>()
+             .map_or(false, |a| self == a)
+    }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GT {
     pub left_table: Option<String>,
     pub left_column: String,
@@ -268,9 +326,19 @@ impl Selector for GT {
     fn box_clone(&self) -> Box<Selector> {
         Box::new(self.clone())
     }
+
+    fn as_any(&self) -> &Any {
+        self
+    }
+
+    fn compare(&self, other: &Selector) -> bool {
+        other.as_any()
+             .downcast_ref::<GT>()
+             .map_or(false, |a| self == a)
+    }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GE {
     pub left_table: Option<String>,
     pub left_column: String,
@@ -318,6 +386,16 @@ impl Selector for GE {
 
     fn box_clone(&self) -> Box<Selector> {
         Box::new(self.clone())
+    }
+
+    fn as_any(&self) -> &Any {
+        self
+    }
+
+    fn compare(&self, other: &Selector) -> bool {
+        other.as_any()
+             .downcast_ref::<GE>()
+             .map_or(false, |a| self == a)
     }
 }
 
@@ -449,4 +527,42 @@ pub fn build_selectors(condition: Conditions, is_or: bool) -> Result<Vec<Box<Sel
 pub enum SelectorError {
     ColumnNotFoundError,
     UnexpectedRightHandError,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use parser::token::*;
+
+    #[test]
+    fn test_build_selectors() {
+        let left_hand: Target = Target {
+            table_name: Some("shohin".to_owned()),
+            name: "shohin_name".to_owned(),
+        };
+
+        let right_column: Target = Target {
+            table_name: Some("shohin".to_owned()),
+            name: "shohin_id".to_owned(),
+        };
+
+        let right_literal: Literal = Literal::String("apple".to_owned());
+
+        // Leaf Equal
+        let column_condition: Conditions = Conditions::Leaf(Condition {
+            left: left_hand.clone(),
+            op: Operator::Equ,
+            right: Comparable::Target(right_column.clone()),
+        });
+        let selectors = build_selectors(column_condition, false);
+        assert_eq!(selectors, Ok(vec![Equal::new(left_hand.clone(), Some(right_column), None) as Box<Selector>]));
+        
+        let scholar_condition: Conditions = Conditions::Leaf(Condition {
+            left: left_hand.clone(),
+            op: Operator::Equ,
+            right: Comparable::Lit(right_literal),
+        });
+        let selectors = build_selectors(scholar_condition, false);
+        assert_eq!(selectors, Ok(vec![Equal::new(left_hand.clone(), None, Some(Field::set_str("apple"))) as Box<Selector>]));
+    }
 }
