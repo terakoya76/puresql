@@ -1,4 +1,6 @@
-use std::string::String; use std::cmp::Ordering;
+use std::string::String;
+use std::hash::{Hash, Hasher};
+use std::cmp::Ordering;
 use std::ops::Add;
 use std::ops::Div;
 
@@ -15,7 +17,7 @@ pub struct Field {
     pub kind: usize,
     pub i: Option<i64>,
     pub u: Option<u64>,
-    pub f: Option<f64>,
+    pub f: Option<String>,
     pub s: Option<String>,
 }
 
@@ -55,7 +57,7 @@ impl Field {
             kind: KIND_F64,
             i: None,
             u: None,
-            f: Some(value as f64),
+            f: Some(value.to_string()),
             s: None,
         }
     }
@@ -100,8 +102,14 @@ impl Field {
         self.u.unwrap()
     }
 
+    // From outside, it behaves like f64
     pub fn get_f64(&self) -> f64 {
-        self.f.unwrap()
+        self.f.clone().unwrap().parse::<f64>().unwrap()
+    }
+
+    // From inside, it behaves like String
+    fn _get_f64(&self) -> String {
+        self.f.clone().unwrap()
     }
 
     pub fn get_str(&self) -> String {
@@ -138,9 +146,23 @@ impl PartialEq for Field {
         match self.kind {
             KIND_I64 => self.get_i64() == other.get_i64(),
             KIND_U64 => self.get_u64() == other.get_u64(),
-            KIND_F64 => self.get_f64() == other.get_f64(),
+            KIND_F64 => self._get_f64() == other._get_f64(),
             KIND_STR => self.get_str() == other.get_str(),
             _ => false,
+        }
+    }
+}
+
+impl Eq for Field {}
+
+impl Hash for Field {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self.kind {
+            KIND_I64 => self.get_i64().hash(state),
+            KIND_U64 => self.get_u64().hash(state),
+            KIND_F64 => self._get_f64().hash(state),
+            KIND_STR => self.get_str().hash(state),
+            _ => (),
         }
     }
 }
@@ -154,7 +176,7 @@ impl PartialOrd for Field {
         match self.kind {
             KIND_I64 => self.get_i64().partial_cmp(&other.get_i64()),
             KIND_U64 => self.get_u64().partial_cmp(&other.get_u64()),
-            KIND_F64 => self.get_f64().partial_cmp(&other.get_f64()),
+            KIND_F64 => self._get_f64().partial_cmp(&other._get_f64()),
             KIND_STR => self.get_str().partial_cmp(&other.get_str()),
             _ => None,
         }
