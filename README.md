@@ -1,8 +1,8 @@
-# PureSQL
+[![Build Status](https://travis-ci.org/terakoya76/puresql.svg?branch=master)](https://travis-ci.org/terakoya76/puresql)
 
-https://travis-ci.org/terakoya76/rdb_sample.svg?branch=master
+# PureSQL
+The Simplest Relational Database.
 
 # Feature
 - prohibit Null data
 - simple
-
