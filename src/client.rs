@@ -52,6 +52,7 @@ pub fn exec_create(ctx: &mut Context, stmt: CreateStmt) -> Result<(), ClientErro
 }
 
 pub fn create_table_stmt(ctx: &mut Context, stmt: CreateTableStmt) -> Result<(), ClientError> {
+    println!("{:?}", stmt.columns.clone());
     let columns: Vec<ColumnInfo> = stmt.columns.into_iter().enumerate().map(|(i, col)| ColumnInfo {
         name: col.name,
         dtype: col.datatype,
