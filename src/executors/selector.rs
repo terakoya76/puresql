@@ -6,18 +6,12 @@ use tables::tuple::Tuple;
 use tables::field::Field;
 use parser::statement::*;
 
-pub trait Selector {
+pub trait Selector : fmt::Debug {
     fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError>;
     fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool;
     fn box_clone(&self) -> Box<Selector>;
     fn as_any(&self) -> &Any;
     fn compare(&self, &Selector) -> bool;
-}
-
-impl fmt::Debug for Box<Selector> {
-    fn fmt(&self, _f: &mut fmt::Formatter) -> fmt::Result {
-        Ok(())
-    }
 }
 
 impl Clone for Box<Selector> {
@@ -642,6 +636,7 @@ mod tests {
         };
         let right_literal: Literal = Literal::String("grape".to_owned());
 
+        // build w/ column right hand
         let column_condition: Conditions = Conditions::Leaf(Condition {
             left: left_hand.clone(),
             op: Operator::NEqu,
@@ -652,7 +647,8 @@ mod tests {
 
         let selector = &selectors.clone()[0];
         assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
-        
+
+        // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
             left: left_hand.clone(),
             op: Operator::NEqu,
@@ -671,6 +667,7 @@ mod tests {
         let right_column: Target = gen_right_column4int();
         let right_literal: Literal = Literal::Int(200);
 
+        // build w/ column right hand
         let column_condition: Conditions = Conditions::Leaf(Condition {
             left: left_hand.clone(),
             op: Operator::GT,
@@ -681,7 +678,8 @@ mod tests {
 
         let selector = &selectors.clone()[0];
         assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), false);
-        
+
+        // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
             left: left_hand.clone(),
             op: Operator::GT,
@@ -700,6 +698,7 @@ mod tests {
         let right_column: Target = gen_right_column4int();
         let right_literal: Literal = Literal::Int(400);
 
+        // build w/ column right hand
         let column_condition: Conditions = Conditions::Leaf(Condition {
             left: left_hand.clone(),
             op: Operator::LT,
@@ -710,7 +709,8 @@ mod tests {
 
         let selector = &selectors.clone()[0];
         assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), false);
-        
+
+        // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
             left: left_hand.clone(),
             op: Operator::LT,
@@ -729,6 +729,7 @@ mod tests {
         let right_column: Target = gen_right_column4int();
         let right_literal: Literal = Literal::Int(200);
 
+        // build w/ column right hand
         let column_condition: Conditions = Conditions::Leaf(Condition {
             left: left_hand.clone(),
             op: Operator::GE,
@@ -739,7 +740,8 @@ mod tests {
 
         let selector = &selectors.clone()[0];
         assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
-        
+
+        // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
             left: left_hand.clone(),
             op: Operator::GE,
@@ -758,6 +760,7 @@ mod tests {
         let right_column: Target = gen_right_column4int();
         let right_literal: Literal = Literal::Int(400);
 
+        // build w/ column right hand
         let column_condition: Conditions = Conditions::Leaf(Condition {
             left: left_hand.clone(),
             op: Operator::LE,
@@ -768,7 +771,8 @@ mod tests {
 
         let selector = &selectors.clone()[0];
         assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
-        
+
+        // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
             left: left_hand.clone(),
             op: Operator::LE,
@@ -779,5 +783,79 @@ mod tests {
 
         let selector = &selectors.clone()[0];
         assert!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+    }
+
+    #[test]
+    fn build_and_node() {
+        let left_hand_str: Target = gen_left_hand4str();
+        let right_column_str: Target = gen_right_column4str();
+
+        let left_hand_int: Target = gen_left_hand4int();
+        let right_literal_int: Literal = Literal::Int(200);
+
+        // condition whose result is true
+        let column_condition: Conditions = Conditions::Leaf(Condition {
+            left: left_hand_str.clone(),
+            op: Operator::Equ,
+            right: Comparable::Target(right_column_str.clone()),
+        });
+
+        // condition whose result is false
+        let scholar_condition: Conditions = Conditions::Leaf(Condition {
+            left: left_hand_int.clone(),
+            op: Operator::GT,
+            right: Comparable::Lit(right_literal_int),
+        });
+
+        let condition: Conditions = Conditions::And(Box::new(column_condition), Box::new(scholar_condition));
+        let built_selectors = build_selectors(condition, false).unwrap();
+        let selectors = vec![
+            Equal::new(left_hand_str.clone(), Some(right_column_str), None) as Box<Selector>,
+            GT::new(left_hand_int.clone(), None, Some(Field::set_i64(200))) as Box<Selector>,
+        ];
+        assert_eq!(built_selectors, selectors);
+
+        let selector = &built_selectors.clone()[0];
+        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+
+        let selector = &built_selectors.clone()[1];
+        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+    }
+
+    #[test]
+    fn build_or_node() {
+        let left_hand_str: Target = gen_left_hand4str();
+        let right_column_str: Target = gen_right_column4str();
+
+        let left_hand_int: Target = gen_left_hand4int();
+        let right_literal_int: Literal = Literal::Int(400);
+
+        // condition whose result is true
+        let column_condition: Conditions = Conditions::Leaf(Condition {
+            left: left_hand_str.clone(),
+            op: Operator::Equ,
+            right: Comparable::Target(right_column_str.clone()),
+        });
+
+        // condition whose result is false
+        let scholar_condition: Conditions = Conditions::Leaf(Condition {
+            left: left_hand_int.clone(),
+            op: Operator::GT,
+            right: Comparable::Lit(right_literal_int),
+        });
+
+        let condition: Conditions = Conditions::Or(Box::new(column_condition), Box::new(scholar_condition));
+        let built_selectors = build_selectors(condition, false).unwrap();
+        let selectors = vec![
+            NotEqual::new(left_hand_str.clone(), Some(right_column_str), None) as Box<Selector>,
+            LE::new(left_hand_int.clone(), None, Some(Field::set_i64(400))) as Box<Selector>,
+        ];
+        assert_eq!(built_selectors, selectors);
+
+        let selector = &built_selectors.clone()[0];
+        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+
+        let selector = &built_selectors.clone()[1];
+        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
     }
 }
