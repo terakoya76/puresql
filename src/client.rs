@@ -121,13 +121,40 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                 DataSource::Join(_s1, _s2, _c) => {
                     let mut scan_exec: NestedLoopJoinExec = try!(exec_join(db.clone(), stmt.source));
                     let mut selection_exec = SelectionExec::new(&mut scan_exec, conditions);
-                    let mut proj_exec = ProjectionExec::new(&mut selection_exec, stmt.targets);
 
-                    loop {
-                        match proj_exec.next() {
-                            None => break,
-                            Some(tuple) => tuple.print(),
+                    let mut aggregators: Vec<Box<Aggregator>> = Vec::new();
+                    for target in stmt.targets.clone() {
+                        match target {
+                            Projectable::Aggregate(expr) => aggregators.push(try!(build_aggregator(expr))),
+                            _ => (),
+                        }
+                    }
+
+                    if aggregators.len() > 0 {
+                        let group_keys = match stmt.group_by {
+                            None => vec![],
+                            Some(v) => v,
                         };
+
+                        let mut aggr_exec = AggregationExec::new(&mut selection_exec, group_keys, aggregators);
+                        loop {
+                            match aggr_exec.next() {
+                                None => break,
+                                Some(tuples) => {
+                                    for tuple in tuples {
+                                        tuple.print();
+                                    }
+                                },
+                            };
+                        }
+                    } else {
+                        let mut proj_exec = ProjectionExec::new(&mut selection_exec, stmt.targets);
+                        loop {
+                            match proj_exec.next() {
+                                None => break,
+                                Some(tuple) => tuple.print(),
+                            };
+                        }
                     }
                     println!("Scaned\n");
                 },
@@ -144,11 +171,20 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                     }
 
                     if aggregators.len() > 0 {
-                        let mut aggr_exec = AggregationExec::new(&mut selection_exec, vec![], aggregators);
+                        let group_keys = match stmt.group_by {
+                            None => vec![],
+                            Some(v) => v,
+                        };
+
+                        let mut aggr_exec = AggregationExec::new(&mut selection_exec, group_keys, aggregators);
                         loop {
                             match aggr_exec.next() {
                                 None => break,
-                                Some(tuple) => tuple.print(),
+                                Some(tuples) => {
+                                    for tuple in tuples {
+                                        tuple.print();
+                                    }
+                                },
                             };
                         }
                     } else {

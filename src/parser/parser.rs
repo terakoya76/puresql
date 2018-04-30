@@ -384,25 +384,21 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
     pub fn parse_select_stmt(&mut self) -> Result<SelectStmt, ParseError> {
         // SELECT xx, yy
         try!(self.bump());
-        let targets: Vec<Projectable> = try!(self.parse_target());
+        let targets: Vec<Projectable> = try!(self.parse_projectable());
 
         // FROM xx, yy
         try!(self.bump());
         let sources: DataSource = try!(self.parse_from());
 
         // WHERE xx and yy
-        try!(self.bump());
         let mut conditions: Option<Conditions> = None;
         if self.validate_keyword(&[Keyword::Where]).is_ok() {
             conditions = Some(try!(self.parse_conditions()));
         }
-
+        
         // GROUP BY xx, yy
-        let mut group_by: Option<GroupBy> = None;
+        let mut group_by: Option<Vec<Target>> = None;
         if self.validate_keyword(&[Keyword::Group]).is_ok() {
-            try!(self.bump());
-            try!(self.validate_keyword(&[Keyword::By]));
-            try!(self.bump());
             group_by = Some(try!(self.parse_groupby()));
         }
 
@@ -432,7 +428,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         })
     }
 
-    pub fn parse_target(&mut self) -> Result<Vec<Projectable>, ParseError> {
+    pub fn parse_projectable(&mut self) -> Result<Vec<Projectable>, ParseError> {
         let mut targets: Vec<Projectable> = Vec::new();
         while !self.validate_keyword(&[Keyword::From]).is_ok() {
             match self.validate_token(&[Token::Comma]) {
@@ -477,23 +473,10 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                 Err(_e) => (),
             };
 
-            match self.validate_word(false) {
-                Ok(_w) => {
-                    let mut table_name: Option<String> = None;
-                    if self.check_next_token(&[Token::Dot]) {
-                        table_name = Some(try!(self.validate_word(false)));
-                        try!(self.double_bump());
-                    };
-
-                    let column_name: String = try!(self.validate_word(true));
-                    targets.push(Projectable::Target(Target {
-                        table_name: table_name,
-                        name: column_name,
-                    }));
-                },
+            match self.parse_target() {
+                Ok(target) => targets.push(Projectable::Target(target)),
                 Err(_e) => ()
             };
-            try!(self.bump());
         }
         Ok(targets)
     }
@@ -507,7 +490,6 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
             Keyword::Min,
         ])) {
             Keyword::Count => {
-                
                 try!(self.bump());
 
                 try!(self.validate_token(&[Token::OpPar]));
@@ -587,6 +569,15 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                 Ok(Aggregatable::All)
             },
             Err(_e) => {
+                let target: Target = try!(self.parse_target());
+                Ok(Aggregatable::Target(target))
+            },
+        }
+    }
+
+    pub fn parse_target(&mut self) -> Result<Target, ParseError> {
+        match try!(self.validate_word(false)) {
+            _ => {
                 let mut table_name: Option<String> = None;
                 if self.check_next_token(&[Token::Dot]) {
                     table_name = Some(try!(self.validate_word(false)));
@@ -595,12 +586,11 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
 
                 let column_name: String = try!(self.validate_word(true));
                 try!(self.bump());
-
-                Ok(Aggregatable::Target(Target {
+                Ok(Target {
                     table_name: table_name,
                     name: column_name,
-                }))
-            },
+                })
+            }
         }
     }
 
@@ -610,7 +600,6 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         while self.validate_keyword(&[Keyword::Join]).is_ok() || self.validate_token(&[Token::Comma]).is_ok() {
             if self.validate_keyword(&[Keyword::Join]).is_ok() {
                 try!(self.bump());
-
                 return Ok(DataSource::Join(
                     Box::new(source),
                     Box::new(try!(self.parse_from())),
@@ -682,6 +671,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                 };
             };
         }
+        try!(self.bump());
         Ok(cond)
     }
 
@@ -740,8 +730,23 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         })
     }
 
-    pub fn parse_groupby(&self) -> Result<GroupBy, ParseError> {
-        Err(ParseError::UndefinedStatementError)
+    pub fn parse_groupby(&mut self) -> Result<Vec<Target>, ParseError> {
+        let mut group_by: Vec<Target> = Vec::new();
+        try!(self.bump());
+        try!(self.validate_keyword(&[Keyword::By]));
+        try!(self.bump());
+
+        loop {
+            group_by.push(try!(self.parse_target()));
+            if self.validate_token(&[Token::Comma]).is_ok() {
+                try!(self.bump());
+                continue;
+            } else {
+                break;
+            }
+        }
+        //println!("{:?}", group_by);
+        Ok(group_by)
     }
 
     pub fn parse_orderby(&self) -> Result<OrderBy, ParseError> {

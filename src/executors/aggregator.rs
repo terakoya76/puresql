@@ -10,9 +10,7 @@ pub trait Aggregator {
 }
 
 impl Clone for Box<Aggregator> {
-    fn clone(&self) -> Box<Aggregator> {
-        self.box_clone()
-    }
+    fn clone(&self) -> Box<Aggregator> { self.box_clone() }
 }
 
 #[derive(Debug, Clone)]
@@ -22,9 +20,7 @@ pub struct Count {
 
 impl Count {
     pub fn new() -> Box<Count> {
-        Box::new(Count {
-            result: Field::set_init(),
-        })
+        Box::new(Count { result: Field::set_init() })
     }
 }
 

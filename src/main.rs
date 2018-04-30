@@ -86,26 +86,24 @@ fn main() {
     let _ = client.handle_query("select shohin_name, kubun_name, price from shohin join kubun on shohin.kubun_id = kubun.kubun_id where shohin.shohin_name = 'apple'");
 
     println!("aggregation\n");
-    let _ = client.handle_query("select count(*) from shohin");
-    let _ = client.handle_query("select avg(shohin.price) from shohin");
+    match client.handle_query("select count(*) from shohin") {
+        Ok(_) => (),
+        Err(e) => println!("{:?}", e),
+    };
+    match client.handle_query("select avg(shohin.price) from shohin") {
+        Ok(_) => (),
+        Err(e) => println!("{:?}", e),
+    };
 
-    /*
-    println!("group by aggregation\n");
-    {
-        let mut grouped = AggregationExec::new(&mut m_shohin_tb_scan, vec!["price"], vec![Count::new(), Sum::new("price"), Average::new("price")]);
-        loop {
-            match grouped.next() {
-                None => break,
-                Some(tuples) => {
-                    for tuple in tuples {
-                        tuple.print();
-                    }
-                },
-            }
-            println!("");
-        }
-        println!("Scaned\n");
-    }
+    println!("grouped aggregation\n");
+    match client.handle_query("select shohin.shohin_name, avg(shohin.price) from shohin group by shohin_name") {
+        Ok(_) => (),
+        Err(e) => println!("{:?}", e),
+    };
+    match client.handle_query("select kubun.kubun_name, sum(shohin.price) from shohin join kubun on kubun_id = kubun_id group by kubun.kubun_name") {
+        Ok(_) => (),
+        Err(e) => println!("{:?}", e),
+    };
 
     /*
     println!("Table with index");
@@ -232,7 +230,6 @@ fn main() {
         }
         println!("Scaned\n");
     }
-    */
     */
 }
 

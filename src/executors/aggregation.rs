@@ -6,19 +6,21 @@ use Aggregator;
 use tables::tuple::Tuple;
 use tables::field::Field;
 
+use parser::statement::*;
+
 pub struct AggregationExec<'a, 't: 'a, T: 't> {
-    pub group_keys: Vec<String>,
+    pub group_keys: Vec<Target>,
     pub inputs: &'a mut T,
     pub aggregators: Vec<Box<Aggregator>>,
-    pub grouped_aggregators: HashMap<Vec<String>, Vec<Box<Aggregator>>>,
+    pub grouped_aggregators: HashMap<Vec<Field>, Vec<Box<Aggregator>>>,
     _marker: PhantomData<&'t T>,
 }
 
 impl<'a, 't, T> AggregationExec<'a, 't, T>
     where T: ScanIterator {
-    pub fn new(inputs: &'a mut T, group_keys: Vec<&str>, aggregators: Vec<Box<Aggregator>>) -> AggregationExec<'a, 't, T> {
+    pub fn new(inputs: &'a mut T, group_keys: Vec<Target>, aggregators: Vec<Box<Aggregator>>) -> AggregationExec<'a, 't, T> {
         AggregationExec {
-            group_keys: group_keys.iter().map(|k| k.to_string()).collect(),
+            group_keys: group_keys,
             inputs: inputs,
             aggregators: aggregators,
             grouped_aggregators: HashMap::new(),
@@ -26,20 +28,27 @@ impl<'a, 't, T> AggregationExec<'a, 't, T>
         }
     }
 
-    fn get_keys(&self, tuple: &Tuple) -> Vec<String> {
-        let mut map_keys: Vec<String> = Vec::new();
+    fn extract_keys(&self, tuple: &Tuple) -> Vec<Field> {
+        let mut grouped_keys: Vec<Field> = Vec::new();
         for key in &self.group_keys {
             for column in &self.inputs.get_columns() {
-                if column.name == *key {
-                    let value: String = tuple.fields[column.offset].clone().to_string();
-                    map_keys.push(value);
+                let t: Target = key.clone();
+                
+                if t.table_name.is_some() {
+                    if t.table_name.unwrap() != column.table_name {
+                        continue;
+                    }
+                }
+
+                if t.name == column.name {
+                    grouped_keys.push(tuple.fields[column.offset].clone());
                 }
             }
         }
-        map_keys
+        grouped_keys
     }
 
-    fn upsert(&mut self, keys: Vec<String>, tuple: Tuple) {
+    fn upsert(&mut self, keys: Vec<Field>, tuple: Tuple) {
         if !self.grouped_aggregators.contains_key(&keys) {
             let init_aggrs: Vec<Box<Aggregator>> = self.aggregators.iter().map(|a| a.clone()).collect();
             self.grouped_aggregators.insert(keys.clone(), init_aggrs.clone());
@@ -56,22 +65,24 @@ impl<'a, 't, T> AggregationExec<'a, 't, T>
 
 impl<'a, 't, T> Iterator for AggregationExec<'a, 't, T>
     where T: ScanIterator {
-    type Item = Tuple;
-    fn next(&mut self) -> Option<Tuple> {
+    type Item = Vec<Tuple>;
+    fn next(&mut self) -> Option<Vec<Tuple>> {
         loop {
             match self.inputs.next() {
                 None => return None,
                 Some(tuple) => {
-                    let mut map_keys: Vec<String> = self.get_keys(&tuple);
-                    &mut self.upsert(map_keys, tuple);
+                    let mut grouped_keys: Vec<Field> = self.extract_keys(&tuple);
+                    &mut self.upsert(grouped_keys.clone(), tuple);
 
-                    let mut fields: Vec<Field> = Vec::new();
-                    for aggrs in self.grouped_aggregators.values() {
+                    let mut tuples: Vec<Tuple> = Vec::new();
+                    for (keys, aggrs) in &mut self.grouped_aggregators.iter_mut() {
+                        let mut fields: Vec<Field> = keys.clone();
                         for aggr in aggrs {
                             fields.push(aggr.fetch_result());
                         }
+                        tuples.push(Tuple::new(fields));
                     }
-                    return Some(Tuple::new(fields));
+                    return Some(tuples);
                 },
             }
         }

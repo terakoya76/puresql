@@ -48,7 +48,7 @@ pub struct SelectStmt {
     pub targets: Vec<Projectable>,
     pub source: DataSource,
     pub condition: Option<Conditions>,
-    pub group_by: Option<GroupBy>,
+    pub group_by: Option<Vec<Target>>,
     pub order_by: Option<OrderBy>,
     pub limit: Option<Limit>,
 }
@@ -61,7 +61,7 @@ pub enum Projectable {
     All,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Target {
     pub table_name: Option<String>,
     pub name: String,
@@ -81,7 +81,6 @@ pub enum Aggregatable {
     Target(Target),
     All,
 }
-
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum DataSource {
