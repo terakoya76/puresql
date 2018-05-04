@@ -39,14 +39,7 @@ impl<'n> NestedLoopJoinExec<'n> {
             next_record_id: Allocator::new(1),
         };
 
-        let selectors: Option<Selectors> = match condition {
-            None => None,
-            Some(c) => match build_selectors(c) {
-                Ok(s) => Some(s),
-                Err(_) => None,
-            },
-        };
-
+        let selectors: Option<Selectors> = condition.and_then(|c| build_selectors(c).ok());
         NestedLoopJoinExec {
             cursor: 0,
             outer_columns: outer_table.get_columns(),
@@ -81,27 +74,14 @@ impl<'n> ScanIterator for NestedLoopJoinExec<'n> {
 impl<'n> Iterator for NestedLoopJoinExec<'n> {
     type Item = Tuple;
     fn next(&mut self) -> Option<Tuple> {
-        loop {
-            match (self.next_tuple)() {
-                None => return None,
-                Some(tuple) => {
-                    let passed: bool = match self.selectors.clone() {
-                        None => true,
-                        Some(selectors) => {
-                            eval_selectors(
-                                selectors,
-                                &tuple,
-                                &self.get_columns()
-                            )
-                        }
-                    };
+        (self.next_tuple)().and_then(|tuple| {
+            let passed: bool = match self.selectors.clone() {
+                None => true,
+                Some(s) => eval_selectors(s, &tuple, &self.get_columns()),
+            };
 
-                    if passed {
-                        return Some(tuple);
-                    }
-                },
-            }
-        }
+            if passed { Some(tuple) } else { None }
+        })
     }
 }
 
@@ -111,13 +91,11 @@ fn next_tuple<'n, T1: ScanIterator + 'n, T2: ScanIterator + 'n>(mut outer_table:
             match outer_table.next() {
                 None => return None,
                 Some(ref outer_tuple) => {
-                    loop {
-                        match inner_table.next() {
-                            None => break,
-                            Some(ref inner_tuple) => {
-                                let joined_tuple: Tuple = outer_tuple.append(inner_tuple);
-                                return Some(joined_tuple);
-                            }
+                    match inner_table.next() {
+                        None => continue,
+                        Some(ref inner_tuple) => {
+                            let joined_tuple: Tuple = outer_tuple.append(inner_tuple);
+                            return Some(joined_tuple);
                         }
                     }
                 }
