@@ -1,20 +1,20 @@
 use std::marker::PhantomData;
 
 use ScanIterator;
-use Selector;
+use { Selectors, eval_selectors };
 use meta::table_info::TableInfo;
 use columns::column::Column;
 use tables::tuple::Tuple;
 
 pub struct SelectionExec<'s, 't: 's, T: 't> {
     inputs: &'s mut T,
-    selectors: Vec<Box<Selector>>,
+    selectors: Option<Selectors>,
     _marker: PhantomData<&'t T>,
 }
 
 impl<'s, 't, T> SelectionExec<'s, 't, T>
     where T: ScanIterator {
-    pub fn new(inputs: &'s mut T, selectors: Vec<Box<Selector>>) -> SelectionExec<'s, 't, T> {
+    pub fn new(inputs: &'s mut T, selectors: Option<Selectors>) -> SelectionExec<'s, 't, T> {
         SelectionExec {
             inputs: inputs,
             selectors: selectors,
@@ -42,13 +42,16 @@ impl<'s, 't, T> Iterator for SelectionExec<'s, 't, T>
             match self.inputs.next() {
                 None => return None,
                 Some(tuple) => {
-                    let mut passed: bool = true;
-                    for ref selector in &self.selectors {
-                        if !selector.is_true(&tuple, &self.inputs.get_columns()) {
-                          passed = false;
-                          break;
+                    let passed: bool = match self.selectors.clone() {
+                        None => true,
+                        Some(selectors) => {
+                            eval_selectors(
+                                selectors,
+                                &tuple,
+                                &self.get_columns()
+                            )
                         }
-                    }
+                    };
 
                     if passed {
                         return Some(tuple);
@@ -58,4 +61,3 @@ impl<'s, 't, T> Iterator for SelectionExec<'s, 't, T>
         }
     }
 }
-

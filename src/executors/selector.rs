@@ -1,53 +1,37 @@
-use std::fmt;
-use std::any::Any;
-
 use columns::column::Column;
 use tables::tuple::Tuple;
 use tables::field::Field;
 use parser::statement::*;
 
-pub trait Selector : fmt::Debug {
-    fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError>;
-    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool;
-    fn box_clone(&self) -> Box<Selector>;
-    fn as_any(&self) -> &Any;
-    fn compare(&self, &Selector) -> bool;
-}
-
-impl Clone for Box<Selector> {
-    fn clone(&self) -> Box<Selector> {
-        self.box_clone()
-    }
-}
-
-impl PartialEq for Box<Selector> {
-    fn eq(&self, other: &Box<Selector>) -> bool {
-        let tmp = other.clone();
-        self.compare(&*tmp)
-    }
+#[derive(Debug, Clone, PartialEq)]
+pub enum Selectors {
+    Leaf(Selector),
+    And(Box<Selectors>, Box<Selectors>),
+    Or(Box<Selectors>, Box<Selectors>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Equal {
+pub struct Selector {
+    pub kind: Operator,
     pub left_table: Option<String>,
     pub left_column: String,
     pub right_hand: Option<Target>,
     pub scholar: Option<Field>,
 }
 
-impl Equal {
-    pub fn new(left_hand: Target, right_hand: Option<Target>, scholar: Option<Field>) -> Box<Equal> {
-        Box::new(Equal {
-            left_table: left_hand.table_name,
-            left_column: left_hand.name,
-            right_hand: right_hand,
-            scholar: scholar,
-        })
+impl Selector {
+    pub fn eval(&self, tuple: &Tuple, columns: &[Column]) -> bool {
+        match self.kind {
+            Operator::Equ => self.eval_equ(tuple, columns).unwrap_or(false),
+            Operator::NEqu => self.eval_nequ(tuple, columns).unwrap_or(false),
+            Operator::GE => self.eval_ge(tuple, columns).unwrap_or(false),
+            Operator::LE => self.eval_le(tuple, columns).unwrap_or(false),
+            Operator::GT => self.eval_gt(tuple, columns).unwrap_or(false),
+            Operator::LT => self.eval_lt(tuple, columns).unwrap_or(false),
+        }
     }
-}
 
-impl Selector for Equal {
-    fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
+    fn eval_equ(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
         match self.right_hand {
             None => {},
             Some(ref right_hand) => {
@@ -66,49 +50,7 @@ impl Selector for Equal {
         }
     }
 
-    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
-        match self.evaluate(tuple, columns) {
-            Ok(b) => b,
-            _ => false
-        }
-    }
-
-    fn box_clone(&self) -> Box<Selector> {
-        Box::new(self.clone())
-    }
-
-    fn as_any(&self) -> &Any {
-        self
-    }
-
-    fn compare(&self, other: &Selector) -> bool {
-        other.as_any()
-             .downcast_ref::<Equal>()
-             .map_or(false, |a| self == a)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct NotEqual {
-    pub left_table: Option<String>,
-    pub left_column: String,
-    pub right_hand: Option<Target>,
-    pub scholar: Option<Field>,
-}
-
-impl NotEqual {
-    pub fn new(left_hand: Target, right_hand: Option<Target>, scholar: Option<Field>) -> Box<NotEqual> {
-        Box::new(NotEqual {
-            left_table: left_hand.table_name,
-            left_column: left_hand.name,
-            right_hand: right_hand,
-            scholar: scholar,
-        })
-    }
-}
-
-impl Selector for NotEqual {
-    fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
+    fn eval_nequ(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
         match self.right_hand {
             None => {},
             Some(ref right_hand) => {
@@ -127,232 +69,7 @@ impl Selector for NotEqual {
         }
     }
 
-    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
-        match self.evaluate(tuple, columns) {
-            Ok(b) => b,
-            _ => false
-        }
-    }
-
-    fn box_clone(&self) -> Box<Selector> {
-        Box::new(self.clone())
-    }
-
-    fn as_any(&self) -> &Any {
-        self
-    }
-
-    fn compare(&self, other: &Selector) -> bool {
-        other.as_any()
-             .downcast_ref::<NotEqual>()
-             .map_or(false, |a| self == a)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct LT {
-    pub left_table: Option<String>,
-    pub left_column: String,
-    pub right_hand: Option<Target>,
-    pub scholar: Option<Field>,
-}
-
-impl LT {
-    pub fn new(left_hand: Target, right_hand: Option<Target>, scholar: Option<Field>) -> Box<LT> {
-        Box::new(LT {
-            left_table: left_hand.table_name,
-            left_column: left_hand.name,
-            right_hand: right_hand,
-            scholar: scholar,
-        })
-    }
-}
-
-impl Selector for LT {
-    fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
-        match self.right_hand {
-            None => {},
-            Some(ref right_hand) => {
-                let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
-                return Ok(left_side < right_side);
-            },
-        }
-
-        match self.scholar {
-            None => Err(SelectorError::UnexpectedRightHandError),
-            Some(ref right_side) => {
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
-                Ok(left_side < right_side)
-            },
-        }
-    }
-
-    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
-        match self.evaluate(tuple, columns) {
-            Ok(b) => b,
-            _ => false
-        }
-    }
-
-    fn box_clone(&self) -> Box<Selector> {
-        Box::new(self.clone())
-    }
-
-    fn as_any(&self) -> &Any {
-        self
-    }
-
-    fn compare(&self, other: &Selector) -> bool {
-        other.as_any()
-             .downcast_ref::<LT>()
-             .map_or(false, |a| self == a)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct LE {
-    pub left_table: Option<String>,
-    pub left_column: String,
-    pub right_hand: Option<Target>,
-    pub scholar: Option<Field>,
-}
-
-impl LE {
-    pub fn new(left_hand: Target, right_hand: Option<Target>, scholar: Option<Field>) -> Box<LE> {
-        Box::new(LE {
-            left_table: left_hand.table_name,
-            left_column: left_hand.name,
-            right_hand: right_hand,
-            scholar: scholar,
-        })
-    }
-}
-
-impl Selector for LE {
-    fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
-        match self.right_hand {
-            None => {},
-            Some(ref right_hand) => {
-                let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
-                return Ok(left_side <= right_side);
-            },
-        }
-
-        match self.scholar {
-            None => Err(SelectorError::UnexpectedRightHandError),
-            Some(ref right_side) => {
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
-                Ok(left_side <= right_side)
-            },
-        }
-    }
-
-    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
-        match self.evaluate(tuple, columns) {
-            Ok(b) => b,
-            _ => false
-        }
-    }
-
-    fn box_clone(&self) -> Box<Selector> {
-        Box::new(self.clone())
-    }
-
-    fn as_any(&self) -> &Any {
-        self
-    }
-
-    fn compare(&self, other: &Selector) -> bool {
-        other.as_any()
-             .downcast_ref::<LE>()
-             .map_or(false, |a| self == a)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct GT {
-    pub left_table: Option<String>,
-    pub left_column: String,
-    pub right_hand: Option<Target>,
-    pub scholar: Option<Field>,
-}
-
-impl GT {
-    pub fn new(left_hand: Target, right_hand: Option<Target>, scholar: Option<Field>) -> Box<GT> {
-        Box::new(GT {
-            left_table: left_hand.table_name,
-            left_column: left_hand.name,
-            right_hand: right_hand,
-            scholar: scholar,
-        })
-    }
-}
-
-impl Selector for GT {
-    fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
-        match self.right_hand {
-            None => {},
-            Some(ref right_hand) => {
-                let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
-                return Ok(left_side > right_side);
-            },
-        }
-
-        match self.scholar {
-            None => Err(SelectorError::UnexpectedRightHandError),
-            Some(ref right_side) => {
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
-                Ok(left_side > right_side)
-            },
-        }
-    }
-
-    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
-        match self.evaluate(tuple, columns) {
-            Ok(b) => b,
-            _ => false
-        }
-    }
-
-    fn box_clone(&self) -> Box<Selector> {
-        Box::new(self.clone())
-    }
-
-    fn as_any(&self) -> &Any {
-        self
-    }
-
-    fn compare(&self, other: &Selector) -> bool {
-        other.as_any()
-             .downcast_ref::<GT>()
-             .map_or(false, |a| self == a)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct GE {
-    pub left_table: Option<String>,
-    pub left_column: String,
-    pub right_hand: Option<Target>,
-    pub scholar: Option<Field>,
-}
-
-impl GE {
-    pub fn new(left_hand: Target, right_hand: Option<Target>, scholar: Option<Field>) -> Box<GE> {
-        Box::new(GE {
-            left_table: left_hand.table_name,
-            left_column: left_hand.name,
-            right_hand: right_hand,
-            scholar: scholar,
-        })
-    }
-}
-
-impl Selector for GE {
-    fn evaluate(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
+    fn eval_ge(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
         match self.right_hand {
             None => {},
             Some(ref right_hand) => {
@@ -371,25 +88,61 @@ impl Selector for GE {
         }
     }
 
-    fn is_true(&self, tuple: &Tuple, columns: &[Column]) -> bool {
-        match self.evaluate(tuple, columns) {
-            Ok(b) => b,
-            _ => false
+    fn eval_le(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
+        match self.right_hand {
+            None => {},
+            Some(ref right_hand) => {
+                let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                return Ok(left_side <= right_side);
+            },
+        }
+
+        match self.scholar {
+            None => Err(SelectorError::UnexpectedRightHandError),
+            Some(ref right_side) => {
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                Ok(left_side <= right_side)
+            },
         }
     }
 
-    fn box_clone(&self) -> Box<Selector> {
-        Box::new(self.clone())
+    fn eval_gt(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
+        match self.right_hand {
+            None => {},
+            Some(ref right_hand) => {
+                let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                return Ok(left_side > right_side);
+            },
+        }
+
+        match self.scholar {
+            None => Err(SelectorError::UnexpectedRightHandError),
+            Some(ref right_side) => {
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                Ok(left_side > right_side)
+            },
+        }
     }
 
-    fn as_any(&self) -> &Any {
-        self
-    }
+    fn eval_lt(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
+        match self.right_hand {
+            None => {},
+            Some(ref right_hand) => {
+                let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                return Ok(left_side < right_side);
+            },
+        }
 
-    fn compare(&self, other: &Selector) -> bool {
-        other.as_any()
-             .downcast_ref::<GE>()
-             .map_or(false, |a| self == a)
+        match self.scholar {
+            None => Err(SelectorError::UnexpectedRightHandError),
+            Some(ref right_side) => {
+                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                Ok(left_side < right_side)
+            },
+        }
     }
 }
 
@@ -411,108 +164,50 @@ fn find_field(tuple: &Tuple, columns: &[Column], table_name: Option<String>, col
     Err(SelectorError::ColumnNotFoundError)
 }
 
-pub fn build_selectors(condition: Conditions, is_or: bool) -> Result<Vec<Box<Selector>>, SelectorError> {
+pub fn build_selectors(condition: Conditions) -> Result<Selectors, SelectorError> {
     match condition {
         Conditions::And(c1, c2) => {
-            let mut selectors1: Vec<Box<Selector>> = try!(build_selectors(*c1, false));
-            let mut selectors2: Vec<Box<Selector>> = try!(build_selectors(*c2, false));
-            selectors1.append(&mut selectors2);
-            Ok(selectors1)
+            let selectors1: Selectors = try!(build_selectors(*c1));
+            let selectors2: Selectors = try!(build_selectors(*c2));
+            Ok(Selectors::And(Box::new(selectors1), Box::new(selectors2)))
         },
 
         Conditions::Or(c1, c2) => {
-            let mut selectors1: Vec<Box<Selector>> = try!(build_selectors(*c1, true));
-            let mut selectors2: Vec<Box<Selector>> = try!(build_selectors(*c2, true));
-            selectors1.append(&mut selectors2);
-            Ok(selectors1)
+            let selectors1: Selectors = try!(build_selectors(*c1));
+            let selectors2: Selectors = try!(build_selectors(*c2));
+            Ok(Selectors::Or(Box::new(selectors1), Box::new(selectors2)))
         },
 
         Conditions::Leaf(condition) => {
-            match condition.op {
-                Operator::Equ => {
-                    if is_or {
-                        match condition.right {
-                            Comparable::Lit(l) => Ok(vec![NotEqual::new(condition.left, None, Some(l.into()))]),
-                            Comparable::Target(t) => Ok(vec![NotEqual::new(condition.left, Some(t), None)]),
-                        }
-                    } else {
-                        match condition.right {
-                            Comparable::Lit(l) => Ok(vec![Equal::new(condition.left, None, Some(l.into()))]),
-                            Comparable::Target(t) => Ok(vec![Equal::new(condition.left, Some(t), None)]),
-                        }
-                    }
-                },
-
-                Operator::NEqu => {
-                    if is_or {
-                        match condition.right {
-                            Comparable::Lit(l) => Ok(vec![Equal::new(condition.left, None, Some(l.into()))]),
-                            Comparable::Target(t) => Ok(vec![Equal::new(condition.left, Some(t), None)]),
-                        }
-                    } else {
-                        match condition.right {
-                            Comparable::Lit(l) => Ok(vec![NotEqual::new(condition.left, None, Some(l.into()))]),
-                            Comparable::Target(t) => Ok(vec![NotEqual::new(condition.left, Some(t), None)]),
-                        }
-                    }
-                },
-
-                Operator::GT => {
-                    if is_or {
-                        match condition.right {
-                            Comparable::Lit(l) => Ok(vec![LE::new(condition.left, None, Some(l.into()))]),
-                            Comparable::Target(t) => Ok(vec![LE::new(condition.left, Some(t), None)]),
-                        }
-                    } else {
-                        match condition.right {
-                            Comparable::Lit(l) => Ok(vec![GT::new(condition.left, None, Some(l.into()))]),
-                            Comparable::Target(t) => Ok(vec![GT::new(condition.left, Some(t), None)]),
-                        }
-                    }
-                },
-
-                Operator::LT => {
-                    if is_or {
-                        match condition.right {
-                            Comparable::Lit(l) => Ok(vec![GE::new(condition.left, None, Some(l.into()))]),
-                            Comparable::Target(t) => Ok(vec![GE::new(condition.left, Some(t), None)]),
-                        }
-                    } else {
-                        match condition.right {
-                            Comparable::Lit(l) => Ok(vec![LT::new(condition.left, None, Some(l.into()))]),
-                            Comparable::Target(t) => Ok(vec![LT::new(condition.left, Some(t), None)]),
-                        }
-                    }
-                },
-
-                Operator::GE => {
-                    if is_or {
-                        match condition.right {
-                            Comparable::Lit(l) => Ok(vec![LT::new(condition.left, None, Some(l.into()))]),
-                            Comparable::Target(t) => Ok(vec![LT::new(condition.left, Some(t), None)]),
-                        }
-                    } else {
-                        match condition.right {
-                            Comparable::Lit(l) => Ok(vec![GE::new(condition.left, None, Some(l.into()))]),
-                            Comparable::Target(t) => Ok(vec![GE::new(condition.left, Some(t), None)]),
-                        }
-                    }
-                },
-
-                Operator::LE => {
-                    if is_or {
-                        match condition.right {
-                            Comparable::Lit(l) => Ok(vec![GT::new(condition.left, None, Some(l.into()))]),
-                            Comparable::Target(t) => Ok(vec![GT::new(condition.left, Some(t), None)]),
-                        }
-                    } else {
-                        match condition.right {
-                            Comparable::Lit(l) => Ok(vec![LE::new(condition.left, None, Some(l.into()))]),
-                            Comparable::Target(t) => Ok(vec![LE::new(condition.left, Some(t), None)]),
-                        }
-                    }
-                },
+            let kind: Operator = condition.op;
+            match condition.right {
+                Comparable::Lit(l) => Ok(Selectors::Leaf(Selector {
+                    kind: kind,
+                    left_table: condition.left.table_name,
+                    left_column: condition.left.name,
+                    right_hand: None,
+                    scholar: Some(l.into()),
+                })),
+                Comparable::Target(t) => Ok(Selectors::Leaf(Selector {
+                    kind: kind,
+                    left_table: condition.left.table_name,
+                    left_column: condition.left.name,
+                    right_hand: Some(t),
+                    scholar: None,
+                })),
             }
+        },
+    }
+}
+
+pub fn eval_selectors(selectors: Selectors, tuple: &Tuple, columns: &[Column]) -> bool {
+    match selectors {
+        Selectors::Leaf(c) => c.eval(tuple, columns),
+        Selectors::And(c1, c2) => {
+            eval_selectors(*c1, tuple, columns) && eval_selectors(*c2, tuple, columns)
+        },
+        Selectors::Or(c1, c2) => {
+            eval_selectors(*c1, tuple, columns) || eval_selectors(*c2, tuple, columns)
         },
     }
 }

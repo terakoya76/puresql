@@ -1,5 +1,5 @@
 use ScanIterator;
-use Selector;
+use { Selectors, eval_selectors };
 use meta::table_info::{TableInfo, TableInfoError};
 use meta::column_info::ColumnInfo;
 use columns::column::Column;
@@ -15,7 +15,7 @@ pub struct NestedLoopJoinExec<'n> {
     pub outer_columns: Vec<Column>,
     pub inner_columns: Vec<Column>,
     pub next_tuple: Box<FnMut() -> Option<Tuple> + 'n>,
-    pub selectors: Vec<Box<Selector>>,
+    pub selectors: Option<Selectors>,
     pub meta: TableInfo,
 }
 
@@ -39,11 +39,11 @@ impl<'n> NestedLoopJoinExec<'n> {
             next_record_id: Allocator::new(1),
         };
 
-        let selectors: Vec<Box<Selector>> = match condition {
-            None => Vec::new(),
-            Some(c) => match build_selectors(c, false) {
-                Ok(s) => s,
-                Err(_) => Vec::new(),
+        let selectors: Option<Selectors> = match condition {
+            None => None,
+            Some(c) => match build_selectors(c) {
+                Ok(s) => Some(s),
+                Err(_) => None,
             },
         };
 
@@ -85,13 +85,16 @@ impl<'n> Iterator for NestedLoopJoinExec<'n> {
             match (self.next_tuple)() {
                 None => return None,
                 Some(tuple) => {
-                    let mut passed: bool = true;
-                    for ref selector in &self.selectors {
-                        if !selector.is_true(&tuple, &self.get_columns()) {
-                          passed = false;
-                          break;
+                    let passed: bool = match self.selectors.clone() {
+                        None => true,
+                        Some(selectors) => {
+                            eval_selectors(
+                                selectors,
+                                &tuple,
+                                &self.get_columns()
+                            )
                         }
-                    }
+                    };
 
                     if passed {
                         return Some(tuple);

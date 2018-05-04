@@ -110,11 +110,11 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
     match ctx.db {
         None => Err(ClientError::BuildExecutorError),
         Some(ref mut db) => {
-            let mut conditions: Vec<Box<Selector>> = Vec::new();
+            let mut conditions: Option<Selectors> = None;
             match stmt.condition.clone() {
                 None => {},
                 Some(condition) => {
-                    conditions = try!(build_selectors(condition, false));
+                    conditions = Some(try!(build_selectors(condition)));
                 },
             }
 
