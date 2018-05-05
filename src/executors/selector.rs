@@ -325,6 +325,7 @@ mod tests {
             ("shohin_name".to_owned(), DataType::Char(10)),
             ("price".to_owned(), DataType::Int),
             ("prev_price".to_owned(), DataType::Int),
+            ("discounted".to_owned(), DataType::Bool),
         ];
 
         column_defs
@@ -360,6 +361,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(100),
+            Field::set_bool(true),
         ]);
 
         let field = find_field(
@@ -445,6 +447,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(equ.clone(), &truthy_tuple, &gen_columns()),
@@ -456,6 +459,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(100),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(equ.clone(), &falsey_tuple, &gen_columns()),
@@ -479,6 +483,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(equ.clone(), &truthy_tuple, &gen_columns()),
@@ -490,6 +495,46 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(200),
             Field::set_i64(300),
+            Field::set_bool(true),
+        ]);
+        assert_eq!(
+            eval_selectors(equ.clone(), &falsey_tuple, &gen_columns()),
+            false
+        );
+    }
+
+    #[test]
+    fn test_eval_bool_equal_leaf() {
+        let left_hand: Target = Target {
+            table_name: Some("shohin".to_owned()),
+            name: "discounted".to_owned(),
+        };
+        let equ = Selectors::Leaf(Selector {
+            kind: Operator::Equ,
+            left_table: left_hand.clone().table_name,
+            left_column: left_hand.clone().name,
+            right_hand: None,
+            scholar: Some(Field::set_bool(true)),
+        });
+
+        let truthy_tuple: Tuple = Tuple::new(vec![
+            Field::set_i64(1),
+            Field::set_str("apple"),
+            Field::set_i64(300),
+            Field::set_i64(300),
+            Field::set_bool(true),
+        ]);
+        assert_eq!(
+            eval_selectors(equ.clone(), &truthy_tuple, &gen_columns()),
+            true
+        );
+
+        let falsey_tuple: Tuple = Tuple::new(vec![
+            Field::set_i64(1),
+            Field::set_str("apple"),
+            Field::set_i64(200),
+            Field::set_i64(300),
+            Field::set_bool(false),
         ]);
         assert_eq!(
             eval_selectors(equ.clone(), &falsey_tuple, &gen_columns()),
@@ -560,6 +605,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(200),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(nequ.clone(), &truthy_tuple, &gen_columns()),
@@ -571,6 +617,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(nequ.clone(), &falsey_tuple, &gen_columns()),
@@ -594,6 +641,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(200),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(nequ.clone(), &truthy_tuple, &gen_columns()),
@@ -605,6 +653,46 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(300),
+            Field::set_bool(true),
+        ]);
+        assert_eq!(
+            eval_selectors(nequ.clone(), &falsey_tuple, &gen_columns()),
+            false
+        );
+    }
+
+   #[test]
+    fn test_eval_bool_not_equal_leaf() {
+        let left_hand: Target = Target {
+            table_name: Some("shohin".to_owned()),
+            name: "discounted".to_owned(),
+        };
+        let nequ = Selectors::Leaf(Selector {
+            kind: Operator::NEqu,
+            left_table: left_hand.clone().table_name,
+            left_column: left_hand.clone().name,
+            right_hand: None,
+            scholar: Some(Field::set_bool(true)),
+        });
+
+        let truthy_tuple: Tuple = Tuple::new(vec![
+            Field::set_i64(1),
+            Field::set_str("apple"),
+            Field::set_i64(300),
+            Field::set_i64(300),
+            Field::set_bool(false),
+        ]);
+        assert_eq!(
+            eval_selectors(nequ.clone(), &truthy_tuple, &gen_columns()),
+            true
+        );
+
+        let falsey_tuple: Tuple = Tuple::new(vec![
+            Field::set_i64(1),
+            Field::set_str("apple"),
+            Field::set_i64(200),
+            Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(nequ.clone(), &falsey_tuple, &gen_columns()),
@@ -675,6 +763,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(200),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(gt.clone(), &truthy_tuple, &gen_columns()),
@@ -686,6 +775,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(gt.clone(), &falsey_tuple, &gen_columns()),
@@ -697,6 +787,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(400),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(gt.clone(), &falsey_tuple, &gen_columns()),
@@ -720,6 +811,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(400),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(gt.clone(), &truthy_tuple, &gen_columns()),
@@ -731,6 +823,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(gt.clone(), &falsey_tuple, &gen_columns()),
@@ -742,6 +835,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(400),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(gt.clone(), &falsey_tuple, &gen_columns()),
@@ -812,6 +906,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(200),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(lt.clone(), &truthy_tuple, &gen_columns()),
@@ -823,6 +918,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(lt.clone(), &falsey_tuple, &gen_columns()),
@@ -834,6 +930,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(400),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(lt.clone(), &falsey_tuple, &gen_columns()),
@@ -857,6 +954,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(200),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(lt.clone(), &truthy_tuple, &gen_columns()),
@@ -868,6 +966,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(lt.clone(), &falsey_tuple, &gen_columns()),
@@ -879,6 +978,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(400),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(lt.clone(), &falsey_tuple, &gen_columns()),
@@ -949,6 +1049,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(400),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(ge.clone(), &truthy_tuple, &gen_columns()),
@@ -960,6 +1061,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(ge.clone(), &truthy_tuple, &gen_columns()),
@@ -971,6 +1073,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(200),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(ge.clone(), &falsey_tuple, &gen_columns()),
@@ -994,6 +1097,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(400),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(ge.clone(), &truthy_tuple, &gen_columns()),
@@ -1005,6 +1109,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(ge.clone(), &truthy_tuple, &gen_columns()),
@@ -1016,6 +1121,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(200),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(ge.clone(), &falsey_tuple, &gen_columns()),
@@ -1086,6 +1192,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(200),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(le.clone(), &truthy_tuple, &gen_columns()),
@@ -1097,6 +1204,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(le.clone(), &truthy_tuple, &gen_columns()),
@@ -1108,6 +1216,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(400),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(le.clone(), &falsey_tuple, &gen_columns()),
@@ -1131,6 +1240,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(200),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(le.clone(), &truthy_tuple, &gen_columns()),
@@ -1142,6 +1252,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(le.clone(), &truthy_tuple, &gen_columns()),
@@ -1153,6 +1264,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(400),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(le.clone(), &falsey_tuple, &gen_columns()),
@@ -1223,6 +1335,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(250),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(and.clone(), &truthy_tuple, &gen_columns()),
@@ -1234,6 +1347,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(100),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(and.clone(), &falsey_tuple, &gen_columns()),
@@ -1245,6 +1359,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(and.clone(), &falsey_tuple, &gen_columns()),
@@ -1315,6 +1430,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(300),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(or.clone(), &truthy_tuple, &gen_columns()),
@@ -1326,6 +1442,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(250),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(or.clone(), &truthy_tuple, &gen_columns()),
@@ -1337,6 +1454,7 @@ mod tests {
             Field::set_str("apple"),
             Field::set_i64(200),
             Field::set_i64(300),
+            Field::set_bool(true),
         ]);
         assert_eq!(
             eval_selectors(or.clone(), &falsey_tuple, &gen_columns()),
