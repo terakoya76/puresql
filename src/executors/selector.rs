@@ -148,9 +148,7 @@ impl Selector {
 
 fn find_field(tuple: &Tuple, columns: &[Column], table_name: Option<String>, column_name: String) -> Result<Field, SelectorError> {
     for column in columns {
-        if column_name != column.name {
-            continue;
-        }
+        if column_name != column.name { continue }
 
         match table_name {
             None => return Ok(tuple.fields[column.offset].clone()),
@@ -303,11 +301,16 @@ mod tests {
             op: Operator::Equ,
             right: Comparable::Target(right_column.clone()),
         });
-        let selectors = build_selectors(column_condition, false).unwrap();
-        assert_eq!(selectors, vec![Equal::new(left_hand.clone(), Some(right_column), None) as Box<Selector>]);
-
-        let selector = &selectors.clone()[0];
-        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+        let selectors = build_selectors(column_condition).unwrap();
+        let equ = Selectors::Leaf(Selector {
+            kind: Operator::Equ,
+            left_table: left_hand.clone().table_name,
+            left_column: left_hand.clone().name,
+            right_hand: Some(right_column),
+            scholar: None,
+        });
+        assert_eq!(selectors, equ);
+        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
         
         // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
@@ -315,11 +318,16 @@ mod tests {
             op: Operator::Equ,
             right: Comparable::Lit(right_literal),
         });
-        let selectors = build_selectors(scholar_condition, false).unwrap();
-        assert_eq!(selectors, vec![Equal::new(left_hand.clone(), None, Some(Field::set_str("apple"))) as Box<Selector>]);
-
-        let selector = &selectors.clone()[0];
-        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+        let selectors = build_selectors(scholar_condition).unwrap();
+        let equ = Selectors::Leaf(Selector {
+            kind: Operator::Equ,
+            left_table: left_hand.clone().table_name,
+            left_column: left_hand.clone().name,
+            right_hand: None,
+            scholar: Some(Field::set_str("apple")),
+        });
+        assert_eq!(selectors, equ);
+        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
     }
 
     #[test]
@@ -337,11 +345,16 @@ mod tests {
             op: Operator::NEqu,
             right: Comparable::Target(right_column.clone()),
         });
-        let selectors = build_selectors(column_condition, false).unwrap();
-        assert_eq!(selectors, vec![NotEqual::new(left_hand.clone(), Some(right_column), None) as Box<Selector>]);
-
-        let selector = &selectors.clone()[0];
-        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+        let selectors = build_selectors(column_condition).unwrap();
+        let nequ = Selectors::Leaf(Selector {
+            kind: Operator::NEqu,
+            left_table: left_hand.clone().table_name,
+            left_column: left_hand.clone().name,
+            right_hand: Some(right_column),
+            scholar: None,
+        });
+        assert_eq!(selectors, nequ);
+        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
 
         // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
@@ -349,11 +362,16 @@ mod tests {
             op: Operator::NEqu,
             right: Comparable::Lit(right_literal),
         });
-        let selectors = build_selectors(scholar_condition, false).unwrap();
-        assert_eq!(selectors, vec![NotEqual::new(left_hand.clone(), None, Some(Field::set_str("grape"))) as Box<Selector>]);
-
-        let selector = &selectors.clone()[0];
-        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+        let selectors = build_selectors(scholar_condition).unwrap();
+        let nequ = Selectors::Leaf(Selector {
+            kind: Operator::NEqu,
+            left_table: left_hand.clone().table_name,
+            left_column: left_hand.clone().name,
+            right_hand: None,
+            scholar: Some(Field::set_str("grape")),
+        });
+        assert_eq!(selectors, nequ);
+        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
     }
 
     #[test]
@@ -368,11 +386,16 @@ mod tests {
             op: Operator::GT,
             right: Comparable::Target(right_column.clone()),
         });
-        let selectors = build_selectors(column_condition, false).unwrap();
-        assert_eq!(selectors, vec![GT::new(left_hand.clone(), Some(right_column), None) as Box<Selector>]);
-
-        let selector = &selectors.clone()[0];
-        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), false);
+        let selectors = build_selectors(column_condition).unwrap();
+        let gt = Selectors::Leaf(Selector {
+            kind: Operator::GT,
+            left_table: left_hand.clone().table_name,
+            left_column: left_hand.clone().name,
+            right_hand: Some(right_column),
+            scholar: None,
+        });
+        assert_eq!(selectors, gt);
+        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), false);
 
         // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
@@ -380,11 +403,16 @@ mod tests {
             op: Operator::GT,
             right: Comparable::Lit(right_literal),
         });
-        let selectors = build_selectors(scholar_condition, false).unwrap();
-        assert_eq!(selectors, vec![GT::new(left_hand.clone(), None, Some(Field::set_i64(200))) as Box<Selector>]);
-
-        let selector = &selectors.clone()[0];
-        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+        let selectors = build_selectors(scholar_condition).unwrap();
+        let gt = Selectors::Leaf(Selector {
+            kind: Operator::GT,
+            left_table: left_hand.clone().table_name,
+            left_column: left_hand.clone().name,
+            right_hand: None,
+            scholar: Some(Field::set_i64(200)),
+        });
+        assert_eq!(selectors, gt);
+        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
     }
 
     #[test]
@@ -399,11 +427,16 @@ mod tests {
             op: Operator::LT,
             right: Comparable::Target(right_column.clone()),
         });
-        let selectors = build_selectors(column_condition, false).unwrap();
-        assert_eq!(selectors, vec![LT::new(left_hand.clone(), Some(right_column), None) as Box<Selector>]);
-
-        let selector = &selectors.clone()[0];
-        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), false);
+        let selectors = build_selectors(column_condition).unwrap();
+        let lt = Selectors::Leaf(Selector {
+            kind: Operator::LT,
+            left_table: left_hand.clone().table_name,
+            left_column: left_hand.clone().name,
+            right_hand: Some(right_column),
+            scholar: None,
+        });
+        assert_eq!(selectors, lt);
+        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), false);
 
         // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
@@ -411,11 +444,16 @@ mod tests {
             op: Operator::LT,
             right: Comparable::Lit(right_literal),
         });
-        let selectors = build_selectors(scholar_condition, false).unwrap();
-        assert_eq!(selectors, vec![LT::new(left_hand.clone(), None, Some(Field::set_i64(400))) as Box<Selector>]);
-
-        let selector = &selectors.clone()[0];
-        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+        let selectors = build_selectors(scholar_condition).unwrap();
+        let lt = Selectors::Leaf(Selector {
+            kind: Operator::LT,
+            left_table: left_hand.clone().table_name,
+            left_column: left_hand.clone().name,
+            right_hand: None,
+            scholar: Some(Field::set_i64(400)),
+        });
+        assert_eq!(selectors, lt);
+        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
     }
 
     #[test]
@@ -430,11 +468,16 @@ mod tests {
             op: Operator::GE,
             right: Comparable::Target(right_column.clone()),
         });
-        let selectors = build_selectors(column_condition, false).unwrap();
-        assert_eq!(selectors, vec![GE::new(left_hand.clone(), Some(right_column), None) as Box<Selector>]);
-
-        let selector = &selectors.clone()[0];
-        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+        let selectors = build_selectors(column_condition).unwrap();
+        let ge = Selectors::Leaf(Selector {
+            kind: Operator::GE,
+            left_table: left_hand.clone().table_name,
+            left_column: left_hand.clone().name,
+            right_hand: Some(right_column),
+            scholar: None,
+        });
+        assert_eq!(selectors, ge);
+        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
 
         // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
@@ -442,11 +485,16 @@ mod tests {
             op: Operator::GE,
             right: Comparable::Lit(right_literal),
         });
-        let selectors = build_selectors(scholar_condition, false).unwrap();
-        assert_eq!(selectors, vec![GE::new(left_hand.clone(), None, Some(Field::set_i64(200))) as Box<Selector>]);
-
-        let selector = &selectors.clone()[0];
-        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+        let selectors = build_selectors(scholar_condition).unwrap();
+        let ge = Selectors::Leaf(Selector {
+            kind: Operator::GE,
+            left_table: left_hand.clone().table_name,
+            left_column: left_hand.clone().name,
+            right_hand: None,
+            scholar: Some(Field::set_i64(200)),
+        });
+        assert_eq!(selectors, ge);
+        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
     }
 
     #[test]
@@ -461,11 +509,16 @@ mod tests {
             op: Operator::LE,
             right: Comparable::Target(right_column.clone()),
         });
-        let selectors = build_selectors(column_condition, false).unwrap();
-        assert_eq!(selectors, vec![LE::new(left_hand.clone(), Some(right_column), None) as Box<Selector>]);
-
-        let selector = &selectors.clone()[0];
-        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+        let selectors = build_selectors(column_condition).unwrap();
+        let le = Selectors::Leaf(Selector {
+            kind: Operator::LE,
+            left_table: left_hand.clone().table_name,
+            left_column: left_hand.clone().name,
+            right_hand: Some(right_column),
+            scholar: None,
+        });
+        assert_eq!(selectors, le);
+        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
 
         // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
@@ -473,11 +526,16 @@ mod tests {
             op: Operator::LE,
             right: Comparable::Lit(right_literal),
         });
-        let selectors = build_selectors(scholar_condition, false).unwrap();
-        assert_eq!(selectors, vec![LE::new(left_hand.clone(), None, Some(Field::set_i64(400))) as Box<Selector>]);
-
-        let selector = &selectors.clone()[0];
-        assert!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+        let selectors = build_selectors(scholar_condition).unwrap();
+        let le = Selectors::Leaf(Selector {
+            kind: Operator::LE,
+            left_table: left_hand.clone().table_name,
+            left_column: left_hand.clone().name,
+            right_hand: None,
+            scholar: Some(Field::set_i64(400)),
+        });
+        assert_eq!(selectors, le);
+        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
     }
 
     #[test]
@@ -503,18 +561,25 @@ mod tests {
         });
 
         let condition: Conditions = Conditions::And(Box::new(column_condition), Box::new(scholar_condition));
-        let built_selectors = build_selectors(condition, false).unwrap();
-        let selectors = vec![
-            Equal::new(left_hand_str.clone(), Some(right_column_str), None) as Box<Selector>,
-            GT::new(left_hand_int.clone(), None, Some(Field::set_i64(200))) as Box<Selector>,
-        ];
+        let built_selectors = build_selectors(condition).unwrap();
+        let selectors = Selectors::And(
+            Box::new(Selectors::Leaf(Selector {
+                kind: Operator::Equ,
+                left_table: left_hand_str.clone().table_name,
+                left_column: left_hand_str.clone().name,
+                right_hand: Some(right_column_str),
+                scholar: None,
+            })),
+            Box::new(Selectors::Leaf(Selector {
+                kind: Operator::GT,
+                left_table: left_hand_int.clone().table_name,
+                left_column: left_hand_int.clone().name,
+                right_hand: None,
+                scholar: Some(Field::set_i64(200)),
+            })),
+        );
         assert_eq!(built_selectors, selectors);
-
-        let selector = &built_selectors.clone()[0];
-        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
-
-        let selector = &built_selectors.clone()[1];
-        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+        assert_eq!(eval_selectors(built_selectors, &gen_tuple(), &gen_columns()), true);
     }
 
     #[test]
@@ -540,17 +605,24 @@ mod tests {
         });
 
         let condition: Conditions = Conditions::Or(Box::new(column_condition), Box::new(scholar_condition));
-        let built_selectors = build_selectors(condition, false).unwrap();
-        let selectors = vec![
-            NotEqual::new(left_hand_str.clone(), Some(right_column_str), None) as Box<Selector>,
-            LE::new(left_hand_int.clone(), None, Some(Field::set_i64(400))) as Box<Selector>,
-        ];
+        let built_selectors = build_selectors(condition).unwrap();
+        let selectors = Selectors::Or(
+            Box::new(Selectors::Leaf(Selector {
+                kind: Operator::Equ,
+                left_table: left_hand_str.clone().table_name,
+                left_column: left_hand_str.clone().name,
+                right_hand: Some(right_column_str),
+                scholar: None,
+            })),
+            Box::new(Selectors::Leaf(Selector {
+                kind: Operator::GT,
+                left_table: left_hand_int.clone().table_name,
+                left_column: left_hand_int.clone().name,
+                right_hand: None,
+                scholar: Some(Field::set_i64(400)),
+            })),
+        );
         assert_eq!(built_selectors, selectors);
-
-        let selector = &built_selectors.clone()[0];
-        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
-
-        let selector = &built_selectors.clone()[1];
-        assert_eq!(selector.is_true(&gen_tuple(), &gen_columns()), true);
+        assert_eq!(eval_selectors(built_selectors, &gen_tuple(), &gen_columns()), true);
     }
 }
