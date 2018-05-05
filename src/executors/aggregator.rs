@@ -265,3 +265,6 @@ pub enum AggregatorError {
     ColumnNotFoundError,
     UnexpectedTargetError,
 }
+
+#[cfg(test)]
+mod tests {}

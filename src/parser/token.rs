@@ -30,3 +30,6 @@ pub enum Literal {
     Float(f64),
     Bool(u8),
 }
+
+#[cfg(test)]
+mod tests {}

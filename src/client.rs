@@ -304,3 +304,6 @@ impl From<AggregatorError> for ClientError {
         ClientError::AggregatorError(err)
     }
 }
+
+#[cfg(test)]
+mod tests {}

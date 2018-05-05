@@ -67,3 +67,6 @@ impl MemoryTable {
 pub enum MemoryTableError {
     StorageFileNotFoundError,
 }
+
+#[cfg(test)]
+mod tests {}

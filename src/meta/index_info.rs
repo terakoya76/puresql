@@ -34,3 +34,6 @@ impl IndexInfo {
         name
     }
 }
+
+#[cfg(test)]
+mod tests {}

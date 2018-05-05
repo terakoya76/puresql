@@ -26,3 +26,6 @@ impl Tuple {
         buffer.clear();
     }
 }
+
+#[cfg(test)]
+mod tests {}

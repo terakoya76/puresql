@@ -7,3 +7,6 @@ pub struct Column {
     pub dtype: DataType,
     pub offset: usize,
 }
+
+#[cfg(test)]
+mod tests {}

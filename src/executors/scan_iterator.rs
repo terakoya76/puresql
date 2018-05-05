@@ -6,3 +6,6 @@ pub trait ScanIterator: Iterator<Item = Tuple> {
     fn get_meta(&self) -> TableInfo;
     fn get_columns(&self) -> Vec<Column>;
 }
+
+#[cfg(test)]
+mod tests {}

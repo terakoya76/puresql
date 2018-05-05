@@ -132,3 +132,6 @@ impl From<SelectorError> for JoinExecError {
         JoinExecError::SelectorError(err)
     }
 }
+
+#[cfg(test)]
+mod tests {}

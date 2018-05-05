@@ -234,3 +234,6 @@ impl From<Literal> for Field {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {}

@@ -85,3 +85,6 @@ impl Iterator for MemoryTableScanExec {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {}

@@ -12,3 +12,6 @@ impl Range {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {}

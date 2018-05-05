@@ -4,3 +4,6 @@ pub enum DataType {
     Bool,
     Char(u8),
 }
+
+#[cfg(test)]
+mod tests {}

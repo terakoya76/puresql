@@ -43,3 +43,6 @@ pub enum Keyword {
     //AutoIncrement,
     //Comment,
 }
+
+#[cfg(test)]
+mod tests {}

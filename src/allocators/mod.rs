@@ -18,3 +18,6 @@ pub mod allocator {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {}

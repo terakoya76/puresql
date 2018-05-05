@@ -79,3 +79,6 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod tests {}

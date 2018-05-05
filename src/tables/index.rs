@@ -25,3 +25,6 @@ impl<T> Index<T> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {}

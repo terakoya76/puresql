@@ -268,3 +268,6 @@ fn is_whitespace(c: char) -> bool {
 pub enum LexError {
     UnclosedQuationmark,
 }
+
+#[cfg(test)]
+mod tests {}

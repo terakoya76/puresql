@@ -88,3 +88,6 @@ impl<'ts, 't> Iterator for TableScanExec<'ts, 't> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {}

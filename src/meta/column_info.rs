@@ -18,3 +18,6 @@ impl ColumnInfo {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {}

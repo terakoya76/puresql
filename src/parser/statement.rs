@@ -166,3 +166,6 @@ pub struct ColumnDef {
     pub name: String,
     pub datatype: DataType,
 }
+
+#[cfg(test)]
+mod tests {}

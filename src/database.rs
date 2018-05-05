@@ -47,3 +47,6 @@ impl From<MemoryTableError> for DatabaseError {
         DatabaseError::MemoryTableError(err)
     }
 }
+
+#[cfg(test)]
+mod tests {}

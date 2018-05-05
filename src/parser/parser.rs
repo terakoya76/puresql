@@ -858,3 +858,6 @@ impl From<LexError> for ParseError {
         ParseError::LexError(err)
     }
 }
+
+#[cfg(test)]
+mod tests {}

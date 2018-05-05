@@ -107,3 +107,6 @@ impl<'t> Table<'t> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {}
