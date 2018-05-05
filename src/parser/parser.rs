@@ -75,21 +75,15 @@ impl<'c> Parser<'c> {
                 try!(self.bump());
                 try!(self.validate_token(&[Token::OpPar]));
                 try!(self.bump());
-                let length = try!(self.validate_number());
+                let length: i64 = try!(self.validate_number());
                 try!(self.bump());
                 try!(self.validate_token(&[Token::ClPar]));
 
-                let l = match length {
-                    Literal::Int(i) => {
-                        if 0 <= i && i <= (u8::max_value() as i64) {
-                            i as u8
-                        } else {
-                            return Err(ParseError::UnexpectedDatatype(debug_token_pos));
-                        }
-                    }
-                    _ => return Err(ParseError::UnexpectedDatatype(debug_token_pos)),
-                };
-                DataType::Char(l)
+                if 0 <= length && length <= (u8::max_value() as i64) {
+                    DataType::Char(length as u8)
+                } else {
+                    return Err(ParseError::UnexpectedDatatype(debug_token_pos));
+                }
             }
             _ => return Err(ParseError::UndefinedDatatype(debug_token_pos)),
         };
@@ -114,19 +108,16 @@ impl<'c> Parser<'c> {
         }
     }
 
-    pub fn validate_number(&self) -> Result<Literal, ParseError> {
+    pub fn validate_number(&self) -> Result<i64, ParseError> {
         let token_pos: &TokenPos = match self.curr_token {
             None => return Err(ParseError::UnexepectedEoq),
             Some(ref ts) => ts,
         };
 
-        let found_number: Literal = match token_pos.token {
-            Token::Lit(Literal::Int(s)) => Literal::Int(s),
-            Token::Lit(Literal::Float(s)) => Literal::Float(s),
-            _ => return Err(ParseError::UndefinedNumber(token_pos.clone())),
-        };
-
-        Ok(found_number)
+        match token_pos.token {
+            Token::Lit(Literal::Int(i)) => Ok(i),
+            _ => Err(ParseError::UndefinedNumber(token_pos.clone())),
+        }
     }
 
     pub fn validate_literal(&self) -> Result<Literal, ParseError> {
@@ -154,12 +145,8 @@ impl<'c> Parser<'c> {
     pub fn validate_column_def(&mut self) -> Result<ColumnDef, ParseError> {
         let name: String = try!(self.validate_word(true));
         try!(self.bump());
+
         let dtype: DataType = try!(self.validate_datatype());
-
-        while self.next_token.is_some() && !self.check_next_token(&[Token::ClPar, Token::Comma]) {
-            //try!(self.bump());
-        }
-
         Ok(ColumnDef {
             name: name,
             datatype: dtype,
@@ -415,7 +402,7 @@ impl<'c> Parser<'c> {
         }
 
         // LIMIT xx
-        let mut limit: Option<Limit> = None;
+        let mut limit: Option<isize> = None;
         if self.validate_keyword(&[Keyword::Limit]).is_ok() {
             try!(self.bump());
             limit = Some(try!(self.parse_limit()));
@@ -749,7 +736,7 @@ impl<'c> Parser<'c> {
                 break;
             }
         }
-        //println!("{:?}", group_by);
+
         Ok(group_by)
     }
 
@@ -757,8 +744,8 @@ impl<'c> Parser<'c> {
         Err(ParseError::UndefinedStatementError)
     }
 
-    pub fn parse_limit(&self) -> Result<Limit, ParseError> {
-        Err(ParseError::UndefinedStatementError)
+    pub fn parse_limit(&self) -> Result<isize, ParseError> {
+        Ok(try!(self.validate_number()) as isize)
     }
 }
 

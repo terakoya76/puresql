@@ -134,6 +134,8 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                         }
                     }
 
+                    let limit :isize = stmt.limit.unwrap_or(-1);
+                    let mut iter: isize = 0;
                     if aggregators.len() > 0 {
                         let group_keys = match stmt.group_by {
                             None => vec![],
@@ -143,6 +145,12 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                         let mut aggr_exec =
                             AggregationExec::new(&mut selection_exec, group_keys, aggregators);
                         loop {
+                            if limit == iter {
+                                break;
+                            } else {
+                                iter += 1;
+                            }
+
                             match aggr_exec.next() {
                                 None => break,
                                 Some(tuples) => for tuple in tuples {
@@ -153,6 +161,12 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                     } else {
                         let mut proj_exec = ProjectionExec::new(&mut selection_exec, stmt.targets);
                         loop {
+                            if limit == iter {
+                                break;
+                            } else {
+                                iter += 1;
+                            }
+
                             match proj_exec.next() {
                                 None => break,
                                 Some(tuple) => tuple.print(),
@@ -176,6 +190,8 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                         }
                     }
 
+                    let limit: isize = stmt.limit.unwrap_or(-1);
+                    let mut iter: isize = 0;
                     if aggregators.len() > 0 {
                         let group_keys = match stmt.group_by {
                             None => vec![],
@@ -185,6 +201,12 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                         let mut aggr_exec =
                             AggregationExec::new(&mut selection_exec, group_keys, aggregators);
                         loop {
+                            if limit == iter {
+                                break;
+                            } else {
+                                iter += 1;
+                            }
+
                             match aggr_exec.next() {
                                 None => break,
                                 Some(tuples) => for tuple in tuples {
@@ -195,6 +217,12 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                     } else {
                         let mut proj_exec = ProjectionExec::new(&mut selection_exec, stmt.targets);
                         loop {
+                            if limit == iter {
+                                break;
+                            } else {
+                                iter += 1;
+                            }
+
                             match proj_exec.next() {
                                 None => break,
                                 Some(tuple) => tuple.print(),

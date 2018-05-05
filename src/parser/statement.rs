@@ -50,7 +50,7 @@ pub struct SelectStmt {
     pub condition: Option<Conditions>,
     pub group_by: Option<Vec<Target>>,
     pub order_by: Option<OrderBy>,
-    pub limit: Option<Limit>,
+    pub limit: Option<isize>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
