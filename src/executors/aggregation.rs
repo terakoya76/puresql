@@ -11,8 +11,8 @@ use parser::statement::*;
 pub struct AggregationExec<'a, 't: 'a, T: 't> {
     pub group_keys: Vec<Target>,
     pub inputs: &'a mut T,
-    pub aggregators: Vec<Box<Aggregator>>,
-    pub grouped_aggregators: HashMap<Vec<Field>, Vec<Box<Aggregator>>>,
+    pub aggregators: Vec<Aggregator>,
+    pub grouped_aggregators: HashMap<Vec<Field>, Vec<Aggregator>>,
     _marker: PhantomData<&'t T>,
 }
 
@@ -23,7 +23,7 @@ where
     pub fn new(
         inputs: &'a mut T,
         group_keys: Vec<Target>,
-        aggregators: Vec<Box<Aggregator>>,
+        aggregators: Vec<Aggregator>,
     ) -> AggregationExec<'a, 't, T> {
         AggregationExec {
             group_keys: group_keys,
@@ -56,8 +56,7 @@ where
 
     fn upsert(&mut self, keys: Vec<Field>, tuple: Tuple) {
         if !self.grouped_aggregators.contains_key(&keys) {
-            let init_aggrs: Vec<Box<Aggregator>> =
-                self.aggregators.iter().map(|a| a.clone()).collect();
+            let init_aggrs: Vec<Aggregator> = self.aggregators.iter().map(|a| a.clone()).collect();
             self.grouped_aggregators
                 .insert(keys.clone(), init_aggrs.clone());
         }

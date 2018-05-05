@@ -34,7 +34,7 @@ pub use executors::selection::SelectionExec;
 pub use executors::selector::{eval_selectors, Selectors};
 pub use executors::projection::ProjectionExec;
 pub use executors::aggregation::AggregationExec;
-pub use executors::aggregator::{Aggregator, Average, Count, Max, Min, Sum};
+pub use executors::aggregator::{Aggregator, Aggregators};
 pub use parser::statement::*;
 pub use parser::parser::Parser;
 

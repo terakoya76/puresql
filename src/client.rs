@@ -124,7 +124,7 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                         try!(exec_join(db.clone(), stmt.source));
                     let mut selection_exec = SelectionExec::new(&mut scan_exec, conditions);
 
-                    let mut aggregators: Vec<Box<Aggregator>> = Vec::new();
+                    let mut aggregators: Vec<Aggregator> = Vec::new();
                     for target in stmt.targets.clone() {
                         match target {
                             Projectable::Aggregate(expr) => {
@@ -166,7 +166,7 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                         try!(exec_scan(db.clone(), stmt.source));
                     let mut selection_exec = SelectionExec::new(&mut scan_exec, conditions);
 
-                    let mut aggregators: Vec<Box<Aggregator>> = Vec::new();
+                    let mut aggregators: Vec<Aggregator> = Vec::new();
                     for target in stmt.targets.clone() {
                         match target {
                             Projectable::Aggregate(expr) => {
