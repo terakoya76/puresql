@@ -144,6 +144,7 @@ impl PartialEq for Field {
         }
 
         match self.kind {
+            INIT => self.kind == other.kind,
             KIND_I64 => self.get_i64() == other.get_i64(),
             KIND_U64 => self.get_u64() == other.get_u64(),
             KIND_F64 => self._get_f64() == other._get_f64(),
@@ -158,6 +159,7 @@ impl Eq for Field {}
 impl Hash for Field {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self.kind {
+            INIT => self.kind.hash(state),
             KIND_I64 => self.get_i64().hash(state),
             KIND_U64 => self.get_u64().hash(state),
             KIND_F64 => self._get_f64().hash(state),
@@ -176,7 +178,7 @@ impl PartialOrd for Field {
         match self.kind {
             KIND_I64 => self.get_i64().partial_cmp(&other.get_i64()),
             KIND_U64 => self.get_u64().partial_cmp(&other.get_u64()),
-            KIND_F64 => self._get_f64().partial_cmp(&other._get_f64()),
+            KIND_F64 => self.get_f64().partial_cmp(&other.get_f64()),
             KIND_STR => self.get_str().partial_cmp(&other.get_str()),
             _ => None,
         }
