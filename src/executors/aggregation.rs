@@ -8,6 +8,7 @@ use tables::field::Field;
 
 use parser::statement::*;
 
+#[derive(Debug)]
 pub struct AggregationExec<'a, 't: 'a, T: 't> {
     pub group_keys: Vec<Target>,
     pub inputs: &'a mut T,

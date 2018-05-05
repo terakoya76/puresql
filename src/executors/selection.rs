@@ -6,6 +6,7 @@ use meta::table_info::TableInfo;
 use columns::column::Column;
 use tables::tuple::Tuple;
 
+#[derive(Debug)]
 pub struct SelectionExec<'s, 't: 's, T: 't> {
     inputs: &'s mut T,
     selectors: Option<Selectors>,
