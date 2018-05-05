@@ -7,14 +7,16 @@ use std::ops::Div;
 use parser::token::Literal;
 
 pub const INIT: usize = 0;
-pub const KIND_I64: usize = 1;
-pub const KIND_U64: usize = 2;
-pub const KIND_F64: usize = 3;
-pub const KIND_STR: usize = 4;
+pub const KIND_BOOL: usize = 1;
+pub const KIND_I64: usize = 2;
+pub const KIND_U64: usize = 3;
+pub const KIND_F64: usize = 4;
+pub const KIND_STR: usize = 5;
 
 #[derive(Debug, Clone)]
 pub struct Field {
     pub kind: usize,
+    pub b: Option<bool>,
     pub i: Option<i64>,
     pub u: Option<u64>,
     pub f: Option<String>,
@@ -25,6 +27,18 @@ impl Field {
     pub fn set_init() -> Field {
         Field {
             kind: INIT,
+            b: None,
+            i: None,
+            u: None,
+            f: None,
+            s: None,
+        }
+    }
+
+    pub fn set_bool(value: bool) -> Field {
+        Field {
+            kind: KIND_BOOL,
+            b: Some(value),
             i: None,
             u: None,
             f: None,
@@ -35,6 +49,7 @@ impl Field {
     pub fn set_i64(value: i64) -> Field {
         Field {
             kind: KIND_I64,
+            b: None,
             i: Some(value as i64),
             u: None,
             f: None,
@@ -45,6 +60,7 @@ impl Field {
     pub fn set_u64(value: u64) -> Field {
         Field {
             kind: KIND_U64,
+            b: None,
             i: None,
             u: Some(value as u64),
             f: None,
@@ -55,6 +71,7 @@ impl Field {
     pub fn set_f64(value: f64) -> Field {
         Field {
             kind: KIND_F64,
+            b: None,
             i: None,
             u: None,
             f: Some(value.to_string()),
@@ -65,6 +82,7 @@ impl Field {
     pub fn set_str(value: &str) -> Field {
         Field {
             kind: KIND_STR,
+            b: None,
             i: None,
             u: None,
             f: None,
@@ -74,6 +92,12 @@ impl Field {
 
     pub fn set_same_type(&self, value: usize) -> Field {
         match self.kind {
+            KIND_BOOL => {
+                match value {
+                    0 => Self::set_bool(false),
+                    _ => Self::set_bool(true),
+                }
+            }
             KIND_I64 => {
                 let converted: i64 = value as i64;
                 Self::set_i64(converted)
@@ -92,6 +116,10 @@ impl Field {
             }
             _ => Self::set_init(),
         }
+    }
+
+    pub fn get_bool(&self) -> bool {
+        self.b.unwrap()
     }
 
     pub fn get_i64(&self) -> i64 {
@@ -118,6 +146,7 @@ impl Field {
 
     pub fn to_string(&self) -> String {
         match self.kind {
+            KIND_BOOL => self.get_bool().to_string(),
             KIND_I64 => self.get_i64().to_string(),
             KIND_U64 => self.get_u64().to_string(),
             KIND_F64 => self.get_f64().to_string(),
@@ -128,6 +157,7 @@ impl Field {
 
     pub fn print(&self) {
         match self.kind {
+            KIND_BOOL => println!("{}", self.get_bool()),
             KIND_I64 => println!("{}", self.get_i64()),
             KIND_U64 => println!("{}", self.get_u64()),
             KIND_F64 => println!("{}", self.get_f64()),
@@ -145,6 +175,7 @@ impl PartialEq for Field {
 
         match self.kind {
             INIT => self.kind == other.kind,
+            KIND_BOOL => self.get_bool() == other.get_bool(),
             KIND_I64 => self.get_i64() == other.get_i64(),
             KIND_U64 => self.get_u64() == other.get_u64(),
             KIND_F64 => self._get_f64() == other._get_f64(),
@@ -160,6 +191,7 @@ impl Hash for Field {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self.kind {
             INIT => self.kind.hash(state),
+            KIND_BOOL => self.get_bool().hash(state),
             KIND_I64 => self.get_i64().hash(state),
             KIND_U64 => self.get_u64().hash(state),
             KIND_F64 => self._get_f64().hash(state),
@@ -176,6 +208,7 @@ impl PartialOrd for Field {
         }
 
         match self.kind {
+            KIND_BOOL => self.get_bool().partial_cmp(&other.get_bool()),
             KIND_I64 => self.get_i64().partial_cmp(&other.get_i64()),
             KIND_U64 => self.get_u64().partial_cmp(&other.get_u64()),
             KIND_F64 => self.get_f64().partial_cmp(&other.get_f64()),
@@ -225,14 +258,16 @@ impl Div for Field {
     }
 }
 
-// TODO: impl bool type
 impl From<Literal> for Field {
     fn from(lit: Literal) -> Field {
         match lit {
             Literal::Int(i) => Self::set_i64(i),
             Literal::Float(f) => Self::set_f64(f),
             Literal::String(s) => Self::set_str(&s),
-            _ => Self::set_init(),
+            Literal::Bool(b) => match b {
+                0 => Self::set_bool(false),
+                _ => Self::set_bool(true),
+            }
         }
     }
 }
