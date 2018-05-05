@@ -7,4 +7,3 @@ pub struct Column {
     pub dtype: DataType,
     pub offset: usize,
 }
-

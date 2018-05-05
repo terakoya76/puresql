@@ -7,12 +7,10 @@ pub mod allocator {
 
     impl Allocator {
         pub fn new(table_id: usize) -> Box<Allocator> {
-            Box::new(
-                Allocator {
-                    table_id: table_id,
-                    base: 1 as usize,
-                }
-            )
+            Box::new(Allocator {
+                table_id: table_id,
+                base: 1 as usize,
+            })
         }
 
         pub fn increment(&mut self) {
@@ -20,4 +18,3 @@ pub mod allocator {
         }
     }
 }
-

@@ -43,4 +43,3 @@ pub enum Keyword {
     //AutoIncrement,
     //Comment,
 }
-

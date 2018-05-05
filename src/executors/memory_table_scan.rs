@@ -56,7 +56,7 @@ impl MemoryTableScanExec {
                 None => {
                     *&mut self.seek_handle = 0;
                     return None;
-                },
+                }
                 Some(handle) => return Some(handle),
             }
         }
@@ -81,8 +81,7 @@ impl Iterator for MemoryTableScanExec {
             Some(handle) => {
                 &mut self.set_next_handle(handle + 1);
                 Some(self.get_tuple(handle))
-            },
+            }
         }
     }
 }
-

@@ -13,8 +13,12 @@ pub struct Database {
 
 impl Database {
     pub fn add_table(&mut self, table_info: TableInfo) {
-        self.tables.insert(table_info.name.clone(), table_info.clone());
-        self.real_tables.insert(table_info.name.clone(), MemoryTable::new(table_info.clone()));
+        self.tables
+            .insert(table_info.name.clone(), table_info.clone());
+        self.real_tables.insert(
+            table_info.name.clone(),
+            MemoryTable::new(table_info.clone()),
+        );
     }
 
     pub fn table_info_from_str(&self, name: &str) -> Result<TableInfo, DatabaseError> {

@@ -50,7 +50,7 @@ impl<'t> Table<'t> {
         let internal_id: usize = self.meta.next_record_id.base;
         let tuple: Tuple = Tuple::new(fields.clone());
         match self.pk_index {
-            None => {},
+            None => {}
             Some(ref mut idx) => idx.insert(internal_id, tuple),
         }
 
@@ -64,11 +64,9 @@ impl<'t> Table<'t> {
     pub fn get_tuple(&self, internal_id: usize) -> Tuple {
         match self.pk_index {
             None => Tuple::new(vec![]),
-            Some(ref idx) => {
-                match idx.tree.get(&internal_id) {
-                    None => Tuple::new(vec![]),
-                    Some(value) => value.clone(),
-                }
+            Some(ref idx) => match idx.tree.get(&internal_id) {
+                None => Tuple::new(vec![]),
+                Some(value) => value.clone(),
             },
         }
     }
@@ -82,11 +80,14 @@ impl<'t> Table<'t> {
                     return None;
                 }
 
-                match idx.tree.range((Included(&current_handle), Included(&offset))).next() {
-                    None => self.seek(current_handle+1),
+                match idx.tree
+                    .range((Included(&current_handle), Included(&offset)))
+                    .next()
+                {
+                    None => self.seek(current_handle + 1),
                     Some(node) => Some(node.0.clone()),
                 }
-            },
+            }
         }
     }
 
@@ -99,13 +100,10 @@ impl<'t> Table<'t> {
         println!("{}", col_buffer);
 
         match self.pk_index {
-            None => {},
-            Some(ref idx) => {
-                for value in idx.tree.values() {
-                    value.print();
-                }
+            None => {}
+            Some(ref idx) => for value in idx.tree.values() {
+                value.print();
             },
         }
     }
 }
-

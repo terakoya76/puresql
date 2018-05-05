@@ -6,7 +6,7 @@ use std::ops::Div;
 
 use parser::token::Literal;
 
-pub const INIT:     usize = 0;
+pub const INIT: usize = 0;
 pub const KIND_I64: usize = 1;
 pub const KIND_U64: usize = 2;
 pub const KIND_F64: usize = 3;
@@ -77,19 +77,19 @@ impl Field {
             KIND_I64 => {
                 let converted: i64 = value as i64;
                 Self::set_i64(converted)
-            },
+            }
             KIND_U64 => {
                 let converted: u64 = value as u64;
                 Self::set_u64(converted)
-            },
+            }
             KIND_F64 => {
                 let converted: f64 = value as f64;
                 Self::set_f64(converted)
-            },
+            }
             KIND_STR => {
                 let converted: &str = &*value.to_string();
                 Self::set_str(converted)
-            },
+            }
             _ => Self::set_init(),
         }
     }
@@ -234,4 +234,3 @@ impl From<Literal> for Field {
         }
     }
 }
-

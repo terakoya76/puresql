@@ -4,4 +4,3 @@ pub enum DataType {
     Bool,
     Char(u8),
 }
-

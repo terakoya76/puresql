@@ -33,122 +33,219 @@ impl Selector {
 
     fn eval_equ(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
         match self.right_hand {
-            None => {},
+            None => {}
             Some(ref right_hand) => {
-                let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                let ref right_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    right_hand.table_name.clone(),
+                    right_hand.name.clone()
+                ));
+                let ref left_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    self.left_table.clone(),
+                    self.left_column.clone()
+                ));
                 return Ok(left_side == right_side);
-            },
+            }
         }
 
         match self.scholar {
             None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                let ref left_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    self.left_table.clone(),
+                    self.left_column.clone()
+                ));
                 Ok(left_side == right_side)
-            },
+            }
         }
     }
 
     fn eval_nequ(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
         match self.right_hand {
-            None => {},
+            None => {}
             Some(ref right_hand) => {
-                let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                let ref right_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    right_hand.table_name.clone(),
+                    right_hand.name.clone()
+                ));
+                let ref left_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    self.left_table.clone(),
+                    self.left_column.clone()
+                ));
                 return Ok(left_side != right_side);
-            },
+            }
         }
 
         match self.scholar {
             None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                let ref left_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    self.left_table.clone(),
+                    self.left_column.clone()
+                ));
                 Ok(left_side != right_side)
-            },
+            }
         }
     }
 
     fn eval_ge(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
         match self.right_hand {
-            None => {},
+            None => {}
             Some(ref right_hand) => {
-                let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                let ref right_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    right_hand.table_name.clone(),
+                    right_hand.name.clone()
+                ));
+                let ref left_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    self.left_table.clone(),
+                    self.left_column.clone()
+                ));
                 return Ok(left_side >= right_side);
-            },
+            }
         }
 
         match self.scholar {
             None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                let ref left_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    self.left_table.clone(),
+                    self.left_column.clone()
+                ));
                 Ok(left_side >= right_side)
-            },
+            }
         }
     }
 
     fn eval_le(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
         match self.right_hand {
-            None => {},
+            None => {}
             Some(ref right_hand) => {
-                let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                let ref right_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    right_hand.table_name.clone(),
+                    right_hand.name.clone()
+                ));
+                let ref left_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    self.left_table.clone(),
+                    self.left_column.clone()
+                ));
                 return Ok(left_side <= right_side);
-            },
+            }
         }
 
         match self.scholar {
             None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                let ref left_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    self.left_table.clone(),
+                    self.left_column.clone()
+                ));
                 Ok(left_side <= right_side)
-            },
+            }
         }
     }
 
     fn eval_gt(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
         match self.right_hand {
-            None => {},
+            None => {}
             Some(ref right_hand) => {
-                let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                let ref right_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    right_hand.table_name.clone(),
+                    right_hand.name.clone()
+                ));
+                let ref left_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    self.left_table.clone(),
+                    self.left_column.clone()
+                ));
                 return Ok(left_side > right_side);
-            },
+            }
         }
 
         match self.scholar {
             None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                let ref left_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    self.left_table.clone(),
+                    self.left_column.clone()
+                ));
                 Ok(left_side > right_side)
-            },
+            }
         }
     }
 
     fn eval_lt(&self, tuple: &Tuple, columns: &[Column]) -> Result<bool, SelectorError> {
         match self.right_hand {
-            None => {},
+            None => {}
             Some(ref right_hand) => {
-                let ref right_side: Field = try!(find_field(tuple, columns, right_hand.table_name.clone(), right_hand.name.clone()));
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                let ref right_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    right_hand.table_name.clone(),
+                    right_hand.name.clone()
+                ));
+                let ref left_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    self.left_table.clone(),
+                    self.left_column.clone()
+                ));
                 return Ok(left_side < right_side);
-            },
+            }
         }
 
         match self.scholar {
             None => Err(SelectorError::UnexpectedRightHandError),
             Some(ref right_side) => {
-                let ref left_side: Field = try!(find_field(tuple, columns, self.left_table.clone(), self.left_column.clone()));
+                let ref left_side: Field = try!(find_field(
+                    tuple,
+                    columns,
+                    self.left_table.clone(),
+                    self.left_column.clone()
+                ));
                 Ok(left_side < right_side)
-            },
+            }
         }
     }
 }
 
-fn find_field(tuple: &Tuple, columns: &[Column], table_name: Option<String>, column_name: String) -> Result<Field, SelectorError> {
+fn find_field(
+    tuple: &Tuple,
+    columns: &[Column],
+    table_name: Option<String>,
+    column_name: String,
+) -> Result<Field, SelectorError> {
     for column in columns {
-        if column_name != column.name { continue }
+        if column_name != column.name {
+            continue;
+        }
 
         match table_name {
             None => return Ok(tuple.fields[column.offset].clone()),
@@ -156,7 +253,7 @@ fn find_field(tuple: &Tuple, columns: &[Column], table_name: Option<String>, col
                 if tbl_name == &column.table_name {
                     return Ok(tuple.fields[column.offset].clone());
                 }
-            },
+            }
         }
     }
     Err(SelectorError::ColumnNotFoundError)
@@ -168,13 +265,13 @@ pub fn build_selectors(condition: Conditions) -> Result<Selectors, SelectorError
             let selectors1: Selectors = try!(build_selectors(*c1));
             let selectors2: Selectors = try!(build_selectors(*c2));
             Ok(Selectors::And(Box::new(selectors1), Box::new(selectors2)))
-        },
+        }
 
         Conditions::Or(c1, c2) => {
             let selectors1: Selectors = try!(build_selectors(*c1));
             let selectors2: Selectors = try!(build_selectors(*c2));
             Ok(Selectors::Or(Box::new(selectors1), Box::new(selectors2)))
-        },
+        }
 
         Conditions::Leaf(condition) => {
             let kind: Operator = condition.op;
@@ -194,7 +291,7 @@ pub fn build_selectors(condition: Conditions) -> Result<Selectors, SelectorError
                     scholar: None,
                 })),
             }
-        },
+        }
     }
 }
 
@@ -203,10 +300,10 @@ pub fn eval_selectors(selectors: Selectors, tuple: &Tuple, columns: &[Column]) -
         Selectors::Leaf(c) => c.eval(tuple, columns),
         Selectors::And(c1, c2) => {
             eval_selectors(*c1, tuple, columns) && eval_selectors(*c2, tuple, columns)
-        },
+        }
         Selectors::Or(c1, c2) => {
             eval_selectors(*c1, tuple, columns) || eval_selectors(*c2, tuple, columns)
-        },
+        }
     }
 }
 
@@ -229,13 +326,17 @@ mod tests {
             ("kubun_id".to_owned(), DataType::Int),
             ("price".to_owned(), DataType::Int),
         ];
-        
-        column_defs.into_iter().enumerate().map(|(i, col)| Column {
-            table_name: "shohin".to_owned(),
-            name: col.clone().0,
-            dtype: col.clone().1,
-            offset: i,
-        }).collect()
+
+        column_defs
+            .into_iter()
+            .enumerate()
+            .map(|(i, col)| Column {
+                table_name: "shohin".to_owned(),
+                name: col.clone().0,
+                dtype: col.clone().1,
+                offset: i,
+            })
+            .collect()
     }
 
     fn gen_tuple() -> Tuple {
@@ -243,7 +344,7 @@ mod tests {
             Field::set_i64(1),
             Field::set_str("apple"),
             Field::set_i64(1),
-            Field::set_i64(300)
+            Field::set_i64(300),
         ];
 
         Tuple::new(fields)
@@ -251,13 +352,23 @@ mod tests {
 
     #[test]
     fn test_find_field() {
-        let field = find_field(&gen_tuple(), &gen_columns(), Some("shohin".to_owned()), "price".to_owned());
+        let field = find_field(
+            &gen_tuple(),
+            &gen_columns(),
+            Some("shohin".to_owned()),
+            "price".to_owned(),
+        );
         assert_eq!(field, Ok(Field::set_i64(300)));
 
         let field = find_field(&gen_tuple(), &gen_columns(), None, "price".to_owned());
         assert_eq!(field, Ok(Field::set_i64(300)));
 
-        let field = find_field(&gen_tuple(), &gen_columns(), None, "fictional_column".to_owned());
+        let field = find_field(
+            &gen_tuple(),
+            &gen_columns(),
+            None,
+            "fictional_column".to_owned(),
+        );
         assert!(field.is_err());
     }
 
@@ -310,8 +421,11 @@ mod tests {
             scholar: None,
         });
         assert_eq!(selectors, equ);
-        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
-        
+        assert_eq!(
+            eval_selectors(selectors, &gen_tuple(), &gen_columns()),
+            true
+        );
+
         // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
             left: left_hand.clone(),
@@ -327,7 +441,10 @@ mod tests {
             scholar: Some(Field::set_str("apple")),
         });
         assert_eq!(selectors, equ);
-        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
+        assert_eq!(
+            eval_selectors(selectors, &gen_tuple(), &gen_columns()),
+            true
+        );
     }
 
     #[test]
@@ -354,7 +471,10 @@ mod tests {
             scholar: None,
         });
         assert_eq!(selectors, nequ);
-        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
+        assert_eq!(
+            eval_selectors(selectors, &gen_tuple(), &gen_columns()),
+            true
+        );
 
         // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
@@ -371,7 +491,10 @@ mod tests {
             scholar: Some(Field::set_str("grape")),
         });
         assert_eq!(selectors, nequ);
-        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
+        assert_eq!(
+            eval_selectors(selectors, &gen_tuple(), &gen_columns()),
+            true
+        );
     }
 
     #[test]
@@ -395,7 +518,10 @@ mod tests {
             scholar: None,
         });
         assert_eq!(selectors, gt);
-        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), false);
+        assert_eq!(
+            eval_selectors(selectors, &gen_tuple(), &gen_columns()),
+            false
+        );
 
         // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
@@ -412,7 +538,10 @@ mod tests {
             scholar: Some(Field::set_i64(200)),
         });
         assert_eq!(selectors, gt);
-        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
+        assert_eq!(
+            eval_selectors(selectors, &gen_tuple(), &gen_columns()),
+            true
+        );
     }
 
     #[test]
@@ -436,7 +565,10 @@ mod tests {
             scholar: None,
         });
         assert_eq!(selectors, lt);
-        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), false);
+        assert_eq!(
+            eval_selectors(selectors, &gen_tuple(), &gen_columns()),
+            false
+        );
 
         // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
@@ -453,7 +585,10 @@ mod tests {
             scholar: Some(Field::set_i64(400)),
         });
         assert_eq!(selectors, lt);
-        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
+        assert_eq!(
+            eval_selectors(selectors, &gen_tuple(), &gen_columns()),
+            true
+        );
     }
 
     #[test]
@@ -477,7 +612,10 @@ mod tests {
             scholar: None,
         });
         assert_eq!(selectors, ge);
-        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
+        assert_eq!(
+            eval_selectors(selectors, &gen_tuple(), &gen_columns()),
+            true
+        );
 
         // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
@@ -494,7 +632,10 @@ mod tests {
             scholar: Some(Field::set_i64(200)),
         });
         assert_eq!(selectors, ge);
-        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
+        assert_eq!(
+            eval_selectors(selectors, &gen_tuple(), &gen_columns()),
+            true
+        );
     }
 
     #[test]
@@ -518,7 +659,10 @@ mod tests {
             scholar: None,
         });
         assert_eq!(selectors, le);
-        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
+        assert_eq!(
+            eval_selectors(selectors, &gen_tuple(), &gen_columns()),
+            true
+        );
 
         // build w/ scholar right hand
         let scholar_condition: Conditions = Conditions::Leaf(Condition {
@@ -535,7 +679,10 @@ mod tests {
             scholar: Some(Field::set_i64(400)),
         });
         assert_eq!(selectors, le);
-        assert_eq!(eval_selectors(selectors, &gen_tuple(), &gen_columns()), true);
+        assert_eq!(
+            eval_selectors(selectors, &gen_tuple(), &gen_columns()),
+            true
+        );
     }
 
     #[test]
@@ -560,7 +707,8 @@ mod tests {
             right: Comparable::Lit(right_literal_int),
         });
 
-        let condition: Conditions = Conditions::And(Box::new(column_condition), Box::new(scholar_condition));
+        let condition: Conditions =
+            Conditions::And(Box::new(column_condition), Box::new(scholar_condition));
         let built_selectors = build_selectors(condition).unwrap();
         let selectors = Selectors::And(
             Box::new(Selectors::Leaf(Selector {
@@ -579,7 +727,10 @@ mod tests {
             })),
         );
         assert_eq!(built_selectors, selectors);
-        assert_eq!(eval_selectors(built_selectors, &gen_tuple(), &gen_columns()), true);
+        assert_eq!(
+            eval_selectors(built_selectors, &gen_tuple(), &gen_columns()),
+            true
+        );
     }
 
     #[test]
@@ -604,7 +755,8 @@ mod tests {
             right: Comparable::Lit(right_literal_int),
         });
 
-        let condition: Conditions = Conditions::Or(Box::new(column_condition), Box::new(scholar_condition));
+        let condition: Conditions =
+            Conditions::Or(Box::new(column_condition), Box::new(scholar_condition));
         let built_selectors = build_selectors(condition).unwrap();
         let selectors = Selectors::Or(
             Box::new(Selectors::Leaf(Selector {
@@ -623,6 +775,9 @@ mod tests {
             })),
         );
         assert_eq!(built_selectors, selectors);
-        assert_eq!(eval_selectors(built_selectors, &gen_tuple(), &gen_columns()), true);
+        assert_eq!(
+            eval_selectors(built_selectors, &gen_tuple(), &gen_columns()),
+            true
+        );
     }
 }

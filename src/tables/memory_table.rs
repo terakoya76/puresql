@@ -53,8 +53,11 @@ impl MemoryTable {
             return None;
         }
 
-        match self.tree.range((Included(&current_handle), Included(&offset))).next() {
-            None => self.seek(current_handle+1),
+        match self.tree
+            .range((Included(&current_handle), Included(&offset)))
+            .next()
+        {
+            None => self.seek(current_handle + 1),
             Some(node) => Some(node.0.clone()),
         }
     }
@@ -64,4 +67,3 @@ impl MemoryTable {
 pub enum MemoryTableError {
     StorageFileNotFoundError,
 }
-

@@ -31,13 +31,12 @@ pub use executors::table_scan::TableScanExec;
 pub use executors::memory_table_scan::MemoryTableScanExec;
 pub use executors::join::NestedLoopJoinExec;
 pub use executors::selection::SelectionExec;
-pub use executors::selector::{Selectors, eval_selectors};
+pub use executors::selector::{eval_selectors, Selectors};
 pub use executors::projection::ProjectionExec;
 pub use executors::aggregation::AggregationExec;
-pub use executors::aggregator::{Aggregator, Count, Sum, Average, Max, Min};
+pub use executors::aggregator::{Aggregator, Average, Count, Max, Min, Sum};
 pub use parser::statement::*;
 pub use parser::parser::Parser;
-
 
 fn main() {
     let db: Database = Database {
@@ -56,7 +55,9 @@ fn main() {
 
     println!("Table on memory\n");
     println!("shohin table setup");
-    let _ = client.handle_query("create table shohin ( shohin_id int, shohin_name char(10), kubun_id int, price int )");
+    let _ = client.handle_query(
+        "create table shohin ( shohin_id int, shohin_name char(10), kubun_id int, price int )",
+    );
     let _ = client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 1, 'apple', 1, 300 )");
     let _ = client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 2, 'orange', 1, 130)");
     let _ = client.handle_query("insert into shohin ( shohin_id, shohin_name, kubun_id, price ) values ( 3, 'cabbage', 2, 200 )");
@@ -66,7 +67,8 @@ fn main() {
     println!("kubun table setup\n");
     let _ = client.handle_query("create table kubun ( kubun_id int, kubun_name char(10) )");
     let _ = client.handle_query("insert into kubun ( kubun_id, kubun_name) values ( 1, 'fruit' )");
-    let _ = client.handle_query("insert into kubun ( kubun_id, kubun_name) values ( 2, 'vegetable' )");
+    let _ =
+        client.handle_query("insert into kubun ( kubun_id, kubun_name) values ( 2, 'vegetable' )");
 
     println!("standard table scan\n");
     let _ = client.handle_query("select shohin_id, shohin_name, kubun_id, price from shohin");
@@ -81,8 +83,11 @@ fn main() {
     let _ = client.handle_query("select shohin.shohin_name, kubun.kubun_name, shohin.price from shohin join kubun on kubun_id = kubun_id");
 
     println!("selection\n");
-    let _ = client.handle_query("select shohin_name, kubun_id, price from shohin where shohin.shohin_name = 'apple'");
-    let _ = client.handle_query("select shohin_name, kubun_id, price from shohin where price > kubun_id");
+    let _ = client.handle_query(
+        "select shohin_name, kubun_id, price from shohin where shohin.shohin_name = 'apple'",
+    );
+    let _ = client
+        .handle_query("select shohin_name, kubun_id, price from shohin where price > kubun_id");
     let _ = client.handle_query("select shohin_name, kubun_name, price from shohin join kubun on shohin.kubun_id = kubun.kubun_id where shohin.shohin_name = 'apple'");
 
     println!("aggregation\n");
@@ -96,7 +101,9 @@ fn main() {
     };
 
     println!("grouped aggregation\n");
-    match client.handle_query("select shohin.shohin_name, avg(shohin.price) from shohin group by shohin_name") {
+    match client.handle_query(
+        "select shohin.shohin_name, avg(shohin.price) from shohin group by shohin_name",
+    ) {
         Ok(_) => (),
         Err(e) => println!("{:?}", e),
     };
@@ -232,4 +239,3 @@ fn main() {
     }
     */
 }
-

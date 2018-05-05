@@ -42,4 +42,3 @@ impl TableInfo {
 pub enum TableInfoError {
     ColumnNotFoundError,
 }
-

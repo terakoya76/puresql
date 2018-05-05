@@ -30,4 +30,3 @@ pub enum Literal {
     Float(f64),
     Bool(u8),
 }
-

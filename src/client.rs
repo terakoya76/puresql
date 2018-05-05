@@ -8,7 +8,7 @@ use tables::field::Field;
 use allocators::allocator::Allocator;
 
 use parser::statement::*;
-use parser::parser::{Parser, ParseError};
+use parser::parser::{ParseError, Parser};
 use executors::memory_table_scan::MemoryTableScanExec;
 use executors::projection::ProjectionExec;
 use executors::selection::SelectionExec;
@@ -19,14 +19,12 @@ use executors::aggregator::*;
 
 #[derive(Debug)]
 pub struct Client {
-   pub ctx: Context,
+    pub ctx: Context,
 }
 
 impl Client {
     pub fn new(ctx: Context) -> Client {
-        Client {
-            ctx: ctx,
-        }
+        Client { ctx: ctx }
     }
 
     pub fn handle_query(&mut self, query: &str) -> Result<(), ClientError> {
@@ -53,11 +51,15 @@ pub fn exec_create(ctx: &mut Context, stmt: CreateStmt) -> Result<(), ClientErro
 
 pub fn create_table_stmt(ctx: &mut Context, stmt: CreateTableStmt) -> Result<(), ClientError> {
     println!("{:?}", stmt.columns.clone());
-    let columns: Vec<ColumnInfo> = stmt.columns.into_iter().enumerate().map(|(i, col)| ColumnInfo {
-        name: col.name,
-        dtype: col.datatype,
-        offset: i,
-    }).collect();
+    let columns: Vec<ColumnInfo> = stmt.columns
+        .into_iter()
+        .enumerate()
+        .map(|(i, col)| ColumnInfo {
+            name: col.name,
+            dtype: col.datatype,
+            offset: i,
+        })
+        .collect();
 
     let table_info: TableInfo = TableInfo {
         id: ctx.table_id_alloc.base,
@@ -93,14 +95,12 @@ pub fn exec_insert(ctx: &mut Context, stmt: InsertStmt) -> Result<(), ClientErro
 
     match ctx.db {
         None => Err(ClientError::BuildExecutorError),
-        Some(ref mut db) => {
-            match db.load_table(stmt.table_name) {
-                Ok(ref mut mem_tbl) => {
-                    mem_tbl.insert(fields);
-                    Ok(())
-                },
-                _ => Err(ClientError::BuildExecutorError),
+        Some(ref mut db) => match db.load_table(stmt.table_name) {
+            Ok(ref mut mem_tbl) => {
+                mem_tbl.insert(fields);
+                Ok(())
             }
+            _ => Err(ClientError::BuildExecutorError),
         },
     }
 }
@@ -112,21 +112,24 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
         Some(ref mut db) => {
             let mut conditions: Option<Selectors> = None;
             match stmt.condition.clone() {
-                None => {},
+                None => {}
                 Some(condition) => {
                     conditions = Some(try!(build_selectors(condition)));
-                },
+                }
             }
 
             match stmt.source.clone() {
                 DataSource::Join(_s1, _s2, _c) => {
-                    let mut scan_exec: NestedLoopJoinExec = try!(exec_join(db.clone(), stmt.source));
+                    let mut scan_exec: NestedLoopJoinExec =
+                        try!(exec_join(db.clone(), stmt.source));
                     let mut selection_exec = SelectionExec::new(&mut scan_exec, conditions);
 
                     let mut aggregators: Vec<Box<Aggregator>> = Vec::new();
                     for target in stmt.targets.clone() {
                         match target {
-                            Projectable::Aggregate(expr) => aggregators.push(try!(build_aggregator(expr))),
+                            Projectable::Aggregate(expr) => {
+                                aggregators.push(try!(build_aggregator(expr)))
+                            }
                             _ => (),
                         }
                     }
@@ -137,14 +140,13 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                             Some(v) => v,
                         };
 
-                        let mut aggr_exec = AggregationExec::new(&mut selection_exec, group_keys, aggregators);
+                        let mut aggr_exec =
+                            AggregationExec::new(&mut selection_exec, group_keys, aggregators);
                         loop {
                             match aggr_exec.next() {
                                 None => break,
-                                Some(tuples) => {
-                                    for tuple in tuples {
-                                        tuple.print();
-                                    }
+                                Some(tuples) => for tuple in tuples {
+                                    tuple.print();
                                 },
                             };
                         }
@@ -158,15 +160,18 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                         }
                     }
                     println!("Scaned\n");
-                },
+                }
                 DataSource::Leaf(_s) => {
-                    let mut scan_exec: MemoryTableScanExec = try!(exec_scan(db.clone(), stmt.source));
+                    let mut scan_exec: MemoryTableScanExec =
+                        try!(exec_scan(db.clone(), stmt.source));
                     let mut selection_exec = SelectionExec::new(&mut scan_exec, conditions);
-                    
+
                     let mut aggregators: Vec<Box<Aggregator>> = Vec::new();
                     for target in stmt.targets.clone() {
                         match target {
-                            Projectable::Aggregate(expr) => aggregators.push(try!(build_aggregator(expr))),
+                            Projectable::Aggregate(expr) => {
+                                aggregators.push(try!(build_aggregator(expr)))
+                            }
                             _ => (),
                         }
                     }
@@ -177,14 +182,13 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                             Some(v) => v,
                         };
 
-                        let mut aggr_exec = AggregationExec::new(&mut selection_exec, group_keys, aggregators);
+                        let mut aggr_exec =
+                            AggregationExec::new(&mut selection_exec, group_keys, aggregators);
                         loop {
                             match aggr_exec.next() {
                                 None => break,
-                                Some(tuples) => {
-                                    for tuple in tuples {
-                                        tuple.print();
-                                    }
+                                Some(tuples) => for tuple in tuples {
+                                    tuple.print();
                                 },
                             };
                         }
@@ -198,43 +202,44 @@ pub fn exec_select(ctx: &mut Context, stmt: SelectStmt) -> Result<(), ClientErro
                         }
                     }
                     println!("Scaned\n");
-                },
+                }
             }
             Ok(())
         }
     }
 }
 
-pub fn exec_join<'i>(db: Database, source: DataSource) -> Result<NestedLoopJoinExec<'i>, ClientError> {
+pub fn exec_join<'i>(
+    db: Database,
+    source: DataSource,
+) -> Result<NestedLoopJoinExec<'i>, ClientError> {
     match source {
-        DataSource::Join(s1, s2, c) => {
-            match *s1.clone() {
-                DataSource::Join(_s1, _s2, _c) => {
-                    let iter1 = try!(exec_join(db.clone(), *s1));
-                    match *s2.clone() {
-                        DataSource::Join(_s1, _s2, _c) => {
-                            let iter2 = try!(exec_join(db.clone(), *s2));
-                            Ok(NestedLoopJoinExec::new(iter1, iter2, c))
-                        },
-                        DataSource::Leaf(_s) => {
-                            let iter2 = try!(exec_scan(db.clone(), *s2));
-                            Ok(NestedLoopJoinExec::new(iter1, iter2, c))
-                        },
+        DataSource::Join(s1, s2, c) => match *s1.clone() {
+            DataSource::Join(_s1, _s2, _c) => {
+                let iter1 = try!(exec_join(db.clone(), *s1));
+                match *s2.clone() {
+                    DataSource::Join(_s1, _s2, _c) => {
+                        let iter2 = try!(exec_join(db.clone(), *s2));
+                        Ok(NestedLoopJoinExec::new(iter1, iter2, c))
                     }
-                },
-                DataSource::Leaf(_s) => {
-                    let iter1 = try!(exec_scan(db.clone(), *s1));
-                    match *s2.clone() {
-                        DataSource::Join(_s1, _s2, _c) => {
-                            let iter2 = try!(exec_join(db.clone(), *s2));
-                            Ok(NestedLoopJoinExec::new(iter1, iter2, c))
-                        },
-                        DataSource::Leaf(_s) => {
-                            let iter2 = try!(exec_scan(db.clone(), *s2));
-                            Ok(NestedLoopJoinExec::new(iter1, iter2, c))
-                        },
+                    DataSource::Leaf(_s) => {
+                        let iter2 = try!(exec_scan(db.clone(), *s2));
+                        Ok(NestedLoopJoinExec::new(iter1, iter2, c))
                     }
-                },
+                }
+            }
+            DataSource::Leaf(_s) => {
+                let iter1 = try!(exec_scan(db.clone(), *s1));
+                match *s2.clone() {
+                    DataSource::Join(_s1, _s2, _c) => {
+                        let iter2 = try!(exec_join(db.clone(), *s2));
+                        Ok(NestedLoopJoinExec::new(iter1, iter2, c))
+                    }
+                    DataSource::Leaf(_s) => {
+                        let iter2 = try!(exec_scan(db.clone(), *s2));
+                        Ok(NestedLoopJoinExec::new(iter1, iter2, c))
+                    }
+                }
             }
         },
         _ => Err(ClientError::BuildExecutorError),
@@ -243,14 +248,16 @@ pub fn exec_join<'i>(db: Database, source: DataSource) -> Result<NestedLoopJoinE
 
 pub fn exec_scan(mut db: Database, source: DataSource) -> Result<MemoryTableScanExec, ClientError> {
     match source {
-        DataSource::Leaf(s) => {
-            match s {
-                Source::Table(t) => {
-                    let tbl_name: String = t.name.clone();
-                    let mut mem_tbl: &MemoryTable = try!(db.load_table(tbl_name));
-                    let mem_tbl_info: TableInfo = mem_tbl.meta.clone();
-                    Ok(MemoryTableScanExec::new(mem_tbl.clone(), mem_tbl_info, vec![Range::new(0, 10)]))
-                },
+        DataSource::Leaf(s) => match s {
+            Source::Table(t) => {
+                let tbl_name: String = t.name.clone();
+                let mut mem_tbl: &MemoryTable = try!(db.load_table(tbl_name));
+                let mem_tbl_info: TableInfo = mem_tbl.meta.clone();
+                Ok(MemoryTableScanExec::new(
+                    mem_tbl.clone(),
+                    mem_tbl_info,
+                    vec![Range::new(0, 10)],
+                ))
             }
         },
         _ => Err(ClientError::BuildExecutorError),

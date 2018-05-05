@@ -95,12 +95,11 @@ pub enum Source {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Table {
-    pub name: String
+    pub name: String,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct SubQuery {
-}
+pub struct SubQuery {}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Conditions {
@@ -133,16 +132,13 @@ pub enum Operator {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct GroupBy {
-}
+pub struct GroupBy {}
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct OrderBy {
-}
+pub struct OrderBy {}
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Limit {
-}
+pub struct Limit {}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum UpdateStmt {
@@ -170,4 +166,3 @@ pub struct ColumnDef {
     pub name: String,
     pub datatype: DataType,
 }
-

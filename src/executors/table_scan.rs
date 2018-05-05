@@ -16,7 +16,11 @@ pub struct TableScanExec<'ts, 't: 'ts> {
 }
 
 impl<'ts, 't> TableScanExec<'ts, 't> {
-    pub fn new(table: &'ts Table<'t>, meta: TableInfo, ranges: Vec<Range>) -> TableScanExec<'ts, 't> {
+    pub fn new(
+        table: &'ts Table<'t>,
+        meta: TableInfo,
+        ranges: Vec<Range>,
+    ) -> TableScanExec<'ts, 't> {
         TableScanExec {
             table: table,
             ranges: ranges,
@@ -55,7 +59,7 @@ impl<'ts, 't> TableScanExec<'ts, 't> {
                 None => {
                     *&mut self.seek_handle = 0;
                     return None;
-                },
+                }
                 Some(handle) => return Some(handle),
             }
         }
@@ -80,8 +84,7 @@ impl<'ts, 't> Iterator for TableScanExec<'ts, 't> {
             Some(handle) => {
                 *&mut self.seek_handle = handle + 1;
                 Some(self.get_tuple(handle))
-            },
+            }
         }
     }
 }
-

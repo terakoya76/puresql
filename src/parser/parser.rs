@@ -1,9 +1,10 @@
 use std::mem::swap;
 
 use data_type::DataType;
-use parser::token::{Token, Literal};
+use parser::token::{Literal, Token};
 use parser::token_pos::TokenPos;
-use parser::lexer::{Lexer, LexError}; use parser::keyword::Keyword;
+use parser::lexer::{LexError, Lexer};
+use parser::keyword::Keyword;
 use parser::statement::*;
 
 #[derive(Debug)]
@@ -14,8 +15,10 @@ pub struct Parser<'c> {
     next_token: Option<TokenPos>,
 }
 
-impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
-        let lexer: Lexer = Lexer::new(query); let mut parser: Parser = Parser {
+impl<'c> Parser<'c> {
+    pub fn new(query: &'c str) -> Parser<'c> {
+        let lexer: Lexer = Lexer::new(query);
+        let mut parser: Parser = Parser {
             lexer: lexer,
             last_token: None,
             curr_token: None,
@@ -83,11 +86,11 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                         } else {
                             return Err(ParseError::UnexpectedDatatype(debug_token_pos));
                         }
-                    },
+                    }
                     _ => return Err(ParseError::UnexpectedDatatype(debug_token_pos)),
                 };
                 DataType::Char(l)
-            },
+            }
             _ => return Err(ParseError::UndefinedDatatype(debug_token_pos)),
         };
         Ok(found_datatype)
@@ -140,7 +143,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                     "false" => Literal::Bool(0),
                     _ => return Err(ParseError::UnexpectedToken(token_pos.clone())),
                 }
-            },
+            }
             Token::Lit(ref l) => l.clone(),
             _ => return Err(ParseError::UnexpectedToken(token_pos.clone())),
         };
@@ -229,7 +232,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
             Keyword::Create => {
                 let stmt: Statement = Statement::DDL(DDL::Create(try!(self.parse_create_stmt())));
                 Ok(try!(self.build_ast(stmt)))
-            },
+            }
             /*
             Keyword::Drop => {
                 let stmt: Statement = Statement::DDL(DDL::Drop(try!(self.parse_drop_stmt())));
@@ -257,7 +260,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
             Keyword::Select => {
                 let stmt: Statement = Statement::DML(DML::Select(try!(self.parse_select_stmt())));
                 Ok(try!(self.build_ast(stmt)))
-            },
+            }
             /*
             Keyword::Update => {
                 let stmt: Statement = Statement::DML(DML::Update(try!(self.parse_update_stmt())));
@@ -267,7 +270,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
             Keyword::Insert => {
                 let stmt: Statement = Statement::DML(DML::Insert(try!(self.parse_insert_stmt())));
                 Ok(try!(self.build_ast(stmt)))
-            },
+            }
             /*
             Keyword::Delete => {
                 let stmt: Statement = Statement::DML(DML::Delete(try!(self.parse_delete_stmt())));
@@ -352,7 +355,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
 
         match column_names.len() {
             0 => Err(ParseError::MissmatchColumnNumber),
-            _ => Ok(column_names)
+            _ => Ok(column_names),
         }
     }
 
@@ -395,7 +398,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
         if self.validate_keyword(&[Keyword::Where]).is_ok() {
             conditions = Some(try!(self.parse_conditions()));
         }
-        
+
         // GROUP BY xx, yy
         let mut group_by: Option<Vec<Target>> = None;
         if self.validate_keyword(&[Keyword::Group]).is_ok() {
@@ -441,10 +444,10 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                     targets.push(Projectable::All);
                     try!(self.bump());
                     continue;
-                },
+                }
                 Err(_e) => (),
             };
-                
+
             match self.validate_keyword(&[
                 Keyword::Count,
                 Keyword::Sum,
@@ -452,14 +455,12 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                 Keyword::Max,
                 Keyword::Min,
             ]) {
-                Ok(_k) => {
-                    match self.parse_aggregate() {
-                        Ok(agg) => {
-                            targets.push(Projectable::Aggregate(agg));
-                            continue;
-                        },
-                        Err(_e) => (),
+                Ok(_k) => match self.parse_aggregate() {
+                    Ok(agg) => {
+                        targets.push(Projectable::Aggregate(agg));
+                        continue;
                     }
+                    Err(_e) => (),
                 },
                 Err(_e) => (),
             };
@@ -469,13 +470,13 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                     targets.push(Projectable::Lit(l));
                     try!(self.bump());
                     continue;
-                },
+                }
                 Err(_e) => (),
             };
 
             match self.parse_target() {
                 Ok(target) => targets.push(Projectable::Target(target)),
-                Err(_e) => ()
+                Err(_e) => (),
             };
         }
         Ok(targets)
@@ -501,7 +502,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                 try!(self.bump());
 
                 Ok(Aggregate::Count(target))
-            },
+            }
 
             Keyword::Sum => {
                 try!(self.bump());
@@ -515,7 +516,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                 try!(self.bump());
 
                 Ok(Aggregate::Sum(target))
-            },
+            }
 
             Keyword::Avg => {
                 try!(self.bump());
@@ -529,7 +530,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                 try!(self.bump());
 
                 Ok(Aggregate::Average(target))
-            },
+            }
 
             Keyword::Max => {
                 try!(self.bump());
@@ -543,7 +544,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                 try!(self.bump());
 
                 Ok(Aggregate::Max(target))
-            },
+            }
 
             Keyword::Min => {
                 try!(self.bump());
@@ -557,7 +558,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                 try!(self.bump());
 
                 Ok(Aggregate::Min(target))
-            },
+            }
             _ => return Err(ParseError::SystemError),
         }
     }
@@ -567,11 +568,11 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
             Ok(_t) => {
                 try!(self.bump());
                 Ok(Aggregatable::All)
-            },
+            }
             Err(_e) => {
                 let target: Target = try!(self.parse_target());
                 Ok(Aggregatable::Target(target))
-            },
+            }
         }
     }
 
@@ -596,8 +597,10 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
 
     pub fn parse_from(&mut self) -> Result<DataSource, ParseError> {
         let source: DataSource = DataSource::Leaf(try!(self.parse_data_source()));
-        
-        while self.validate_keyword(&[Keyword::Join]).is_ok() || self.validate_token(&[Token::Comma]).is_ok() {
+
+        while self.validate_keyword(&[Keyword::Join]).is_ok()
+            || self.validate_token(&[Token::Comma]).is_ok()
+        {
             if self.validate_keyword(&[Keyword::Join]).is_ok() {
                 try!(self.bump());
                 return Ok(DataSource::Join(
@@ -613,13 +616,15 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                     None,
                 ));
             }
-        };
+        }
 
         Ok(source)
     }
 
     pub fn parse_data_source(&mut self) -> Result<Source, ParseError> {
-        let table = Source::Table(Table { name: try!(self.validate_word(true)) });
+        let table = Source::Table(Table {
+            name: try!(self.validate_word(true)),
+        });
         try!(self.bump());
         Ok(table)
     }
@@ -635,15 +640,15 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                 match try!(self.validate_keyword(&[Keyword::And, Keyword::Or])) {
                     Keyword::And => {
                         cond = Conditions::And(
-                            Box::new(cond), Box::new(try!(self.parse_conditions()))
+                            Box::new(cond),
+                            Box::new(try!(self.parse_conditions())),
                         );
-                    },
+                    }
                     Keyword::Or => {
-                        cond = Conditions::Or(
-                            Box::new(cond), Box::new(try!(self.parse_conditions()))
-                        );
-                    },
-                    _ => {},
+                        cond =
+                            Conditions::Or(Box::new(cond), Box::new(try!(self.parse_conditions())));
+                    }
+                    _ => {}
                 };
             };
         } else {
@@ -653,23 +658,24 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                     Keyword::And => {
                         if self.check_next_token(&[Token::OpPar]) {
                             cond = Conditions::And(
-                                Box::new(cond), Box::new(try!(self.parse_conditions()))
+                                Box::new(cond),
+                                Box::new(try!(self.parse_conditions())),
                             );
                         } else {
                             cond = Conditions::And(
-                                Box::new(cond), Box::new(Conditions::Leaf(try!(self.parse_condition())))
+                                Box::new(cond),
+                                Box::new(Conditions::Leaf(try!(self.parse_condition()))),
                             );
                             try!(self.bump());
                         };
-                    },
+                    }
                     Keyword::Or => {
-                        cond = Conditions::Or(
-                            Box::new(cond), Box::new(try!(self.parse_conditions()))
-                        );
-                    },
+                        cond =
+                            Conditions::Or(Box::new(cond), Box::new(try!(self.parse_conditions())));
+                    }
                     _ => return Err(ParseError::UndefinedStatementError),
                 };
-            };
+            }
         }
         try!(self.bump());
         Ok(cond)
@@ -697,11 +703,9 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
             Token::LT => Operator::LT,
             Token::GE => Operator::GE,
             Token::LE => Operator::LE,
-            _ => {
-                match self.curr_token {
-                    None => return Err(ParseError::UnexepectedEoq),
-                    Some(ref ts) => return Err(ParseError::UnexpectedToken(ts.clone())),
-                }
+            _ => match self.curr_token {
+                None => return Err(ParseError::UnexepectedEoq),
+                Some(ref ts) => return Err(ParseError::UnexpectedToken(ts.clone())),
             },
         };
 
@@ -719,7 +723,7 @@ impl<'c> Parser<'c> { pub fn new(query: &'c str) -> Parser<'c> {
                     table_name: right_table_name,
                     name: right_column_name,
                 })
-            },
+            }
             _ => Comparable::Lit(try!(self.validate_literal())),
         };
 
@@ -854,4 +858,3 @@ impl From<LexError> for ParseError {
         ParseError::LexError(err)
     }
 }
-

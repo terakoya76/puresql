@@ -10,7 +10,9 @@ pub trait Aggregator {
 }
 
 impl Clone for Box<Aggregator> {
-    fn clone(&self) -> Box<Aggregator> { self.box_clone() }
+    fn clone(&self) -> Box<Aggregator> {
+        self.box_clone()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -20,7 +22,9 @@ pub struct Count {
 
 impl Count {
     pub fn new() -> Box<Count> {
-        Box::new(Count { result: Field::set_init() })
+        Box::new(Count {
+            result: Field::set_init(),
+        })
     }
 }
 
@@ -59,7 +63,12 @@ impl Sum {
 
 impl Aggregator for Sum {
     fn update(&mut self, tuple: &Tuple, columns: &[Column]) -> Result<(), AggregatorError> {
-        let value: Field = try!(find_field(tuple, columns, self.table.clone(), self.column.clone()));
+        let value: Field = try!(find_field(
+            tuple,
+            columns,
+            self.table.clone(),
+            self.column.clone()
+        ));
         self.result = self.result.clone() + value;
         Ok(())
     }
@@ -95,7 +104,12 @@ impl Average {
 impl Aggregator for Average {
     fn update(&mut self, tuple: &Tuple, columns: &[Column]) -> Result<(), AggregatorError> {
         self.iterate_num += 1;
-        let value: Field = try!(find_field(tuple, columns, self.table.clone(), self.column.clone()));
+        let value: Field = try!(find_field(
+            tuple,
+            columns,
+            self.table.clone(),
+            self.column.clone()
+        ));
         self.sum = self.sum.clone() + value;
         Ok(())
     }
@@ -128,7 +142,12 @@ impl Max {
 
 impl Aggregator for Max {
     fn update(&mut self, tuple: &Tuple, columns: &[Column]) -> Result<(), AggregatorError> {
-        let value: Field = try!(find_field(tuple, columns, self.table.clone(), self.column.clone()));
+        let value: Field = try!(find_field(
+            tuple,
+            columns,
+            self.table.clone(),
+            self.column.clone()
+        ));
         if self.result < value {
             self.result = value;
         }
@@ -163,7 +182,12 @@ impl Min {
 
 impl Aggregator for Min {
     fn update(&mut self, tuple: &Tuple, columns: &[Column]) -> Result<(), AggregatorError> {
-        let value: Field = try!(find_field(tuple, columns, self.table.clone(), self.column.clone()));
+        let value: Field = try!(find_field(
+            tuple,
+            columns,
+            self.table.clone(),
+            self.column.clone()
+        ));
         if self.result > value {
             self.result = value;
         }
@@ -179,7 +203,12 @@ impl Aggregator for Min {
     }
 }
 
-fn find_field(tuple: &Tuple, columns: &[Column], table_name: Option<String>, column_name: String) -> Result<Field, AggregatorError> {
+fn find_field(
+    tuple: &Tuple,
+    columns: &[Column],
+    table_name: Option<String>,
+    column_name: String,
+) -> Result<Field, AggregatorError> {
     for column in columns {
         if column_name != column.name {
             continue;
@@ -191,7 +220,7 @@ fn find_field(tuple: &Tuple, columns: &[Column], table_name: Option<String>, col
                 if tbl_name == &column.table_name {
                     return Ok(tuple.fields[column.offset].clone());
                 }
-            },
+            }
         }
     }
     Err(AggregatorError::ColumnNotFoundError)
@@ -201,32 +230,32 @@ pub fn build_aggregator(aggregate: Aggregate) -> Result<Box<Aggregator>, Aggrega
     match aggregate {
         Aggregate::Count(_aggr) => Ok(Count::new()),
 
-        Aggregate::Sum(aggr) => {
-            match aggr {
-                Aggregatable::Target(target) => Ok(Sum::new(target.table_name.clone(), target.name.clone())),
-                _ => Err(AggregatorError::UnexpectedTargetError),
+        Aggregate::Sum(aggr) => match aggr {
+            Aggregatable::Target(target) => {
+                Ok(Sum::new(target.table_name.clone(), target.name.clone()))
             }
+            _ => Err(AggregatorError::UnexpectedTargetError),
         },
 
-        Aggregate::Average(aggr) => {
-            match aggr {
-                Aggregatable::Target(target) => Ok(Average::new(target.table_name.clone(), target.name.clone())),
-                _ => Err(AggregatorError::UnexpectedTargetError),
+        Aggregate::Average(aggr) => match aggr {
+            Aggregatable::Target(target) => {
+                Ok(Average::new(target.table_name.clone(), target.name.clone()))
             }
+            _ => Err(AggregatorError::UnexpectedTargetError),
         },
 
-        Aggregate::Max(aggr) => {
-            match aggr {
-                Aggregatable::Target(target) => Ok(Max::new(target.table_name.clone(), target.name.clone())),
-                _ => Err(AggregatorError::UnexpectedTargetError),
+        Aggregate::Max(aggr) => match aggr {
+            Aggregatable::Target(target) => {
+                Ok(Max::new(target.table_name.clone(), target.name.clone()))
             }
+            _ => Err(AggregatorError::UnexpectedTargetError),
         },
 
-        Aggregate::Min(aggr) => {
-            match aggr {
-                Aggregatable::Target(target) => Ok(Min::new(target.table_name.clone(), target.name.clone())),
-                _ => Err(AggregatorError::UnexpectedTargetError),
+        Aggregate::Min(aggr) => match aggr {
+            Aggregatable::Target(target) => {
+                Ok(Min::new(target.table_name.clone(), target.name.clone()))
             }
+            _ => Err(AggregatorError::UnexpectedTargetError),
         },
     }
 }

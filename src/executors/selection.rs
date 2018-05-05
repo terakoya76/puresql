@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use ScanIterator;
-use { Selectors, eval_selectors };
+use {eval_selectors, Selectors};
 use meta::table_info::TableInfo;
 use columns::column::Column;
 use tables::tuple::Tuple;
@@ -13,7 +13,9 @@ pub struct SelectionExec<'s, 't: 's, T: 't> {
 }
 
 impl<'s, 't, T> SelectionExec<'s, 't, T>
-    where T: ScanIterator {
+where
+    T: ScanIterator,
+{
     pub fn new(inputs: &'s mut T, selectors: Option<Selectors>) -> SelectionExec<'s, 't, T> {
         SelectionExec {
             inputs: inputs,
@@ -24,7 +26,9 @@ impl<'s, 't, T> SelectionExec<'s, 't, T>
 }
 
 impl<'s, 't, T> ScanIterator for SelectionExec<'s, 't, T>
-    where T: ScanIterator {
+where
+    T: ScanIterator,
+{
     fn get_meta(&self) -> TableInfo {
         self.inputs.get_meta()
     }
@@ -35,7 +39,9 @@ impl<'s, 't, T> ScanIterator for SelectionExec<'s, 't, T>
 }
 
 impl<'s, 't, T> Iterator for SelectionExec<'s, 't, T>
-    where T: ScanIterator {
+where
+    T: ScanIterator,
+{
     type Item = Tuple;
     fn next(&mut self) -> Option<Tuple> {
         loop {
@@ -44,19 +50,13 @@ impl<'s, 't, T> Iterator for SelectionExec<'s, 't, T>
                 Some(tuple) => {
                     let passed: bool = match self.selectors.clone() {
                         None => true,
-                        Some(selectors) => {
-                            eval_selectors(
-                                selectors,
-                                &tuple,
-                                &self.get_columns()
-                            )
-                        }
+                        Some(selectors) => eval_selectors(selectors, &tuple, &self.get_columns()),
                     };
 
                     if passed {
                         return Some(tuple);
                     }
-                },
+                }
             }
         }
     }

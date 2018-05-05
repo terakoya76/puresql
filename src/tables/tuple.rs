@@ -7,9 +7,7 @@ pub struct Tuple {
 
 impl Tuple {
     pub fn new(fields: Vec<Field>) -> Tuple {
-        Tuple {
-            fields: fields,
-        }
+        Tuple { fields: fields }
     }
 
     pub fn append(&self, tuple: &Tuple) -> Tuple {

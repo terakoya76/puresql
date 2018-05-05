@@ -17,8 +17,14 @@ pub struct AggregationExec<'a, 't: 'a, T: 't> {
 }
 
 impl<'a, 't, T> AggregationExec<'a, 't, T>
-    where T: ScanIterator {
-    pub fn new(inputs: &'a mut T, group_keys: Vec<Target>, aggregators: Vec<Box<Aggregator>>) -> AggregationExec<'a, 't, T> {
+where
+    T: ScanIterator,
+{
+    pub fn new(
+        inputs: &'a mut T,
+        group_keys: Vec<Target>,
+        aggregators: Vec<Box<Aggregator>>,
+    ) -> AggregationExec<'a, 't, T> {
         AggregationExec {
             group_keys: group_keys,
             inputs: inputs,
@@ -33,7 +39,7 @@ impl<'a, 't, T> AggregationExec<'a, 't, T>
         for key in &self.group_keys {
             for column in &self.inputs.get_columns() {
                 let t: Target = key.clone();
-                
+
                 if t.table_name.is_some() {
                     if t.table_name.unwrap() != column.table_name {
                         continue;
@@ -50,8 +56,10 @@ impl<'a, 't, T> AggregationExec<'a, 't, T>
 
     fn upsert(&mut self, keys: Vec<Field>, tuple: Tuple) {
         if !self.grouped_aggregators.contains_key(&keys) {
-            let init_aggrs: Vec<Box<Aggregator>> = self.aggregators.iter().map(|a| a.clone()).collect();
-            self.grouped_aggregators.insert(keys.clone(), init_aggrs.clone());
+            let init_aggrs: Vec<Box<Aggregator>> =
+                self.aggregators.iter().map(|a| a.clone()).collect();
+            self.grouped_aggregators
+                .insert(keys.clone(), init_aggrs.clone());
         }
 
         {
@@ -64,7 +72,9 @@ impl<'a, 't, T> AggregationExec<'a, 't, T>
 }
 
 impl<'a, 't, T> Iterator for AggregationExec<'a, 't, T>
-    where T: ScanIterator {
+where
+    T: ScanIterator,
+{
     type Item = Vec<Tuple>;
     fn next(&mut self) -> Option<Vec<Tuple>> {
         loop {
@@ -83,7 +93,7 @@ impl<'a, 't, T> Iterator for AggregationExec<'a, 't, T>
                         tuples.push(Tuple::new(fields));
                     }
                     return Some(tuples);
-                },
+                }
             }
         }
     }

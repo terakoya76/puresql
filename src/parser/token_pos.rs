@@ -6,4 +6,3 @@ pub struct TokenPos {
     pub token: Token,
     pub pos: Position,
 }
-

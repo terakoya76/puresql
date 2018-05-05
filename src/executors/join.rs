@@ -1,5 +1,5 @@
 use ScanIterator;
-use { Selectors, eval_selectors };
+use {eval_selectors, Selectors};
 use meta::table_info::{TableInfo, TableInfoError};
 use meta::column_info::ColumnInfo;
 use columns::column::Column;
@@ -20,7 +20,11 @@ pub struct NestedLoopJoinExec<'n> {
 }
 
 impl<'n> NestedLoopJoinExec<'n> {
-    pub fn new<T1: ScanIterator + 'n, T2: ScanIterator + 'n>(outer_table: T1, inner_table: T2, condition: Option<Conditions>) -> NestedLoopJoinExec<'n> {
+    pub fn new<T1: ScanIterator + 'n, T2: ScanIterator + 'n>(
+        outer_table: T1,
+        inner_table: T2,
+        condition: Option<Conditions>,
+    ) -> NestedLoopJoinExec<'n> {
         let outer_column_length: usize = outer_table.get_meta().columns.len();
         let mut column_infos: Vec<ColumnInfo> = outer_table.get_meta().columns;
         for (i, column) in inner_table.get_meta().columns.iter().enumerate() {
@@ -59,12 +63,16 @@ impl<'n> ScanIterator for NestedLoopJoinExec<'n> {
     fn get_columns(&self) -> Vec<Column> {
         let outer_length: usize = self.outer_columns.len();
         let mut outer_columns = self.outer_columns.clone();
-        let mut inner_columns: Vec<Column> = self.inner_columns.clone().into_iter().map(|c| Column {
-            table_name: c.table_name,
-            name: c.name,
-            dtype: c.dtype,
-            offset: c.offset + outer_length,
-        }).collect();
+        let mut inner_columns: Vec<Column> = self.inner_columns
+            .clone()
+            .into_iter()
+            .map(|c| Column {
+                table_name: c.table_name,
+                name: c.name,
+                dtype: c.dtype,
+                offset: c.offset + outer_length,
+            })
+            .collect();
 
         outer_columns.append(&mut inner_columns);
         outer_columns
@@ -80,26 +88,29 @@ impl<'n> Iterator for NestedLoopJoinExec<'n> {
                 Some(s) => eval_selectors(s, &tuple, &self.get_columns()),
             };
 
-            if passed { Some(tuple) } else { None }
+            if passed {
+                Some(tuple)
+            } else {
+                None
+            }
         })
     }
 }
 
-fn next_tuple<'n, T1: ScanIterator + 'n, T2: ScanIterator + 'n>(mut outer_table: T1, mut inner_table: T2) -> Box<FnMut() -> Option<Tuple> + 'n> {
-    Box::new(move || {
-        loop {
-            match outer_table.next() {
-                None => return None,
-                Some(ref outer_tuple) => {
-                    match inner_table.next() {
-                        None => continue,
-                        Some(ref inner_tuple) => {
-                            let joined_tuple: Tuple = outer_tuple.append(inner_tuple);
-                            return Some(joined_tuple);
-                        }
-                    }
+fn next_tuple<'n, T1: ScanIterator + 'n, T2: ScanIterator + 'n>(
+    mut outer_table: T1,
+    mut inner_table: T2,
+) -> Box<FnMut() -> Option<Tuple> + 'n> {
+    Box::new(move || loop {
+        match outer_table.next() {
+            None => return None,
+            Some(ref outer_tuple) => match inner_table.next() {
+                None => continue,
+                Some(ref inner_tuple) => {
+                    let joined_tuple: Tuple = outer_tuple.append(inner_tuple);
+                    return Some(joined_tuple);
                 }
-            }
+            },
         }
     })
 }

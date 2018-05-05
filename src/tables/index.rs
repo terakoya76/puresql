@@ -25,4 +25,3 @@ impl<T> Index<T> {
         }
     }
 }
-

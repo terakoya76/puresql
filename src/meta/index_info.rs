@@ -12,7 +12,6 @@ pub struct IndexInfo {
 
 impl IndexInfo {
     pub fn new(table_info: &mut TableInfo, column_names: Vec<&str>, is_pk: bool) -> IndexInfo {
-
         let index_info = IndexInfo {
             id: 0,
             name: Self::generate_name(&column_names),
@@ -35,4 +34,3 @@ impl IndexInfo {
         name
     }
 }
-

@@ -1,6 +1,6 @@
 use std::str::Chars;
 
-use parser::token::{Token, Literal};
+use parser::token::{Literal, Token};
 use parser::position::Position;
 use parser::token_pos::TokenPos;
 
@@ -38,7 +38,7 @@ impl<'c> Lexer<'c> {
         self.last_pos = self.curr_pos;
 
         match self.next_char {
-            None => {},
+            None => {}
             Some(c) => {
                 self.curr_pos = match self.curr_pos {
                     Some(n) => Some(n + c.len_utf8()),
@@ -57,12 +57,9 @@ impl<'c> Lexer<'c> {
         let mut s: String = String::new();
         loop {
             match self.curr_char.unwrap_or(' ') {
-                c @ 'a' ... 'z' |
-                c @ 'A' ... 'Z' |
-                c @ '0' ... '9' |
-                c @ '_' => {
+                c @ 'a'...'z' | c @ 'A'...'Z' | c @ '0'...'9' | c @ '_' => {
                     s.push(c);
-                },
+                }
                 _ => break,
             }
             self.bump();
@@ -74,10 +71,9 @@ impl<'c> Lexer<'c> {
         let mut s: String = String::new();
         loop {
             match self.curr_char.unwrap_or(' ') {
-                c @ '0' ... '9' |
-                c @ '.' => {
+                c @ '0'...'9' | c @ '.' => {
                     s.push(c);
-                },
+                }
                 _ => break,
             }
             self.bump();
@@ -92,12 +88,10 @@ impl<'c> Lexer<'c> {
         loop {
             match self.curr_char {
                 None => return Err(LexError::UnclosedQuationmark),
-                Some(c) => {
-                    match c {
-                        '\'' | '"' => break,
-                        _ => l.push(c),
-                    }
-                }
+                Some(c) => match c {
+                    '\'' | '"' => break,
+                    _ => l.push(c),
+                },
             }
             self.bump();
         }
@@ -109,12 +103,10 @@ impl<'c> Lexer<'c> {
         let token_pos: Option<TokenPos> = try!(self.next());
         let is_ws: bool = match token_pos {
             None => false,
-            Some(ref ts) => {
-                match ts.token {
-                    Token::WS => true,
-                    _ => false,
-                }
-            }
+            Some(ref ts) => match ts.token {
+                Token::WS => true,
+                _ => false,
+            },
         };
 
         if is_ws {
@@ -141,12 +133,12 @@ impl<'c> Lexer<'c> {
         };
 
         let token = match curr_char {
-            'a' ... 'z' | 'A' ... 'Z' => {
+            'a'...'z' | 'A'...'Z' => {
                 let w = self.scan_words();
                 Token::Word(w)
-            },
+            }
 
-            '0' ... '9' => {
+            '0'...'9' => {
                 let n = self.scan_nums();
                 if let Ok(i) = n.parse::<i64>() {
                     Token::Lit(Literal::Int(i))
@@ -157,27 +149,27 @@ impl<'c> Lexer<'c> {
                         Token::Unknown
                     }
                 }
-            },
+            }
 
             ';' => {
                 self.bump();
                 Token::Semi
-            },
+            }
 
             '.' => {
                 self.bump();
                 Token::Dot
-            },
+            }
 
             ',' => {
                 self.bump();
                 Token::Comma
-            },
+            }
 
             '(' => {
                 self.bump();
                 Token::OpPar
-            },
+            }
 
             ')' => {
                 self.bump();
@@ -187,72 +179,72 @@ impl<'c> Lexer<'c> {
             '\'' | '"' => {
                 let l = try!(self.scan_literal());
                 Token::Lit(Literal::String(l))
-            },
+            }
 
             '=' => {
                 self.bump();
                 Token::Equ
-            },
+            }
 
             '>' if next_char == '=' => {
                 self.double_bump();
                 Token::GE
-            },
+            }
 
             '>' => {
                 self.bump();
                 Token::GT
-            },
+            }
 
             '<' if next_char == '=' => {
                 self.double_bump();
                 Token::LE
-            },
+            }
 
             '<' if next_char == '>' => {
                 self.double_bump();
                 Token::NEqu
-            },
+            }
 
             '<' => {
                 self.bump();
                 Token::LT
-            },
+            }
 
             '+' => {
                 self.bump();
                 Token::Add
-            },
+            }
 
             '-' => {
                 self.bump();
                 Token::Sub
-            },
+            }
 
             '/' => {
                 self.bump();
                 Token::Div
-            },
+            }
 
             '%' => {
                 self.bump();
                 Token::Mod
-            },
+            }
 
             '*' => {
                 self.bump();
                 Token::Star
-            },
+            }
 
             c if is_whitespace(c) => {
                 self.skip_whitespace();
                 Token::WS
-            },
+            }
 
             _ => {
                 self.bump();
                 Token::Unknown
-            },
+            }
         };
 
         Ok(Some(TokenPos {
@@ -276,4 +268,3 @@ fn is_whitespace(c: char) -> bool {
 pub enum LexError {
     UnclosedQuationmark,
 }
-
