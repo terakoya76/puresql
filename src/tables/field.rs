@@ -144,6 +144,15 @@ impl Field {
         self.s.clone().unwrap()
     }
 
+    pub fn aggregatable(&self) -> bool {
+        match self.kind {
+            KIND_I64 => true,
+            KIND_U64 => true,
+            KIND_F64 => true,
+            _ => false,
+        }
+    }
+
     pub fn to_string(&self) -> String {
         match self.kind {
             KIND_BOOL => self.get_bool().to_string(),
